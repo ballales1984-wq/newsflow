@@ -1,0 +1,30 @@
+# Versione MINIMAL per test rapido - Solo funzionalità base
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database (SQLite)
+sqlalchemy==2.0.25
+
+# News Collection
+feedparser==6.0.11
+requests==2.31.0
+beautifulsoup4==4.12.3
+python-dateutil==2.8.2
+
+# Security & Auth
+python-dotenv==1.0.0
+
+# Validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Utilities
+python-slugify==8.0.1
+langdetect==1.0.9
+
+# Testing
+pytest==7.4.4
+

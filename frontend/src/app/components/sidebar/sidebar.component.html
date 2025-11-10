@@ -1,0 +1,75 @@
+<div class="sidebar-container">
+  <div class="sidebar-section">
+    <h3 class="section-title">Modalità Lettura</h3>
+    <mat-nav-list>
+      <a mat-list-item>
+        <mat-icon matListItemIcon>wb_sunny</mat-icon>
+        <span matListItemTitle>Mattino</span>
+      </a>
+      <a mat-list-item>
+        <mat-icon matListItemIcon>nights_stay</mat-icon>
+        <span matListItemTitle>Serale</span>
+      </a>
+      <a mat-list-item>
+        <mat-icon matListItemIcon>weekend</mat-icon>
+        <span matListItemTitle>Weekend</span>
+      </a>
+    </mat-nav-list>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="sidebar-section">
+    <h3 class="section-title">Categorie</h3>
+    <mat-nav-list>
+      <a
+        mat-list-item
+        (click)="selectCategory(null)"
+        [class.active]="selectedCategoryId === null"
+      >
+        <mat-icon matListItemIcon>all_inclusive</mat-icon>
+        <span matListItemTitle>Tutte</span>
+      </a>
+      
+      <a
+        mat-list-item
+        *ngFor="let category of categories"
+        (click)="selectCategory(category.id)"
+        [class.active]="selectedCategoryId === category.id"
+      >
+        <mat-icon
+          matListItemIcon
+          [style.color]="category.color"
+        >
+          {{ category.icon || 'folder' }}
+        </mat-icon>
+        <span matListItemTitle>{{ category.name }}</span>
+      </a>
+    </mat-nav-list>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="sidebar-section">
+    <h3 class="section-title">Libreria</h3>
+    <mat-nav-list>
+      <a mat-list-item>
+        <mat-icon matListItemIcon>bookmark</mat-icon>
+        <span matListItemTitle>Salvati</span>
+      </a>
+      <a mat-list-item>
+        <mat-icon matListItemIcon>favorite</mat-icon>
+        <span matListItemTitle>Preferiti</span>
+      </a>
+      <a mat-list-item>
+        <mat-icon matListItemIcon>history</mat-icon>
+        <span matListItemTitle>Cronologia</span>
+      </a>
+      <a mat-list-item>
+        <mat-icon matListItemIcon>note</mat-icon>
+        <span matListItemTitle>Note</span>
+      </a>
+    </mat-nav-list>
+  </div>
+</div>
+

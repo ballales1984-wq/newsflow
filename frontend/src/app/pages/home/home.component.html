@@ -1,0 +1,54 @@
+<div class="home-container">
+  <section class="hero-section" *ngIf="featuredArticles.length > 0">
+    <h2 class="section-title">
+      <mat-icon>star</mat-icon>
+      In Evidenza
+    </h2>
+    <div class="featured-grid">
+      <app-article-card
+        *ngFor="let article of featuredArticles.slice(0, 3)"
+        [article]="article"
+      ></app-article-card>
+    </div>
+  </section>
+
+  <section class="main-section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <mat-icon>article</mat-icon>
+        {{ selectedCategoryId ? 'Articoli Filtrati' : 'Tutte le Notizie' }}
+      </h2>
+      <div class="filters">
+        <button mat-stroked-button>
+          <mat-icon>filter_list</mat-icon>
+          Filtri
+        </button>
+        <button mat-stroked-button>
+          <mat-icon>sort</mat-icon>
+          Ordina
+        </button>
+      </div>
+    </div>
+
+    <app-category-filter
+      [categories]="categories"
+      [selectedCategoryId]="selectedCategoryId"
+      (categoryChange)="onCategoryChange($event)"
+    ></app-category-filter>
+
+    <app-article-list
+      [articles]="articles"
+      [loading]="loading"
+    ></app-article-list>
+
+    <mat-paginator
+      *ngIf="!loading && totalArticles > 0"
+      [length]="totalArticles"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[10, 20, 50, 100]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    ></mat-paginator>
+  </section>
+</div>
+

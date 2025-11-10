@@ -1,0 +1,66 @@
+<mat-toolbar color="primary" class="header">
+  <div class="header-content">
+    <div class="logo-section">
+      <button mat-icon-button>
+        <mat-icon>menu</mat-icon>
+      </button>
+      <a routerLink="/" class="logo">
+        <mat-icon>article</mat-icon>
+        <span class="logo-text">NewsFlow</span>
+      </a>
+    </div>
+
+    <div class="search-section">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input
+          matInput
+          placeholder="Cerca notizie..."
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="onSearch()"
+        />
+      </mat-form-field>
+    </div>
+
+    <div class="actions-section">
+      <button
+        mat-icon-button
+        (click)="toggleTheme()"
+        matTooltip="Toggle theme"
+      >
+        <mat-icon>
+          {{ themeService.isDarkMode ? 'light_mode' : 'dark_mode' }}
+        </mat-icon>
+      </button>
+      
+      <button mat-icon-button matTooltip="Notifiche">
+        <mat-icon matBadge="3" matBadgeColor="warn">notifications</mat-icon>
+      </button>
+
+      <button mat-icon-button [matMenuTriggerFor]="userMenu">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+      
+      <mat-menu #userMenu="matMenu">
+        <button mat-menu-item>
+          <mat-icon>person</mat-icon>
+          <span>Profilo</span>
+        </button>
+        <button mat-menu-item>
+          <mat-icon>bookmark</mat-icon>
+          <span>Articoli salvati</span>
+        </button>
+        <button mat-menu-item>
+          <mat-icon>settings</mat-icon>
+          <span>Impostazioni</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item>
+          <mat-icon>logout</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+</mat-toolbar>
+

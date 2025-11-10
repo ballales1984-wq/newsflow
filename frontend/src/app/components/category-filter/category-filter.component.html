@@ -1,0 +1,23 @@
+<div class="category-filter">
+  <mat-chip-set>
+    <mat-chip
+      [class.selected]="selectedCategoryId === null"
+      (click)="selectCategory(null)"
+    >
+      <mat-icon matChipAvatar>all_inclusive</mat-icon>
+      Tutte
+    </mat-chip>
+    
+    <mat-chip
+      *ngFor="let category of categories"
+      [class.selected]="selectedCategoryId === category.id"
+      (click)="selectCategory(category.id)"
+    >
+      <mat-icon matChipAvatar [style.color]="category.color">
+        {{ category.icon || 'folder' }}
+      </mat-icon>
+      {{ category.name }}
+    </mat-chip>
+  </mat-chip-set>
+</div>
+

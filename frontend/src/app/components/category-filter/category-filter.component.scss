@@ -1,0 +1,33 @@
+.category-filter {
+  margin-bottom: 24px;
+
+  mat-chip-set {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  mat-chip {
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &.selected {
+      background-color: #3f51b5;
+      color: white;
+
+      mat-icon {
+        color: white !important;
+      }
+    }
+  }
+}
+
+.dark-theme .category-filter mat-chip.selected {
+  background-color: #9c27b0;
+}
+

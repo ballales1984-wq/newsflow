@@ -1,0 +1,49 @@
+<mat-card class="article-card" (click)="viewArticle()">
+  <div class="card-image" *ngIf="article.image_url">
+    <img [src]="article.image_url" [alt]="article.title" />
+    <div class="quality-badge" *ngIf="article.quality_score">
+      <mat-chip [color]="getQualityColor(article.quality_score)">
+        {{ (article.quality_score * 100).toFixed(0) }}%
+      </mat-chip>
+    </div>
+  </div>
+
+  <mat-card-header>
+    <mat-card-title>{{ article.title }}</mat-card-title>
+    <mat-card-subtitle>
+      <span *ngIf="article.author">{{ article.author }} · </span>
+      <span>{{ formatDate(article.published_at) }}</span>
+      <span *ngIf="article.reading_time_minutes"> · {{ article.reading_time_minutes }} min</span>
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <p class="summary">{{ article.summary }}</p>
+
+    <div class="keywords" *ngIf="article.keywords && article.keywords.length > 0">
+      <mat-chip-set>
+        <mat-chip *ngFor="let keyword of article.keywords.slice(0, 5)">
+          {{ keyword }}
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+  </mat-card-content>
+
+  <mat-card-actions>
+    <div class="actions-left">
+      <button mat-icon-button matTooltip="Salva">
+        <mat-icon>bookmark_border</mat-icon>
+      </button>
+      <button mat-icon-button matTooltip="Condividi">
+        <mat-icon>share</mat-icon>
+      </button>
+    </div>
+    <div class="actions-right">
+      <button mat-button color="primary">
+        Leggi
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </div>
+  </mat-card-actions>
+</mat-card>
+

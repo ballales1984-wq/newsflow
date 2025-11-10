@@ -1,0 +1,119 @@
+<div class="article-detail-container" *ngIf="!loading && article">
+  <div class="back-button">
+    <button mat-icon-button (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  </div>
+
+  <article class="article-content">
+    <header class="article-header">
+      <div class="article-meta">
+        <mat-chip-set>
+          <mat-chip *ngIf="article.language">
+            {{ article.language.toUpperCase() }}
+          </mat-chip>
+          <mat-chip *ngIf="article.quality_score" color="primary">
+            Quality: {{ (article.quality_score * 100).toFixed(0) }}%
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+
+      <h1 class="article-title">{{ article.title }}</h1>
+
+      <div class="article-info">
+        <span class="author" *ngIf="article.author">
+          <mat-icon>person</mat-icon>
+          {{ article.author }}
+        </span>
+        <span class="date">
+          <mat-icon>schedule</mat-icon>
+          {{ formatDate(article.published_at) }}
+        </span>
+        <span class="reading-time" *ngIf="article.reading_time_minutes">
+          <mat-icon>timer</mat-icon>
+          {{ article.reading_time_minutes }} min di lettura
+        </span>
+      </div>
+
+      <div class="article-actions">
+        <button mat-raised-button color="primary" (click)="saveArticle()">
+          <mat-icon>bookmark</mat-icon>
+          Salva
+        </button>
+        <button mat-raised-button (click)="shareArticle()">
+          <mat-icon>share</mat-icon>
+          Condividi
+        </button>
+        <a [href]="article.url" target="_blank" mat-raised-button>
+          <mat-icon>open_in_new</mat-icon>
+          Leggi originale
+        </a>
+      </div>
+    </header>
+
+    <div class="article-image" *ngIf="article.image_url">
+      <img [src]="article.image_url" [alt]="article.title" />
+    </div>
+
+    <div class="article-body">
+      <div class="summary" *ngIf="article.summary">
+        <h3>Sommario</h3>
+        <p>{{ article.summary }}</p>
+      </div>
+
+      <div class="content" *ngIf="article.content">
+        <p>{{ article.content }}</p>
+      </div>
+    </div>
+
+    <div class="article-metadata">
+      <div class="keywords-section" *ngIf="article.keywords && article.keywords.length > 0">
+        <h3>Parole Chiave</h3>
+        <mat-chip-set>
+          <mat-chip *ngFor="let keyword of article.keywords">
+            {{ keyword }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+
+      <div class="entities-section" *ngIf="article.entities">
+        <h3>Entità Riconosciute</h3>
+        
+        <div class="entity-group" *ngIf="article.entities.persons?.length">
+          <h4>Persone</h4>
+          <mat-chip-set>
+            <mat-chip *ngFor="let person of article.entities.persons">
+              <mat-icon matChipAvatar>person</mat-icon>
+              {{ person }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+
+        <div class="entity-group" *ngIf="article.entities.organizations?.length">
+          <h4>Organizzazioni</h4>
+          <mat-chip-set>
+            <mat-chip *ngFor="let org of article.entities.organizations">
+              <mat-icon matChipAvatar>business</mat-icon>
+              {{ org }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+
+        <div class="entity-group" *ngIf="article.entities.locations?.length">
+          <h4>Luoghi</h4>
+          <mat-chip-set>
+            <mat-chip *ngFor="let loc of article.entities.locations">
+              <mat-icon matChipAvatar>place</mat-icon>
+              {{ loc }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+
+<div class="loading-container" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+

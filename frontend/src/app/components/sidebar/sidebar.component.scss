@@ -1,0 +1,59 @@
+.sidebar-container {
+  padding: 16px 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  padding: 16px 0;
+}
+
+.section-title {
+  padding: 8px 16px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-theme .section-title {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+mat-nav-list {
+  padding: 0;
+  
+  a.mat-mdc-list-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+    
+    &.active {
+      background-color: rgba(63, 81, 181, 0.1);
+      
+      mat-icon {
+        color: #3f51b5;
+      }
+    }
+  }
+}
+
+.dark-theme mat-nav-list a.mat-mdc-list-item {
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+  
+  &.active {
+    background-color: rgba(156, 39, 176, 0.1);
+    
+    mat-icon {
+      color: #9c27b0;
+    }
+  }
+}
+

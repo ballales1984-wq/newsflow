@@ -1,0 +1,48 @@
+# Versione semplificata per development locale (senza PostgreSQL/Redis)
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database (SQLite per locale)
+sqlalchemy==2.0.25
+alembic==1.13.1
+
+# NLP & AI (versioni leggere)
+spacy==3.7.2
+# transformers==4.36.2  # Commentato per ora, troppo pesante
+# torch==2.1.2  # Commentato per ora
+# sentence-transformers==2.2.2  # Commentato per ora
+numpy==1.26.3
+scikit-learn==1.4.0
+
+# News Collection
+feedparser==6.0.11
+requests==2.31.0
+beautifulsoup4==4.12.3
+lxml==5.1.0
+python-dateutil==2.8.2
+
+# Security & Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+
+# Validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# HTTP Client
+httpx==0.26.0
+
+# Utilities
+python-slugify==8.0.1
+pytz==2023.3
+langdetect==1.0.9
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+
