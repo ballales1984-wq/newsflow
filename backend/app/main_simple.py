@@ -738,10 +738,24 @@ def trigger_news_collection():
                 count = 0
                 for entry in feed.entries[:5]:
                     try:
-                        summary = entry.get('summary', entry.get('description', ''))
-                        # Pulisce HTML da summary
-                        summary = clean_html(summary)
-                        summary = summary[:400]  # Limita lunghezza dopo pulizia
+                        # Estrae contenuto completo: prova content, poi description, poi summary
+                        full_content = ""
+                        if hasattr(entry, 'content') and entry.content:
+                            # Alcuni feed hanno content[0].value con HTML completo
+                            full_content = entry.content[0].value if isinstance(entry.content, list) and len(entry.content) > 0 else ""
+                        elif hasattr(entry, 'description'):
+                            full_content = entry.description
+                        elif hasattr(entry, 'summary'):
+                            full_content = entry.summary
+                        
+                        # Pulisce HTML dal contenuto completo
+                        full_content_clean = clean_html(full_content)
+                        
+                        # Summary: usa i primi 600 caratteri (aumentato da 400)
+                        summary = full_content_clean[:600] if len(full_content_clean) > 600 else full_content_clean
+                        
+                        # Content completo: tutto il testo pulito (max 5000 caratteri per performance)
+                        content = full_content_clean[:5000] if len(full_content_clean) > 5000 else full_content_clean
                         
                         # Determina lingua originale
                         original_language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
@@ -760,12 +774,21 @@ def trigger_news_collection():
                                 else:
                                     title_it = title_en
                                 
-                                # Traduci summary
+                                # Traduci summary (primi 500 caratteri per evitare limiti API)
                                 if summary:
-                                    summary_it = translator.translate(summary[:300])
-                                    time.sleep(0.2)
+                                    summary_it = translator.translate(summary[:500])
+                                    time.sleep(0.3)
                                 else:
                                     summary_it = summary
+                                
+                                # Traduci anche content completo se disponibile (primi 2000 caratteri)
+                                if content and len(content) > len(summary):
+                                    try:
+                                        content_it = translator.translate(content[:2000])
+                                        time.sleep(0.5)  # Più tempo per contenuti lunghi
+                                        content = content_it if content_it else content
+                                    except:
+                                        pass  # Se fallisce, usa content originale
                                 
                                 # Usa versioni tradotte
                                 entry_title = title_it if title_it else entry.get('title', '').strip()[:200]
@@ -803,12 +826,17 @@ def trigger_news_collection():
                         else:
                             category = 'Technology'
                         
+                        # Calcola reading_time basato sulla lunghezza del contenuto
+                        content_length = len(content) if content else len(summary)
+                        reading_time = max(1, int(content_length / 200))  # ~200 caratteri per minuto
+                        
                         article = {
                             "id": article_id,
                             "title": entry_title,
                             "slug": entry_title.lower().replace(' ', '-').replace("'", '').replace(',', '')[:50],
                             "url": entry.get('link', ''),
-                            "summary": summary,
+                            "summary": summary,  # Summary più lungo (600 caratteri)
+                            "content": content,  # Contenuto completo (fino a 5000 caratteri)
                             "author": entry.get('author', source_name) + (" (trad. auto)" if original_language == 'en' and language == 'it' else ""),
                             "published_at": datetime.now().isoformat(),
                             "collected_at": datetime.now().isoformat(),
@@ -817,7 +845,7 @@ def trigger_news_collection():
                             "is_verified": True,
                             "is_archived": False,
                             "quality_score": 0.7 + (0.05 * (5 - count)),
-                            "reading_time_minutes": 3 + count,
+                            "reading_time_minutes": reading_time,
                             "keywords": [category.lower(), "news", language, source_name.lower()],
                             "language": language,
                             "original_language": original_language if original_language != language else None

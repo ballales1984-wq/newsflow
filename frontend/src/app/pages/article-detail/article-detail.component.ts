@@ -87,5 +87,14 @@ export class ArticleDetailComponent implements OnInit {
       minute: '2-digit'
     });
   }
+
+  getContentParagraphs(content: string): string[] {
+    if (!content) return [];
+    // Divide il contenuto in paragrafi (per doppio a capo o punti)
+    return content
+      .split(/\n\n+|\.\s+(?=[A-Z])/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+  }
 }
 

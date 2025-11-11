@@ -18,7 +18,13 @@
   </mat-card-header>
 
   <mat-card-content>
-    <p class="summary">{{ article.summary }}</p>
+    <!-- Mostra content completo se disponibile, altrimenti summary -->
+    <p class="summary" *ngIf="article.content && article.content.length > 0">
+      {{ article.content.length > 400 ? (article.content.substring(0, 400) + '...') : article.content }}
+    </p>
+    <p class="summary" *ngIf="!article.content || article.content.length === 0">
+      {{ article.summary }}
+    </p>
 
     <div class="keywords" *ngIf="article.keywords && article.keywords.length > 0">
       <mat-chip-set>
