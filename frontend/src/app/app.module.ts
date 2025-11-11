@@ -34,6 +34,7 @@ import { SearchComponent } from './pages/search/search.component';
 import { CategoryFilterComponent } from './components/category-filter/category-filter.component';
 import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
+import { SavedComponent } from './pages/saved/saved.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
     SearchComponent,
     CategoryFilterComponent,
     HeaderComponent,
-    SidebarComponent
+    SidebarComponent,
+    SavedComponent
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,18 @@
+<div class="saved-container">
+  <h2 class="page-title">
+    <mat-icon>bookmark</mat-icon>
+    Articoli Salvati
+  </h2>
+
+  <div *ngIf="!loading && savedArticles.length === 0" class="no-saved">
+    <mat-icon>bookmark_border</mat-icon>
+    <p>Nessun articolo salvato</p>
+    <p class="hint">Clicca sull'icona bookmark per salvare articoli</p>
+  </div>
+
+  <app-article-list
+    [articles]="savedArticles"
+    [loading]="loading"
+  ></app-article-list>
+</div>
+
