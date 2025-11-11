@@ -1,0 +1,138 @@
+.explain-dialog {
+  min-width: 600px;
+  max-width: 900px;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 24px;
+    color: white;
+  }
+
+  .close-button {
+    color: white;
+  }
+}
+
+.article-title {
+  padding: 20px 0;
+  border-bottom: 2px solid rgba(63, 81, 181, 0.2);
+  margin-bottom: 20px;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 500;
+    margin: 0;
+    color: rgba(0, 0, 0, 0.87);
+    line-height: 1.4;
+  }
+}
+
+mat-dialog-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.explanation-content {
+  padding: 24px 0;
+  min-height: 300px;
+
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+::ng-deep .mat-mdc-tab-group {
+  .mat-mdc-tab-labels {
+    background: rgba(63, 81, 181, 0.05);
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  .mat-mdc-tab-label {
+    min-width: 140px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .mat-mdc-tab-label-active {
+    background: rgba(63, 81, 181, 0.15);
+  }
+}
+
+@media (max-width: 768px) {
+  .explain-dialog {
+    min-width: unset;
+    width: 100%;
+  }
+
+  mat-dialog-content {
+    padding: 16px;
+  }
+
+  .explanation-content pre {
+    font-size: 14px;
+  }
+}
+
+.dark-theme {
+  .dialog-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .article-title {
+    border-bottom-color: rgba(156, 39, 176, 0.3);
+
+    h3 {
+      color: rgba(255, 255, 255, 0.87);
+    }
+  }
+
+  .explanation-content pre {
+    color: rgba(255, 255, 255, 0.87);
+  }
+
+  mat-dialog-actions {
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+
+  ::ng-deep .mat-mdc-tab-group {
+    .mat-mdc-tab-labels {
+      background: rgba(156, 39, 176, 0.1);
+    }
+
+    .mat-mdc-tab-label-active {
+      background: rgba(156, 39, 176, 0.2);
+    }
+  }
+}
+

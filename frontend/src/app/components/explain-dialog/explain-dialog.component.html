@@ -1,0 +1,46 @@
+<div class="explain-dialog">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon>school</mat-icon>
+      Spiegami questa notizia
+    </h2>
+    <button mat-icon-button (click)="close()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <div class="article-title">
+      <h3>{{ article.title }}</h3>
+    </div>
+
+    <mat-tab-group>
+      <mat-tab label="⚡ 30 secondi">
+        <div class="explanation-content">
+          <pre>{{ getQuickExplanation() }}</pre>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="📄 3 minuti">
+        <div class="explanation-content">
+          <pre>{{ getStandardExplanation() }}</pre>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="📚 Approfondimento">
+        <div class="explanation-content">
+          <pre>{{ getDeepExplanation() }}</pre>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button mat-button (click)="close()">Chiudi</button>
+    <a [href]="article.url" target="_blank" mat-raised-button color="primary">
+      <mat-icon>open_in_new</mat-icon>
+      Leggi Originale
+    </a>
+  </mat-dialog-actions>
+</div>
+
