@@ -103,24 +103,30 @@ class YouTubeVideoGenerator:
             # 1. Immagine di sfondo (se disponibile)
             image_path = self.download_image(article.get('image_url'))
             if image_path:
-                img_clip = ImageClip(image_path, duration=duration)
-                # Ridimensiona per adattare al formato YouTube (1920x1080)
-                img_clip = img_clip.resize(height=1080)
-                # Centra l'immagine
-                img_clip = img_clip.set_position(('center', 'center'))
-                clips.append(img_clip)
-            else:
+                try:
+                    img_clip = ImageClip(image_path, duration=duration)
+                    # Ridimensiona per adattare al formato YouTube (1920x1080)
+                    img_clip = img_clip.resize(height=1080)
+                    # Centra l'immagine
+                    img_clip = img_clip.set_position(('center', 'center'))
+                    clips.append(img_clip)
+                except Exception as e:
+                    print(f"⚠️  Errore caricamento immagine: {e}")
+                    image_path = None
+            
+            if not image_path:
                 # Sfondo nero se non c'è immagine
-                img_clip = ImageClip('black.jpg', duration=duration) if os.path.exists('black.jpg') else None
-                if not img_clip:
-                    # Crea sfondo nero temporaneo
+                try:
                     from PIL import Image
                     black_img = Image.new('RGB', (1920, 1080), color='black')
                     black_path = os.path.join(self.output_dir, 'black_temp.jpg')
                     black_img.save(black_path)
                     img_clip = ImageClip(black_path, duration=duration)
                     self.temp_files.append(black_path)
-                clips.append(img_clip)
+                    clips.append(img_clip)
+                except Exception as e:
+                    print(f"⚠️  Errore creazione sfondo: {e}")
+                    return None
             
             # 2. Titolo come testo sovrapposto
             title = article.get('title', 'Notizia')[:100]  # Limita lunghezza

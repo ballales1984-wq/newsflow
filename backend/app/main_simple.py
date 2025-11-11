@@ -1003,7 +1003,10 @@ def create_youtube_video(max_articles: int = 5):
                     "error": "Errore nella creazione del video"
                 }
         finally:
-            generator.cleanup()
+            try:
+                generator.cleanup()
+            except:
+                pass
             
     except ImportError as e:
         return {
