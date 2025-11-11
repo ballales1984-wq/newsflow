@@ -804,11 +804,11 @@ def trigger_news_collection():
                         
                         article = {
                             "id": article_id,
-                            "title": entry.get('title', '').strip()[:200],
-                            "slug": entry.get('title', '').lower().replace(' ', '-').replace("'", '')[:50],
+                            "title": entry_title,
+                            "slug": entry_title.lower().replace(' ', '-').replace("'", '').replace(',', '')[:50],
                             "url": entry.get('link', ''),
                             "summary": summary,
-                            "author": entry.get('author', source_name),
+                            "author": entry.get('author', source_name) + (" (trad. auto)" if original_language == 'en' and language == 'it' else ""),
                             "published_at": datetime.now().isoformat(),
                             "collected_at": datetime.now().isoformat(),
                             "source_id": 1,
@@ -817,8 +817,9 @@ def trigger_news_collection():
                             "is_archived": False,
                             "quality_score": 0.7 + (0.05 * (5 - count)),
                             "reading_time_minutes": 3 + count,
-                            "keywords": [category.lower(), "news", language],
+                            "keywords": [category.lower(), "news", language, source_name.lower()],
                             "language": language,
+                            "original_language": original_language if original_language != language else None
                         }
                         
                         all_articles.append(article)
