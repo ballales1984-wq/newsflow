@@ -47,8 +47,8 @@ export class SidebarComponent implements OnInit {
       }
     });
 
-    // Carica conteggi per ogni categoria
-    [1, 2, 3, 4, 5, 6, 7, 8].forEach(catId => {
+    // Carica conteggi per ogni categoria (tutte le 14 categorie)
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].forEach(catId => {
       this.articleService.getArticles(1, 1000, { category_id: catId }).subscribe({
         next: (response) => {
           this.categoryCounts[catId] = response.total;
