@@ -36,9 +36,17 @@ export class HomeComponent implements OnInit {
     
     // Listen to query params
     this.route.queryParams.subscribe(params => {
+      const previousCategoryId = this.selectedCategoryId;
       this.selectedCategoryId = params['category'] ? +params['category'] : null;
       this.currentPage = 1;
       this.loadArticles();
+      
+      // Scroll to filtered articles section when category changes
+      if (this.selectedCategoryId !== null && previousCategoryId !== this.selectedCategoryId) {
+        setTimeout(() => {
+          this.scrollToFilteredArticles();
+        }, 300);
+      }
     });
   }
 
@@ -95,7 +103,21 @@ export class HomeComponent implements OnInit {
     this.currentPage = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.loadArticles();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.scrollToFilteredArticles();
+  }
+
+  scrollToFilteredArticles(): void {
+    const element = document.getElementById('articoli-filtrati');
+    if (element) {
+      const headerOffset = 80; // Offset per l'header fisso
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
   }
 }
 
