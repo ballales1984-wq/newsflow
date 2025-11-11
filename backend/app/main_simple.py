@@ -779,9 +779,6 @@ def trigger_news_collection():
                         else:
                             entry_title = entry.get('title', '').strip()[:200]
                         
-                        language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
-                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport'] else language
-                        
                         # Determina categoria basandosi sulla fonte
                         if 'Security' in source_name or 'Hacker' in source_name:
                             category = 'Cybersecurity'
