@@ -1,7 +1,9 @@
 """Versione semplificata di main.py per deploy veloce senza dipendenze complesse"""
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import json
+from app.core.auth_fingerprint import FingerprintAuth
 
 # Create FastAPI app
 app = FastAPI(
@@ -499,6 +501,72 @@ def get_sources():
             "is_verified": True
         }
     ]
+
+
+@app.get("/api/v1/auth/whoami")
+def whoami(request: Request):
+    """
+    Autenticazione automatica con fingerprint
+    Zero friction - 100% conversion!
+    
+    Returns user data (esistente o nuovo)
+    """
+    # Genera fingerprint da request
+    request_data = {
+        'ip': request.client.host if request.client else 'unknown',
+        'user_agent': request.headers.get('user-agent', 'unknown'),
+        'accept_language': request.headers.get('accept-language', 'unknown'),
+        'accept_encoding': request.headers.get('accept-encoding', 'unknown')
+    }
+    
+    fingerprint = FingerprintAuth.generate_fingerprint(request_data)
+    
+    # Carica o crea file users (localStorage-like server-side)
+    users_file = 'users_db.json'
+    
+    try:
+        with open(users_file, 'r', encoding='utf-8') as f:
+            users = json.load(f)
+    except:
+        users = {}
+    
+    # Cerca utente per fingerprint
+    if fingerprint in users:
+        # Utente esistente!
+        user = users[fingerprint]
+        user['is_new'] = False
+        
+        # Aggiorna last_seen
+        from datetime import datetime
+        user['last_seen'] = datetime.utcnow().isoformat()
+        
+        # Salva
+        with open(users_file, 'w', encoding='utf-8') as f:
+            json.dump(users, f, indent=2, ensure_ascii=False)
+        
+        return {
+            "success": True,
+            "authenticated": True,
+            "user": user
+        }
+    
+    # Nuovo utente - crea!
+    user_data = FingerprintAuth.create_user_data(fingerprint)
+    user_data['id'] = len(users) + 1
+    user_data['is_new'] = True
+    
+    # Salva
+    users[fingerprint] = user_data
+    
+    with open(users_file, 'w', encoding='utf-8') as f:
+        json.dump(users, f, indent=2, ensure_ascii=False)
+    
+    return {
+        "success": True,
+        "authenticated": True,
+        "user": user_data,
+        "message": f"Benvenuto {user_data['name']}! 🎉"
+    }
 
 
 if __name__ == "__main__":
