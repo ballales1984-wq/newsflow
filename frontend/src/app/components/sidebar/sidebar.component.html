@@ -9,6 +9,7 @@
       >
         <mat-icon matListItemIcon>all_inclusive</mat-icon>
         <span matListItemTitle>Tutte</span>
+        <span class="count-badge">{{ totalArticles }}</span>
       </a>
       
       <a
@@ -24,6 +25,7 @@
           {{ category.icon || 'folder' }}
         </mat-icon>
         <span matListItemTitle>{{ category.name }}</span>
+        <span class="count-badge">{{ getCategoryCount(category.id) }}</span>
       </a>
     </mat-nav-list>
   </div>
