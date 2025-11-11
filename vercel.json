@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm --prefix frontend install && npm --prefix frontend run build",
-  "outputDirectory": "frontend/dist/newsflow/browser",
-  "installCommand": "npm --prefix frontend install"
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist/newsflow",
+  "installCommand": "cd frontend && npm install"
 }
 
