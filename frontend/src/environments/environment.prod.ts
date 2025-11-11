@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: '/api/v1'
+  apiUrl: 'https://newsflow-backend-mzw7.onrender.com/api/v1'
 };
 
