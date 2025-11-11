@@ -1,0 +1,58 @@
+<div class="explain-dialog">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon>school</mat-icon>
+      Spiegami questa notizia
+    </h2>
+    <button mat-icon-button (click)="close()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <div class="article-title">
+      <h3>{{ article.title }}</h3>
+    </div>
+
+    <mat-tab-group [(selectedIndex)]="selectedLevel === 'quick' ? 0 : selectedLevel === 'standard' ? 1 : 2">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>flash_on</mat-icon>
+          30 secondi
+        </ng-template>
+        <div class="explanation-content">
+          <pre>{{ explanations.quick.content }}</pre>
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>description</mat-icon>
+          3 minuti
+        </ng-template>
+        <div class="explanation-content">
+          <pre>{{ explanations.standard.content }}</pre>
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>menu_book</mat-icon>
+          Approfondimento
+        </ng-template>
+        <div class="explanation-content">
+          <pre>{{ explanations.deep.content }}</pre>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button mat-button (click)="close()">Chiudi</button>
+    <a [href]="article.url" target="_blank" mat-raised-button color="primary">
+      <mat-icon>open_in_new</mat-icon>
+      Leggi Originale
+    </a>
+  </mat-dialog-actions>
+</div>
+

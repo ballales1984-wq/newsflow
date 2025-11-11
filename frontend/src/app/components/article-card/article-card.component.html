@@ -57,6 +57,15 @@
       </a>
     </div>
     <div class="actions-right">
+      <button 
+        mat-stroked-button 
+        color="accent" 
+        (click)="explainArticle($event)"
+        matTooltip="Spiegazione AI con 3 livelli di profondità"
+      >
+        <mat-icon>school</mat-icon>
+        Spiegami
+      </button>
       <button mat-button color="primary" (click)="viewArticle()">
         Leggi
         <mat-icon>arrow_forward</mat-icon>
