@@ -130,30 +130,56 @@ class YouTubeVideoGenerator:
             
             # 2. Titolo come testo sovrapposto
             title = article.get('title', 'Notizia')[:100]  # Limita lunghezza
-            title_clip = TextClip(
-                title,
-                fontsize=60,
-                color='white',
-                font='Arial-Bold',
-                method='caption',
-                size=(1600, None),
-                align='center'
-            ).set_position(('center', 100)).set_duration(duration)
-            clips.append(title_clip)
+            try:
+                title_clip = TextClip(
+                    title,
+                    fontsize=60,
+                    color='white',
+                    font='Arial-Bold',
+                    method='caption',
+                    size=(1600, None),
+                    align='center'
+                ).set_position(('center', 100)).set_duration(duration)
+                clips.append(title_clip)
+            except Exception as e:
+                print(f"⚠️  Errore creazione titolo (potrebbe richiedere ImageMagick): {e}")
+                # Fallback: crea immagine con testo usando PIL
+                try:
+                    from PIL import Image, ImageDraw, ImageFont
+                    img = Image.new('RGBA', (1600, 200), (0, 0, 0, 0))
+                    draw = ImageDraw.Draw(img)
+                    # Prova a usare font di sistema
+                    try:
+                        font = ImageFont.truetype("arial.ttf", 60)
+                    except:
+                        font = ImageFont.load_default()
+                    # Disegna testo
+                    draw.text((800, 100), title, fill='white', font=font, anchor='mm')
+                    title_img_path = os.path.join(self.output_dir, f'title_{article_id}.png')
+                    img.save(title_img_path)
+                    title_clip = ImageClip(title_img_path, duration=duration).set_position(('center', 100))
+                    clips.append(title_clip)
+                    self.temp_files.append(title_img_path)
+                except Exception as e2:
+                    print(f"⚠️  Errore fallback titolo: {e2}")
             
             # 3. Summary come testo
             summary = article.get('summary', article.get('content', ''))[:300]
             if summary:
-                summary_clip = TextClip(
-                    summary,
-                    fontsize=40,
-                    color='white',
-                    font='Arial',
-                    method='caption',
-                    size=(1600, 400),
-                    align='center'
-                ).set_position(('center', 300)).set_duration(duration)
-                clips.append(summary_clip)
+                try:
+                    summary_clip = TextClip(
+                        summary,
+                        fontsize=40,
+                        color='white',
+                        font='Arial',
+                        method='caption',
+                        size=(1600, 400),
+                        align='center'
+                    ).set_position(('center', 300)).set_duration(duration)
+                    clips.append(summary_clip)
+                except Exception as e:
+                    print(f"⚠️  Errore creazione summary: {e}")
+                    # Skip summary se TextClip non funziona
             
             # 4. Audio narrante (se disponibile)
             audio_text = f"{title}. {summary[:200]}"
