@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { Article } from '../../models/article.model';
 import { SavedArticleService } from '../../services/saved-article.service';
+import { AnalyticsService } from '../../services/analytics.service';
 import { ExplainDialogComponent } from '../explain-dialog/explain-dialog.component';
 
 @Component({
@@ -16,10 +17,12 @@ export class ArticleCardComponent {
   constructor(
     private router: Router,
     public savedArticleService: SavedArticleService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private analytics: AnalyticsService
   ) {}
 
   viewArticle(): void {
+    this.analytics.trackArticleView(this.article.id, this.article.title);
     this.router.navigate(['/article', this.article.slug]);
   }
 
@@ -29,11 +32,14 @@ export class ArticleCardComponent {
       this.savedArticleService.unsaveArticle(this.article.id);
     } else {
       this.savedArticleService.saveArticle(this.article.id);
+      this.analytics.trackArticleSave(this.article.id, this.article.title);
     }
   }
 
   shareArticle(event: Event): void {
     event.stopPropagation();
+    this.analytics.trackArticleShare(this.article.id, this.article.title);
+    
     if (navigator.share) {
       navigator.share({
         title: this.article.title,
@@ -53,6 +59,9 @@ export class ArticleCardComponent {
 
   explainArticle(event: Event): void {
     event.stopPropagation();
+    
+    // Track "Spiegami" click
+    this.analytics.trackExplainClick(this.article.id, this.article.title);
     
     // Apre modal con spiegazione a 3 livelli!
     this.dialog.open(ExplainDialogComponent, {

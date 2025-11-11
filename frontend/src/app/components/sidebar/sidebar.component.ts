@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
 import { ArticleService } from '../../services/article.service';
+import { AnalyticsService } from '../../services/analytics.service';
 import { Category } from '../../models/category.model';
 
 @Component({
@@ -18,6 +19,7 @@ export class SidebarComponent implements OnInit {
   constructor(
     private categoryService: CategoryService,
     private articleService: ArticleService,
+    private analytics: AnalyticsService,
     private router: Router
   ) {}
 
@@ -57,6 +59,13 @@ export class SidebarComponent implements OnInit {
 
   selectCategory(categoryId: number | null): void {
     this.selectedCategoryId = categoryId;
+    
+    // Track category filter
+    const categoryName = categoryId 
+      ? this.categories.find(c => c.id === categoryId)?.name || 'Unknown'
+      : 'All';
+    this.analytics.trackCategoryFilter(categoryName);
+    
     if (categoryId) {
       this.router.navigate(['/'], { queryParams: { category: categoryId } });
     } else {
