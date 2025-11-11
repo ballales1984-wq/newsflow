@@ -578,23 +578,114 @@ def whoami(request: Request):
 @app.post("/api/admin/collect-news")
 def trigger_news_collection():
     """
-    Endpoint per raccogliere nuovi articoli.
+    Endpoint per raccogliere nuovi articoli AUTOMATICAMENTE.
     Può essere chiamato da un CRON job gratuito ogni 4 ore.
     
     Usa cron-job.org (gratuito) per chiamare questo endpoint:
-    URL: https://newsflow-backend.onrender.com/api/admin/collect-news
+    URL: https://newsflow-backend-v2.onrender.com/api/admin/collect-news
     Frequenza: Ogni 4 ore
     """
+    import feedparser
+    import json
+    import os
+    from datetime import datetime
+    
     try:
-        # Qui dovresti aggiungere la logica per raccogliere nuovi articoli
-        # Per ora restituisce un messaggio di successo
+        print("🔄 Aggiornamento automatico notizie iniziato...")
+        
+        # Fonti RSS
+        RSS_SOURCES = {
+            'MIT Technology Review': 'https://www.technologyreview.com/feed/',
+            'The Guardian Tech': 'https://www.theguardian.com/technology/rss',
+            'Wired IT': 'https://www.wired.it/feed/rss',
+            'The Hacker News': 'https://feeds.feedburner.com/TheHackersNews',
+            'MicroMega': 'https://www.micromega.net/feed/',
+            'AI4Business': 'https://www.ai4business.it/feed/',
+            'ICT Security Magazine': 'https://www.ictsecuritymagazine.com/feed/',
+            'Punto Informatico': 'https://www.punto-informatico.it/feed/',
+            'Agenda Digitale': 'https://www.agendadigitale.eu/feed/',
+            'ArXiv CS': 'http://export.arxiv.org/rss/cs',
+        }
+        
+        all_articles = []
+        article_id = 1
+        
+        # Raccoglie notizie da tutte le fonti
+        for source_name, rss_url in RSS_SOURCES.items():
+            try:
+                feed = feedparser.parse(rss_url)
+                count = 0
+                for entry in feed.entries[:5]:
+                    try:
+                        summary = entry.get('summary', entry.get('description', ''))[:400]
+                        summary = summary.replace('<p>', '').replace('</p>', '').replace('<br>', ' ')
+                        
+                        language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
+                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT'] else 'en'
+                        
+                        if 'Security' in source_name or 'Hacker' in source_name:
+                            category = 'Cybersecurity'
+                        elif 'ArXiv' in source_name:
+                            category = 'Science'
+                        elif 'MicroMega' in source_name:
+                            category = 'Philosophy'
+                        else:
+                            category = 'Technology'
+                        
+                        article = {
+                            "id": article_id,
+                            "title": entry.get('title', '').strip()[:200],
+                            "slug": entry.get('title', '').lower().replace(' ', '-').replace("'", '')[:50],
+                            "url": entry.get('link', ''),
+                            "summary": summary,
+                            "author": entry.get('author', source_name),
+                            "published_at": datetime.now().isoformat(),
+                            "collected_at": datetime.now().isoformat(),
+                            "source_id": 1,
+                            "is_featured": count == 0,
+                            "is_verified": True,
+                            "is_archived": False,
+                            "quality_score": 0.7 + (0.05 * (5 - count)),
+                            "reading_time_minutes": 3 + count,
+                            "keywords": [category.lower(), "news", language],
+                            "language": language,
+                        }
+                        
+                        all_articles.append(article)
+                        article_id += 1
+                        count += 1
+                    except:
+                        continue
+            except Exception as e:
+                print(f"Errore fonte {source_name}: {e}")
+                continue
+        
+        # Aggiorna final_news_italian.json
+        output_data = {
+            "items": all_articles,
+            "total": len(all_articles),
+            "page": 1,
+            "size": len(all_articles),
+            "pages": 1,
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        file_path = 'final_news_italian.json'
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(output_data, f, indent=2, ensure_ascii=False)
+        
+        # Gli articoli verranno ricaricati automaticamente alla prossima chiamata a _load_articles()
+        print(f"✅ Aggiornate {len(all_articles)} notizie!")
+        
         return {
             "success": True,
-            "message": "News collection triggered successfully!",
-            "next_collection": "In 4 hours",
-            "info": "Configure a free cron job at https://cron-job.org to call this endpoint every 4 hours"
+            "message": f"Collected and updated {len(all_articles)} articles successfully!",
+            "total_articles": len(all_articles),
+            "updated_at": datetime.now().isoformat(),
+            "next_collection": "In 4 hours"
         }
     except Exception as e:
+        print(f"❌ Errore aggiornamento: {e}")
         return {
             "success": False,
             "error": str(e)
