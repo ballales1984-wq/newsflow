@@ -286,78 +286,56 @@ def _load_articles():
 
 
 @app.get("/api/v1/articles")
-def get_articles():
-    """Get articles - REAL NEWS from RSS feeds"""
+def get_articles(category_id: int = None):
+    """Get articles - REAL NEWS from RSS feeds - WITH CATEGORY FILTER"""
     articles = _load_articles()
     
+    # Mappa categorie → keywords da cercare
+    CATEGORY_KEYWORDS = {
+        1: ["technology", "tech", "tecnologia", "ai", "computer", "software", "hardware", "digital"],  # Technology
+        2: ["science", "scienz", "research", "ricerca", "studio"],  # Science
+        3: ["philosophy", "filosofia", "pensiero", "critica"],  # Philosophy
+        4: ["cybersecurity", "security", "sicurezza", "hacking", "exploit", "malware", "cyber"],  # Cybersecurity
+        5: ["ai", "artificial intelligence", "intelligenza artificiale", "machine learning", "gpt", "openai", "llm"],  # AI
+        6: ["innovation", "innovazione", "futuro", "new"],  # Innovation
+        7: ["culture", "cultura", "arte", "society", "società"],  # Culture
+        8: ["ethics", "etica", "morale", "diritti"]  # Ethics
+    }
+    
     if articles:
+        # Filtra per categoria se richiesto
+        if category_id and category_id in CATEGORY_KEYWORDS:
+            cat_keywords = CATEGORY_KEYWORDS[category_id]
+            filtered = []
+            
+            for article in articles:
+                # Cerca match nei keywords dell'articolo
+                article_keywords = [k.lower() for k in article.get('keywords', [])]
+                article_title = article.get('title', '').lower()
+                article_summary = article.get('summary', '').lower()
+                
+                # Match se almeno una keyword della categoria è presente
+                for cat_kw in cat_keywords:
+                    if any(cat_kw in akw for akw in article_keywords) or \
+                       cat_kw in article_title or \
+                       cat_kw in article_summary:
+                        filtered.append(article)
+                        break
+            
+            articles = filtered
+        
         return {
             "items": articles,
             "total": len(articles),
             "page": 1,
-            "size": 20,
+            "size": len(articles),
             "pages": 1
         }
     
     # Fallback to demo if file not found
     return {
-        "items": [
-            {
-                "id": 1,
-                "title": "NewsFlow è online! 🎉",
-                "slug": "newsflow-online",
-                "url": "https://newsflow-orcin.vercel.app",
-                "summary": "La piattaforma di news curation intelligente è ora disponibile!",
-                "author": "Sistema NewsFlow",
-                "published_at": "2024-11-11T00:00:00",
-                "collected_at": "2024-11-11T00:00:00",
-                "source_id": 1,
-                "is_featured": True,
-                "is_verified": True,
-                "is_archived": False,
-                "quality_score": 0.95,
-                "reading_time_minutes": 2,
-                "keywords": ["newsflow", "launch", "ai", "news"],
-                "language": "it"
-            },
-            {
-                "id": 2,
-                "title": "Super Almanacco Digitale: La Visione",
-                "slug": "super-almanacco-visione",
-                "url": "https://github.com/ballales1984-wq/newsflow",
-                "summary": "Mining di notizie di valore, TG AI, streaming 24/7, edizioni territoriali e molto altro in arrivo!",
-                "author": "Redazione SINTESI",
-                "published_at": "2024-11-11T00:00:00",
-                "collected_at": "2024-11-11T00:00:00",
-                "source_id": 1,
-                "is_featured": True,
-                "is_verified": True,
-                "is_archived": False,
-                "quality_score": 0.92,
-                "reading_time_minutes": 5,
-                "keywords": ["almanacco", "ai", "giornalismo", "innovazione"],
-                "language": "it"
-            },
-            {
-                "id": 3,
-                "title": "Testata SINTESI: Manifesto Fondativo",
-                "slug": "sintesi-manifesto",
-                "url": "https://newsflow-orcin.vercel.app",
-                "summary": "Notizie curate dall'intelligenza critica. Imparzialità algoritmica, confronto sistemico, rispetto del tempo.",
-                "author": "Fondatori SINTESI",
-                "published_at": "2024-11-11T00:00:00",
-                "collected_at": "2024-11-11T00:00:00",
-                "source_id": 1,
-                "is_featured": False,
-                "is_verified": True,
-                "is_archived": False,
-                "quality_score": 0.89,
-                "reading_time_minutes": 3,
-                "keywords": ["sintesi", "manifesto", "giornalismo", "etica"],
-                "language": "it"
-            }
-        ],
-        "total": 3,
+        "items": [],
+        "total": 0,
         "page": 1,
         "size": 20,
         "pages": 1
