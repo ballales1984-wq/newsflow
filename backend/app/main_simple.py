@@ -408,6 +408,82 @@ def get_recent_articles(days: int = 7, limit: int = 20):
     return articles[:limit]
 
 
+@app.post("/api/v1/articles/search")
+def search_articles(query: str = "", category_id: int = None, language: str = ""):
+    """Search articles by query - FULL TEXT SEARCH"""
+    articles = _load_articles()
+    
+    if not articles:
+        return {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "size": 0,
+            "pages": 1
+        }
+    
+    results = []
+    query_lower = query.lower() if query else ""
+    
+    for article in articles:
+        # Se c'è una query, cerca nel titolo, sommario e keywords
+        if query_lower:
+            title = article.get('title', '').lower()
+            summary = article.get('summary', '').lower()
+            keywords = ' '.join(article.get('keywords', [])).lower()
+            
+            # Match se la query è nel titolo, sommario o keywords
+            if query_lower not in title and \
+               query_lower not in summary and \
+               query_lower not in keywords:
+                continue
+        
+        # Filtra per categoria se richiesto
+        if category_id:
+            # Usa la stessa logica del filtro categorie
+            CATEGORY_KEYWORDS = {
+                1: ["technology", "tech", "tecnologia", "ai", "computer", "software", "hardware", "digital"],
+                2: ["science", "scienz", "research", "ricerca", "studio"],
+                3: ["philosophy", "filosofia", "pensiero", "critica"],
+                4: ["cybersecurity", "security", "sicurezza", "hacking", "exploit", "malware", "cyber"],
+                5: ["ai", "artificial intelligence", "intelligenza artificiale", "machine learning", "gpt", "openai", "llm"],
+                6: ["innovation", "innovazione", "futuro", "new"],
+                7: ["culture", "cultura", "arte", "society", "società"],
+                8: ["ethics", "etica", "morale", "diritti"]
+            }
+            
+            if category_id in CATEGORY_KEYWORDS:
+                cat_keywords = CATEGORY_KEYWORDS[category_id]
+                article_keywords = [k.lower() for k in article.get('keywords', [])]
+                article_title = article.get('title', '').lower()
+                article_summary = article.get('summary', '').lower()
+                
+                match = False
+                for cat_kw in cat_keywords:
+                    if any(cat_kw in akw for akw in article_keywords) or \
+                       cat_kw in article_title or \
+                       cat_kw in article_summary:
+                        match = True
+                        break
+                
+                if not match:
+                    continue
+        
+        # Filtra per lingua se richiesto
+        if language and article.get('language', '') != language:
+            continue
+        
+        results.append(article)
+    
+    return {
+        "items": results,
+        "total": len(results),
+        "page": 1,
+        "size": len(results),
+        "pages": 1
+    }
+
+
 @app.get("/api/v1/sources")
 def get_sources():
     """Get sources - demo data"""

@@ -20,6 +20,8 @@ export class HeaderComponent {
       this.router.navigate(['/search'], {
         queryParams: { q: this.searchQuery }
       });
+      // Reset dopo navigazione
+      // this.searchQuery = '';
     }
   }
 
