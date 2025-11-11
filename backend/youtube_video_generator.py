@@ -92,7 +92,7 @@ class YouTubeVideoGenerator:
             print(f"⚠️  Errore TTS: {e}")
             return None
     
-    def create_news_segment(self, article: Dict, duration: int = 10):
+    def create_news_segment(self, article: Dict, duration: int = 10, article_id: int = 0):
         """Crea un segmento video per una notizia"""
         if not MOVIEPY_AVAILABLE or VideoFileClip is None:
             return None
@@ -119,7 +119,7 @@ class YouTubeVideoGenerator:
                 try:
                     from PIL import Image
                     black_img = Image.new('RGB', (1920, 1080), color='black')
-                    black_path = os.path.join(self.output_dir, 'black_temp.jpg')
+                    black_path = os.path.join(self.output_dir, f'black_temp_{article_id}.jpg')
                     black_img.save(black_path)
                     img_clip = ImageClip(black_path, duration=duration)
                     self.temp_files.append(black_path)
@@ -128,7 +128,7 @@ class YouTubeVideoGenerator:
                     print(f"⚠️  Errore creazione sfondo: {e}")
                     return None
             
-            # 2. Titolo come testo sovrapposto
+            # 2. Titolo come testo sovrapposto (con fallback PIL)
             title = article.get('title', 'Notizia')[:100]  # Limita lunghezza
             try:
                 title_clip = TextClip(
@@ -142,7 +142,7 @@ class YouTubeVideoGenerator:
                 ).set_position(('center', 100)).set_duration(duration)
                 clips.append(title_clip)
             except Exception as e:
-                print(f"⚠️  Errore creazione titolo (potrebbe richiedere ImageMagick): {e}")
+                print(f"⚠️  Errore creazione titolo (usando fallback PIL): {e}")
                 # Fallback: crea immagine con testo usando PIL
                 try:
                     from PIL import Image, ImageDraw, ImageFont
@@ -163,7 +163,7 @@ class YouTubeVideoGenerator:
                 except Exception as e2:
                     print(f"⚠️  Errore fallback titolo: {e2}")
             
-            # 3. Summary come testo
+            # 3. Summary come testo (opzionale, può essere saltato se TextClip non funziona)
             summary = article.get('summary', article.get('content', ''))[:300]
             if summary:
                 try:
@@ -178,11 +178,11 @@ class YouTubeVideoGenerator:
                     ).set_position(('center', 300)).set_duration(duration)
                     clips.append(summary_clip)
                 except Exception as e:
-                    print(f"⚠️  Errore creazione summary: {e}")
-                    # Skip summary se TextClip non funziona
+                    print(f"⚠️  Errore creazione summary (saltato): {e}")
+                    # Skip summary se TextClip non funziona - il video funzionerà comunque
             
             # 4. Audio narrante (se disponibile)
-            audio_text = f"{title}. {summary[:200]}"
+            audio_text = f"{title}. {summary[:200] if summary else ''}"
             audio_path = self.text_to_speech(audio_text, lang='it')
             if audio_path:
                 try:
@@ -197,11 +197,16 @@ class YouTubeVideoGenerator:
                     print(f"⚠️  Errore aggiunta audio: {e}")
             
             # Combina tutti i clip
+            if len(clips) == 0:
+                return None
+                
             final_clip = CompositeVideoClip(clips, size=(1920, 1080))
             return final_clip
             
         except Exception as e:
             print(f"⚠️  Errore creazione segmento: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def create_video(self, max_articles: int = 5, output_filename: str = None, target_duration_minutes: int = None) -> Optional[str]:
@@ -246,7 +251,7 @@ class YouTubeVideoGenerator:
                     break
                     
                 print(f"   {i+1}: {article.get('title', '')[:50]}...")
-                segment = self.create_news_segment(article, duration=15)  # 15 secondi per articolo
+                segment = self.create_news_segment(article, duration=15, article_id=i)  # Passa article_id
                 if segment:
                     segments.append(segment)
                     total_duration += segment.duration
