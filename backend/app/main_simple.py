@@ -40,8 +40,21 @@ def health_check():
 
 
 def _load_articles():
-    """Helper to load articles - REAL NEWS embedded"""
-    # Notizie vere raccolte da RSS feeds
+    """Helper to load articles - REAL NEWS from multiple sources"""
+    import json
+    import os
+    
+    # Prova a caricare da file (se esiste)
+    file_path = 'all_sources_news.json'
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('items', [])
+        except:
+            pass
+    
+    # Fallback: notizie embedded (le 12 migliori)
     return [
         {
             "id": 1,
