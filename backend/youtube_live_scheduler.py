@@ -138,14 +138,28 @@ def create_daily_schedule():
 
 
 if __name__ == "__main__":
-    # Test
-    test_articles = []
-    scheduler = YouTubeLiveScheduler(test_articles)
+    import sys
     
-    # Programma live giornalieri
-    for hour, minute, duration in create_daily_schedule():
-        scheduler.schedule_live_stream(hour, minute, duration)
+    # Carica programmazione da file
+    scheduler = YouTubeLiveScheduler()
+    
+    if not scheduler.scheduled_streams:
+        print("⚠️  Nessuna programmazione trovata!")
+        print("   Esegui PROGRAMMA_YOUTUBE_LIVE.ps1 per crearne una")
+        sys.exit(1)
+    
+    # Programma tutti i live trovati nel file
+    for stream in scheduler.scheduled_streams:
+        scheduler.schedule_live_stream(
+            stream['hour'],
+            stream['minute'],
+            stream['duration_minutes']
+        )
     
     # Avvia scheduler
-    scheduler.run_scheduler()
+    try:
+        scheduler.run_scheduler()
+    except KeyboardInterrupt:
+        print("\n\n⏹️  Scheduler fermato dall'utente")
+        sys.exit(0)
 
