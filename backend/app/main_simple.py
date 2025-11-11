@@ -677,6 +677,16 @@ def trigger_news_collection():
     try:
         print("🔄 Aggiornamento automatico notizie iniziato...")
         
+        # Importa traduttore (opzionale, se disponibile)
+        try:
+            from deep_translator import GoogleTranslator
+            translator = GoogleTranslator(source='en', target='it')
+            translation_available = True
+        except ImportError:
+            print("⚠️  deep_translator non disponibile - traduzione disabilitata")
+            translation_available = False
+            translator = None
+        
         # Fonti RSS - ESPANSE per tutte le categorie
         RSS_SOURCES = {
             # Tecnologia
@@ -733,8 +743,40 @@ def trigger_news_collection():
                         summary = clean_html(summary)
                         summary = summary[:400]  # Limita lunghezza dopo pulizia
                         
+                        # Traduci in italiano se la notizia è in inglese
+                        original_language = language
+                        if language == 'en' and translation_available and translator:
+                            try:
+                                import time
+                                # Traduci titolo
+                                title_en = entry.get('title', '').strip()[:200]
+                                if title_en:
+                                    title_it = translator.translate(title_en)
+                                    time.sleep(0.2)  # Evita rate limiting
+                                else:
+                                    title_it = title_en
+                                
+                                # Traduci summary
+                                if summary:
+                                    summary_it = translator.translate(summary[:300])
+                                    time.sleep(0.2)
+                                else:
+                                    summary_it = summary
+                                
+                                # Usa versioni tradotte
+                                entry_title = title_it if title_it else entry.get('title', '').strip()[:200]
+                                summary = summary_it if summary_it else summary
+                                language = 'it'  # Ora è in italiano
+                                
+                            except Exception as e:
+                                print(f"⚠️  Errore traduzione: {e}")
+                                # Usa originale se traduzione fallisce
+                                entry_title = entry.get('title', '').strip()[:200]
+                        else:
+                            entry_title = entry.get('title', '').strip()[:200]
+                        
                         language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
-                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport'] else 'en'
+                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport'] else language
                         
                         # Determina categoria basandosi sulla fonte
                         if 'Security' in source_name or 'Hacker' in source_name:
