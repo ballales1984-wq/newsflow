@@ -165,7 +165,7 @@
   }
 }
 
-.dark-theme {
+:host-context(.dark-theme) {
   .article-content {
     background: #424242;
   }
