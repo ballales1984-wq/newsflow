@@ -39,17 +39,33 @@ def health_check():
     return {"status": "healthy"}
 
 
-@app.get("/api/v1/articles")
-def get_articles():
-    """Get articles - REAL NEWS from RSS feeds"""
-    # Carica notizie vere da file
+def _load_articles():
+    """Helper to load articles from JSON"""
     import json
     try:
         with open('real_news.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+            return data.get('items', [])
     except:
-        # Fallback to demo if file not found
+        return []
+
+
+@app.get("/api/v1/articles")
+def get_articles():
+    """Get articles - REAL NEWS from RSS feeds"""
+    articles = _load_articles()
+    
+    if articles:
         return {
+            "items": articles,
+            "total": len(articles),
+            "page": 1,
+            "size": 20,
+            "pages": 1
+        }
+    
+    # Fallback to demo if file not found
+    return {
         "items": [
             {
                 "id": 1,
@@ -126,6 +142,30 @@ def get_categories():
         {"id": 7, "name": "Culture", "slug": "culture", "icon": "palette", "color": "#E91E63"},
         {"id": 8, "name": "Ethics", "slug": "ethics", "icon": "balance", "color": "#607D8B"}
     ]
+
+
+@app.get("/api/v1/articles/{article_id}")
+def get_article(article_id: int):
+    """Get single article by ID"""
+    articles = _load_articles()
+    
+    for article in articles:
+        if article.get('id') == article_id:
+            return article
+    
+    return {"error": "Article not found"}
+
+
+@app.get("/api/v1/articles/slug/{slug}")
+def get_article_by_slug(slug: str):
+    """Get single article by slug"""
+    articles = _load_articles()
+    
+    for article in articles:
+        if article.get('slug') == slug:
+            return article
+    
+    return {"error": "Article not found"}
 
 
 @app.get("/api/v1/sources")
