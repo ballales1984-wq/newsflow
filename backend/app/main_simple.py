@@ -743,8 +743,12 @@ def trigger_news_collection():
                         summary = clean_html(summary)
                         summary = summary[:400]  # Limita lunghezza dopo pulizia
                         
+                        # Determina lingua originale
+                        original_language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
+                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport'] else 'en'
+                        language = original_language
+                        
                         # Traduci in italiano se la notizia è in inglese
-                        original_language = language
                         if language == 'en' and translation_available and translator:
                             try:
                                 import time
