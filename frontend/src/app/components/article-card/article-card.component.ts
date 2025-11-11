@@ -1,9 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
 import { Article } from '../../models/article.model';
 import { SavedArticleService } from '../../services/saved-article.service';
-import { ExplainDialogComponent } from '../explain-dialog/explain-dialog.component';
 
 @Component({
   selector: 'app-article-card',
@@ -15,8 +13,7 @@ export class ArticleCardComponent {
 
   constructor(
     private router: Router,
-    public savedArticleService: SavedArticleService,
-    private dialog: MatDialog
+    public savedArticleService: SavedArticleService
   ) {}
 
   viewArticle(): void {
@@ -53,11 +50,12 @@ export class ArticleCardComponent {
 
   explainArticle(event: Event): void {
     event.stopPropagation();
-    this.dialog.open(ExplainDialogComponent, {
-      data: this.article,
-      width: '800px',
-      maxWidth: '95vw'
-    });
+    
+    // Apre direttamente l'articolo per ora (modal in sviluppo)
+    this.viewArticle();
+    
+    // TODO: Implementare modal spiegazione quando Angular cache sistemata
+    // alert('Feature "Spiegami" in arrivo! Per ora clicca "Leggi" per il dettaglio completo.');
   }
 
   getQualityColor(score?: number): string {

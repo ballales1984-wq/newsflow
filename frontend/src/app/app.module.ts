@@ -35,7 +35,6 @@ import { CategoryFilterComponent } from './components/category-filter/category-f
 import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SavedComponent } from './pages/saved/saved.component';
-import { ExplainDialogComponent } from './components/explain-dialog/explain-dialog.component';
 
 @NgModule({
   declarations: [
@@ -48,8 +47,7 @@ import { ExplainDialogComponent } from './components/explain-dialog/explain-dial
     CategoryFilterComponent,
     HeaderComponent,
     SidebarComponent,
-    SavedComponent,
-    ExplainDialogComponent
+    SavedComponent
   ],
   imports: [
     BrowserModule,
