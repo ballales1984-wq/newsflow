@@ -23,7 +23,7 @@ except ImportError as e:
     CompositeVideoClip = None
     concatenate_videoclips = None
     AudioFileClip = None
-    print(f"⚠️  moviepy non installato: {e}. Installa con: pip install moviepy")
+    print(f"WARNING: moviepy non installato: {e}. Installa con: pip install moviepy")
 
 try:
     from gtts import gTTS
