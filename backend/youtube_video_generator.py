@@ -15,9 +15,15 @@ try:
         concatenate_videoclips, AudioFileClip
     )
     MOVIEPY_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     MOVIEPY_AVAILABLE = False
-    print("⚠️  moviepy non installato. Installa con: pip install moviepy")
+    VideoFileClip = None
+    ImageClip = None
+    TextClip = None
+    CompositeVideoClip = None
+    concatenate_videoclips = None
+    AudioFileClip = None
+    print(f"⚠️  moviepy non installato: {e}. Installa con: pip install moviepy")
 
 try:
     from gtts import gTTS
@@ -86,9 +92,9 @@ class YouTubeVideoGenerator:
             print(f"⚠️  Errore TTS: {e}")
             return None
     
-    def create_news_segment(self, article: Dict, duration: int = 10) -> Optional[VideoFileClip]:
+    def create_news_segment(self, article: Dict, duration: int = 10):
         """Crea un segmento video per una notizia"""
-        if not MOVIEPY_AVAILABLE:
+        if not MOVIEPY_AVAILABLE or VideoFileClip is None:
             return None
         
         try:
