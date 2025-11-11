@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://newsflow-backend-v2.onrender.com/api/v1'
+  apiUrl: 'http://localhost:8000/api/v1'
 };
 
