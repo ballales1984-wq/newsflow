@@ -45,6 +45,25 @@ def _load_articles():
     """Helper to load articles - 94 NEWS ALL IN ITALIAN"""
     import json
     import os
+    import re
+    
+    def clean_html(text):
+        """Rimuove tutti i tag HTML dal testo"""
+        if not text:
+            return ""
+        # Rimuove tutti i tag HTML
+        text = re.sub(r'<[^>]+>', '', text)
+        # Decodifica entità HTML comuni
+        text = text.replace('&nbsp;', ' ')
+        text = text.replace('&amp;', '&')
+        text = text.replace('&lt;', '<')
+        text = text.replace('&gt;', '>')
+        text = text.replace('&quot;', '"')
+        text = text.replace('&#39;', "'")
+        text = text.replace('&apos;', "'")
+        # Rimuove spazi multipli
+        text = re.sub(r'\s+', ' ', text)
+        return text.strip()
     
     # Usa il file finale con tutte le notizie in italiano
     file_path = 'final_news_italian.json'
@@ -52,7 +71,14 @@ def _load_articles():
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return data.get('items', [])
+                articles = data.get('items', [])
+                # Pulisce HTML da tutte le notizie esistenti
+                for article in articles:
+                    if 'summary' in article:
+                        article['summary'] = clean_html(article['summary'])
+                    if 'title' in article:
+                        article['title'] = clean_html(article['title'])
+                return articles
         except:
             pass
     
@@ -62,7 +88,14 @@ def _load_articles():
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return data.get('items', [])
+                articles = data.get('items', [])
+                # Pulisce HTML da tutte le notizie esistenti
+                for article in articles:
+                    if 'summary' in article:
+                        article['summary'] = clean_html(article['summary'])
+                    if 'title' in article:
+                        article['title'] = clean_html(article['title'])
+                return articles
         except:
             pass
     
