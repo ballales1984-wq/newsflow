@@ -953,6 +953,73 @@ def trigger_news_collection():
         }
 
 
+@app.post("/api/admin/create-youtube-video")
+def create_youtube_video(max_articles: int = 5):
+    """
+    Crea un video YouTube automatico dalle notizie.
+    
+    Args:
+        max_articles: Numero massimo di notizie da includere (default: 5)
+    
+    Returns:
+        Informazioni sul video creato
+    """
+    try:
+        import sys
+        import os
+        # Aggiungi il percorso del backend al PYTHONPATH
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        
+        from youtube_video_generator import YouTubeVideoGenerator
+        
+        # Carica le notizie
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+        
+        # Crea il generatore video
+        generator = YouTubeVideoGenerator(articles)
+        
+        try:
+            # Crea il video
+            video_path = generator.create_video(max_articles=max_articles)
+            
+            if video_path:
+                return {
+                    "success": True,
+                    "message": f"Video creato con successo!",
+                    "video_path": video_path,
+                    "articles_count": min(max_articles, len(articles)),
+                    "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2) if os.path.exists(video_path) else 0
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Errore nella creazione del video"
+                }
+        finally:
+            generator.cleanup()
+            
+    except ImportError as e:
+        return {
+            "success": False,
+            "error": f"Dipendenze mancanti: {str(e)}",
+            "hint": "Installa con: pip install moviepy gtts pillow"
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main_simple:app", host="0.0.0.0", port=8000, reload=True)
