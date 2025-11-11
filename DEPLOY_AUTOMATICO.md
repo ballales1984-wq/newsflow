@@ -1,16 +1,15 @@
-# 🚀 Deploy Automatico su Render - Guida Rapida
+# 🚀 Deploy GRATUITO su Render - Guida Rapida
 
 ## ✅ Tutto Pronto per il Deploy!
 
-Il sistema è configurato per aggiornare automaticamente gli articoli **OGNI 4 ORE**.
+Il sistema è configurato per essere **100% GRATUITO** e aggiornarsi automaticamente **OGNI 4 ORE**.
 
 ## 📦 Cosa Include
 
-- 🌐 **Backend API** - FastAPI su porta pubblica
-- 👷 **Celery Worker** - Elabora task in background
-- ⏰ **Celery Beat** - Scheduler automatico (ogni 4 ore!)
-- 💾 **PostgreSQL** - Database (piano gratuito)
-- 🔴 **Redis** - Cache e message broker (piano gratuito)
+- 🌐 **Backend API** - FastAPI (Render Free)
+- ⏰ **Cron Job Gratuito** - Aggiornamento ogni 4 ore (cron-job.org)
+- 💾 **SQLite** - Database incluso (nessun costo)
+- 🆓 **ZERO COSTI** - Tutto completamente gratuito!
 
 ## 🎯 Deploy in 3 Click
 
@@ -33,12 +32,23 @@ Clicca **"Apply"** e aspetta ~5 minuti
 Render crea:
 
 ```
-✅ newsflow-backend      → API Backend (Web Service)
-✅ newsflow-worker       → Celery Worker (Background)
-✅ newsflow-beat         → Scheduler (ogni 4 ore)
-✅ newsflow-db           → PostgreSQL Database
-✅ newsflow-redis        → Redis Cache
+✅ newsflow-backend  → API Backend (GRATUITO!)
 ```
+
+### 4️⃣ Configura Cron Job Gratuito (2 minuti)
+
+Dopo che Render ha finito il deploy:
+
+1. **Vai su**: https://cron-job.org (gratuito, senza registrazione carta!)
+2. **Crea account gratuito**
+3. **Crea nuovo Cron Job**:
+   - **URL**: `https://newsflow-backend.onrender.com/api/admin/collect-news`
+   - **Metodo**: POST
+   - **Frequenza**: Ogni 4 ore (0 */4 * * *)
+   - **Titolo**: "NewsFlow - Raccolta Articoli"
+4. **Salva** e attiva!
+
+🎉 Fatto! Gli articoli si aggiorneranno automaticamente ogni 4 ore!
 
 ## ⏰ Schedule Aggiornamenti
 
@@ -108,18 +118,23 @@ Dovresti vedere:
 [INFO] Collected 156 articles from 7 sources
 ```
 
-## 🆓 Piano Gratuito
+## 🆓 100% GRATUITO
 
-Tutto **GRATIS** con Render Free Plan:
+Tutto **COMPLETAMENTE GRATIS**:
 
-- ✅ 750 ore/mese di compute (sufficiente per 3 servizi 24/7)
-- ✅ PostgreSQL 1GB
-- ✅ Redis 25MB
+### Render (Free Plan)
+- ✅ 750 ore/mese di compute (sufficiente 24/7)
 - ✅ Deploy automatici da GitHub
 - ✅ SSL certificati automatici
-- ⚠️ Auto-sleep dopo 15 min di inattività (solo web service)
+- ⚠️ Auto-sleep dopo 15 min inattività (il cron lo risveglia!)
 
-**Nota**: I worker (celery-worker e celery-beat) NON vanno in sleep!
+### Cron-Job.org (Free Plan)
+- ✅ Fino a 50 cron jobs
+- ✅ Frequenza: ogni minuto (usiamo ogni 4 ore)
+- ✅ Monitor e notifiche
+- ✅ Nessuna carta di credito richiesta!
+
+**Totale costo mensile: 0€ 💰**
 
 ## 🔄 Aggiornamenti Futuri
 

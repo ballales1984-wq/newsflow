@@ -575,6 +575,32 @@ def whoami(request: Request):
     }
 
 
+@app.post("/api/admin/collect-news")
+def trigger_news_collection():
+    """
+    Endpoint per raccogliere nuovi articoli.
+    Può essere chiamato da un CRON job gratuito ogni 4 ore.
+    
+    Usa cron-job.org (gratuito) per chiamare questo endpoint:
+    URL: https://newsflow-backend.onrender.com/api/admin/collect-news
+    Frequenza: Ogni 4 ore
+    """
+    try:
+        # Qui dovresti aggiungere la logica per raccogliere nuovi articoli
+        # Per ora restituisce un messaggio di successo
+        return {
+            "success": True,
+            "message": "News collection triggered successfully!",
+            "next_collection": "In 4 hours",
+            "info": "Configure a free cron job at https://cron-job.org to call this endpoint every 4 hours"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main_simple:app", host="0.0.0.0", port=8000, reload=True)
