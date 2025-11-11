@@ -6,7 +6,12 @@ from datetime import datetime, timedelta
 from ....core.database import get_db
 from ....models import Article
 from ....schemas import article as schemas
-from ....services.tasks import collect_from_source
+try:
+    from ....services.tasks import collect_from_source
+    TASKS_AVAILABLE = True
+except ImportError:
+    TASKS_AVAILABLE = False
+    collect_from_source = None
 
 router = APIRouter()
 
@@ -185,6 +190,9 @@ def get_recent_articles(
 @router.post("/collect/{source_id}")
 def trigger_collection(source_id: int):
     """Trigger news collection for specific source (admin only)"""
+    
+    if not TASKS_AVAILABLE:
+        return {"message": "Background tasks not available", "status": "disabled"}
     
     # Trigger async task
     task = collect_from_source.delay(source_id)

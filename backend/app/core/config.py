@@ -12,10 +12,10 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Database
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite:///./newsflow.db"
     
-    # Redis
-    REDIS_URL: str
+    # Redis (optional)
+    REDIS_URL: str = "redis://localhost:6379"
     
     # Security
     SECRET_KEY: str

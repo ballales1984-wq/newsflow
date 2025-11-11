@@ -1,6 +1,12 @@
 from typing import List, Optional
-from transformers import pipeline
 import logging
+
+try:
+    from transformers import pipeline
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+    pipeline = None
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +16,12 @@ class ArticleClassifier:
     
     def __init__(self):
         """Initialize classification model"""
+        self.classifier = None
+        
+        if not TRANSFORMERS_AVAILABLE:
+            logger.warning("Transformers not available, classification disabled")
+            return
+            
         try:
             self.classifier = pipeline(
                 "zero-shot-classification",
@@ -19,7 +31,6 @@ class ArticleClassifier:
             logger.info("Loaded classification model")
         except Exception as e:
             logger.error(f"Error loading classification model: {e}")
-            self.classifier = None
     
     def classify(
         self,

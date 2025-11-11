@@ -1,9 +1,22 @@
-import spacy
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
+    spacy = None
+
 from typing import Dict, List, Any, Optional
 from collections import Counter
 import re
 import logging
-from langdetect import detect, LangDetectException
+
+try:
+    from langdetect import detect, LangDetectException
+    LANGDETECT_AVAILABLE = True
+except ImportError:
+    LANGDETECT_AVAILABLE = False
+    detect = None
+    LangDetectException = Exception
 
 logger = logging.getLogger(__name__)
 
@@ -13,19 +26,23 @@ class NLPAnalyzer:
     
     def __init__(self):
         """Initialize NLP models"""
-        try:
-            self.nlp_it = spacy.load("it_core_news_lg")
-            logger.info("Loaded Italian spaCy model")
-        except:
-            logger.warning("Italian spaCy model not available")
-            self.nlp_it = None
+        self.nlp_it = None
+        self.nlp_en = None
         
-        try:
-            self.nlp_en = spacy.load("en_core_web_lg")
-            logger.info("Loaded English spaCy model")
-        except:
-            logger.warning("English spaCy model not available")
-            self.nlp_en = None
+        if SPACY_AVAILABLE:
+            try:
+                self.nlp_it = spacy.load("it_core_news_lg")
+                logger.info("Loaded Italian spaCy model")
+            except:
+                logger.warning("Italian spaCy model not available")
+            
+            try:
+                self.nlp_en = spacy.load("en_core_web_lg")
+                logger.info("Loaded English spaCy model")
+            except:
+                logger.warning("English spaCy model not available")
+        else:
+            logger.warning("spaCy not available, NLP features disabled")
     
     def analyze(self, text: str, title: str = "") -> Dict[str, Any]:
         """
@@ -71,10 +88,12 @@ class NLPAnalyzer:
     
     def _detect_language(self, text: str) -> str:
         """Detect text language"""
+        if not LANGDETECT_AVAILABLE:
+            return "en"
         try:
             lang = detect(text[:1000])
             return lang
-        except LangDetectException:
+        except (LangDetectException, Exception):
             return "en"
     
     def _extract_keywords(self, doc, top_n: int = 15) -> List[str]:

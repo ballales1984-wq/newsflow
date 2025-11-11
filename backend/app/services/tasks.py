@@ -3,18 +3,30 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 import logging
 
-from ..core.celery_app import celery_app
+from ..core.celery_app import celery_app, CELERY_AVAILABLE
 from ..core.database import SessionLocal
 from ..models import Article, Source
 from ..services.collectors import RSSCollector, APICollector, ScraperCollector
 from ..services.nlp import NLPAnalyzer, ArticleClassifier
 from ..core.config import settings
-from slugify import slugify
+
+try:
+    from slugify import slugify
+except ImportError:
+    def slugify(text):
+        return text.lower().replace(" ", "-")[:500]
 
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.services.tasks.collect_all_news")
+def _task_decorator(func):
+    """Decorator that works with or without Celery"""
+    if CELERY_AVAILABLE and celery_app:
+        return celery_app.task(name=f"app.services.tasks.{func.__name__}")(func)
+    return func
+
+
+@_task_decorator
 def collect_all_news():
     """Collect news from all active sources"""
     logger.info("Starting news collection task")
@@ -39,7 +51,7 @@ def collect_all_news():
         db.close()
 
 
-@celery_app.task(name="app.services.tasks.collect_from_source")
+@_task_decorator
 def collect_from_source(source_id: int) -> int:
     """Collect news from specific source"""
     db = SessionLocal()
@@ -88,8 +100,11 @@ def collect_from_source(source_id: int) -> int:
                 db.add(article)
                 db.commit()
                 
-                # Analyze article in background
-                analyze_article.delay(article.id)
+                # Analyze article in background (if Celery available)
+                if CELERY_AVAILABLE:
+                    analyze_article.delay(article.id)
+                else:
+                    analyze_article(article.id)
                 
                 count += 1
                 
@@ -109,7 +124,7 @@ def collect_from_source(source_id: int) -> int:
         db.close()
 
 
-@celery_app.task(name="app.services.tasks.analyze_article")
+@_task_decorator
 def analyze_article(article_id: int):
     """Analyze article with NLP"""
     db = SessionLocal()
@@ -147,7 +162,7 @@ def analyze_article(article_id: int):
         db.close()
 
 
-@celery_app.task(name="app.services.tasks.update_article_scores")
+@_task_decorator
 def update_article_scores():
     """Recalculate relevance scores for recent articles"""
     logger.info("Updating article scores")
@@ -165,7 +180,10 @@ def update_article_scores():
             try:
                 # Recalculate quality score if needed
                 if article.content and not article.quality_score:
-                    analyze_article.delay(article.id)
+                    if CELERY_AVAILABLE:
+                        analyze_article.delay(article.id)
+                    else:
+                        analyze_article(article.id)
                     count += 1
             except Exception as e:
                 logger.error(f"Error updating article {article.id}: {e}")
@@ -177,7 +195,7 @@ def update_article_scores():
         db.close()
 
 
-@celery_app.task(name="app.services.tasks.cleanup_old_articles")
+@_task_decorator
 def cleanup_old_articles():
     """Archive or delete old articles"""
     logger.info("Cleaning up old articles")
