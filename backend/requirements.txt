@@ -58,6 +58,7 @@ Pillow==10.2.0
 google-api-python-client==2.108.0
 google-auth-httplib2==0.1.1
 google-auth-oauthlib==1.2.0
+schedule==1.2.0
 
 # Testing (dev)
 pytest==7.4.4

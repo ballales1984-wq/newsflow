@@ -1066,6 +1066,17 @@ def _create_youtube_video_internal(max_articles: int = None, target_duration_min
         }
 
 
+@app.get("/api/admin/youtube-schedule")
+def get_youtube_schedule():
+    """Ottieni la programmazione YouTube attuale"""
+    # Implementazione per salvare/caricare schedule da file
+    return {
+        "success": True,
+        "scheduled_streams": [],
+        "message": "Usa /api/admin/create-daily-schedule per creare programmazione"
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main_simple:app", host="0.0.0.0", port=8000, reload=True)
