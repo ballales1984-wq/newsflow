@@ -41,8 +41,15 @@ def health_check():
 
 @app.get("/api/v1/articles")
 def get_articles():
-    """Get articles - demo data"""
-    return {
+    """Get articles - REAL NEWS from RSS feeds"""
+    # Carica notizie vere da file
+    import json
+    try:
+        with open('real_news.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except:
+        # Fallback to demo if file not found
+        return {
         "items": [
             {
                 "id": 1,
@@ -103,7 +110,7 @@ def get_articles():
         "page": 1,
         "size": 20,
         "pages": 1
-    }
+        }
 
 
 @app.get("/api/v1/categories")
