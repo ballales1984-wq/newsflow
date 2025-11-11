@@ -355,7 +355,13 @@ def get_categories():
         {"id": 5, "name": "AI", "slug": "ai", "icon": "smart_toy", "color": "#FF9800"},
         {"id": 6, "name": "Innovation", "slug": "innovation", "icon": "lightbulb", "color": "#FFEB3B"},
         {"id": 7, "name": "Culture", "slug": "culture", "icon": "palette", "color": "#E91E63"},
-        {"id": 8, "name": "Ethics", "slug": "ethics", "icon": "balance", "color": "#607D8B"}
+        {"id": 8, "name": "Ethics", "slug": "ethics", "icon": "balance", "color": "#607D8B"},
+        {"id": 9, "name": "Sport", "slug": "sport", "icon": "sports_soccer", "color": "#FF5722"},
+        {"id": 10, "name": "Nature", "slug": "nature", "icon": "park", "color": "#4CAF50"},
+        {"id": 11, "name": "Business", "slug": "business", "icon": "business_center", "color": "#1976D2"},
+        {"id": 12, "name": "Health", "slug": "health", "icon": "health_and_safety", "color": "#E91E63"},
+        {"id": 13, "name": "Politics", "slug": "politics", "icon": "gavel", "color": "#9C27B0"},
+        {"id": 14, "name": "Entertainment", "slug": "entertainment", "icon": "movie", "color": "#FF9800"}
     ]
 
 

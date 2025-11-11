@@ -58,6 +58,42 @@ def init_categories():
             "description": "Ethical debates and moral philosophy",
             "icon": "balance",
             "color": "#607D8B"
+        },
+        {
+            "name": "Sport",
+            "description": "Sports news, events, and competitions",
+            "icon": "sports_soccer",
+            "color": "#FF5722"
+        },
+        {
+            "name": "Nature",
+            "description": "Environment, wildlife, and nature conservation",
+            "icon": "park",
+            "color": "#4CAF50"
+        },
+        {
+            "name": "Business",
+            "description": "Economy, finance, and business news",
+            "icon": "business_center",
+            "color": "#1976D2"
+        },
+        {
+            "name": "Health",
+            "description": "Healthcare, wellness, and medical research",
+            "icon": "health_and_safety",
+            "color": "#E91E63"
+        },
+        {
+            "name": "Politics",
+            "description": "Political news and government affairs",
+            "icon": "gavel",
+            "color": "#9C27B0"
+        },
+        {
+            "name": "Entertainment",
+            "description": "Movies, music, TV shows, and celebrities",
+            "icon": "movie",
+            "color": "#FF9800"
         }
     ]
     
