@@ -340,14 +340,20 @@ def get_articles(category_id: int = None):
     
     # Mappa categorie → keywords da cercare
     CATEGORY_KEYWORDS = {
-        1: ["technology", "tech", "tecnologia", "ai", "computer", "software", "hardware", "digital"],  # Technology
-        2: ["science", "scienz", "research", "ricerca", "studio"],  # Science
+        1: ["technology", "tech", "tecnologia", "computer", "software", "hardware", "digital"],  # Technology
+        2: ["science", "scienz", "research", "ricerca", "studio", "arxiv"],  # Science
         3: ["philosophy", "filosofia", "pensiero", "critica"],  # Philosophy
         4: ["cybersecurity", "security", "sicurezza", "hacking", "exploit", "malware", "cyber"],  # Cybersecurity
         5: ["ai", "artificial intelligence", "intelligenza artificiale", "machine learning", "gpt", "openai", "llm"],  # AI
         6: ["innovation", "innovazione", "futuro", "new"],  # Innovation
         7: ["culture", "cultura", "arte", "society", "società"],  # Culture
-        8: ["ethics", "etica", "morale", "diritti"]  # Ethics
+        8: ["ethics", "etica", "morale", "diritti"],  # Ethics
+        9: ["sport", "calcio", "football", "soccer", "tennis", "basketball", "sports"],  # Sport
+        10: ["nature", "ambiente", "environment", "climate", "clima", "green", "ecologia"],  # Nature
+        11: ["business", "economia", "finance", "finanza", "market", "mercato", "company", "azienda"],  # Business
+        12: ["health", "salute", "medical", "medico", "hospital", "ospedale", "medicine"],  # Health
+        13: ["politics", "politica", "government", "governo", "election", "elezioni", "parliament"],  # Politics
+        14: ["entertainment", "intrattenimento", "movie", "film", "cinema", "music", "musica", "tv", "show"]  # Entertainment
     }
     
     if articles:
@@ -671,18 +677,45 @@ def trigger_news_collection():
     try:
         print("🔄 Aggiornamento automatico notizie iniziato...")
         
-        # Fonti RSS
+        # Fonti RSS - ESPANSE per tutte le categorie
         RSS_SOURCES = {
+            # Tecnologia
             'MIT Technology Review': 'https://www.technologyreview.com/feed/',
             'The Guardian Tech': 'https://www.theguardian.com/technology/rss',
             'Wired IT': 'https://www.wired.it/feed/rss',
             'The Hacker News': 'https://feeds.feedburner.com/TheHackersNews',
-            'MicroMega': 'https://www.micromega.net/feed/',
-            'AI4Business': 'https://www.ai4business.it/feed/',
-            'ICT Security Magazine': 'https://www.ictsecuritymagazine.com/feed/',
             'Punto Informatico': 'https://www.punto-informatico.it/feed/',
             'Agenda Digitale': 'https://www.agendadigitale.eu/feed/',
+            
+            # Scienza
             'ArXiv CS': 'http://export.arxiv.org/rss/cs',
+            'Science Daily': 'https://www.sciencedaily.com/rss/all.xml',
+            
+            # Filosofia
+            'MicroMega': 'https://www.micromega.net/feed/',
+            
+            # Cybersecurity
+            'ICT Security Magazine': 'https://www.ictsecuritymagazine.com/feed/',
+            
+            # Business
+            'AI4Business': 'https://www.ai4business.it/feed/',
+            'The Guardian Business': 'https://www.theguardian.com/business/rss',
+            
+            # Sport
+            'The Guardian Sport': 'https://www.theguardian.com/sport/rss',
+            'Gazzetta dello Sport': 'https://www.gazzetta.it/rss/home.xml',
+            
+            # Salute
+            'The Guardian Health': 'https://www.theguardian.com/society/health/rss',
+            
+            # Politica
+            'The Guardian Politics': 'https://www.theguardian.com/politics/rss',
+            
+            # Intrattenimento
+            'The Guardian Entertainment': 'https://www.theguardian.com/uk/entertainment/rss',
+            
+            # Natura/Ambiente
+            'The Guardian Environment': 'https://www.theguardian.com/environment/rss',
         }
         
         all_articles = []
@@ -701,14 +734,29 @@ def trigger_news_collection():
                         summary = summary[:400]  # Limita lunghezza dopo pulizia
                         
                         language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
-                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT'] else 'en'
+                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport'] else 'en'
                         
+                        # Determina categoria basandosi sulla fonte
                         if 'Security' in source_name or 'Hacker' in source_name:
                             category = 'Cybersecurity'
-                        elif 'ArXiv' in source_name:
+                        elif 'ArXiv' in source_name or 'Science' in source_name:
                             category = 'Science'
                         elif 'MicroMega' in source_name:
                             category = 'Philosophy'
+                        elif 'Sport' in source_name or 'Gazzetta' in source_name:
+                            category = 'Sport'
+                        elif 'Business' in source_name or 'AI4Business' in source_name:
+                            category = 'Business'
+                        elif 'Health' in source_name:
+                            category = 'Health'
+                        elif 'Politics' in source_name:
+                            category = 'Politics'
+                        elif 'Entertainment' in source_name:
+                            category = 'Entertainment'
+                        elif 'Environment' in source_name:
+                            category = 'Nature'
+                        elif 'AI' in source_name or 'artificial intelligence' in summary.lower():
+                            category = 'AI'
                         else:
                             category = 'Technology'
                         
