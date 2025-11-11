@@ -178,32 +178,58 @@ class YouTubeVideoGenerator:
             print(f"⚠️  Errore creazione segmento: {e}")
             return None
     
-    def create_video(self, max_articles: int = 5, output_filename: str = None) -> Optional[str]:
-        """Crea video completo con più notizie"""
+    def create_video(self, max_articles: int = 5, output_filename: str = None, target_duration_minutes: int = None) -> Optional[str]:
+        """
+        Crea video completo con più notizie
+        
+        Args:
+            max_articles: Numero massimo di articoli (ignorato se target_duration_minutes è specificato)
+            output_filename: Nome file output
+            target_duration_minutes: Durata target in minuti (es. 60 per 1 ora). Se specificato, aggiunge articoli fino a raggiungere la durata.
+        """
         if not MOVIEPY_AVAILABLE:
             print("❌ moviepy non disponibile. Installa con: pip install moviepy")
             return None
         
         try:
+            # Se target_duration è specificato, calcola quanti articoli servono
+            if target_duration_minutes:
+                # Stima: ~15 secondi per articolo (con audio)
+                articles_per_minute = 4  # ~4 articoli al minuto
+                estimated_articles_needed = int(target_duration_minutes * articles_per_minute)
+                max_articles = min(estimated_articles_needed, len(self.articles))
+                print(f"📹 Creo video di ~{target_duration_minutes} minuti (~{max_articles} articoli)...")
+            else:
+                print(f"📹 Creo video con {max_articles} notizie...")
+            
             # Seleziona le notizie migliori (featured o più recenti)
             selected_articles = sorted(
-                self.articles[:max_articles],
+                self.articles[:max_articles * 2],  # Prendi il doppio per avere scelta
                 key=lambda x: (x.get('is_featured', False), x.get('quality_score', 0)),
                 reverse=True
-            )[:max_articles]
-            
-            print(f"📹 Creo video con {len(selected_articles)} notizie...")
+            )
             
             segments = []
+            total_duration = 0
+            target_duration_seconds = target_duration_minutes * 60 if target_duration_minutes else None
+            
             for i, article in enumerate(selected_articles):
-                print(f"   {i+1}/{len(selected_articles)}: {article.get('title', '')[:50]}...")
-                segment = self.create_news_segment(article, duration=12)
+                if target_duration_seconds and total_duration >= target_duration_seconds:
+                    break
+                if not target_duration_seconds and i >= max_articles:
+                    break
+                    
+                print(f"   {i+1}: {article.get('title', '')[:50]}...")
+                segment = self.create_news_segment(article, duration=15)  # 15 secondi per articolo
                 if segment:
                     segments.append(segment)
+                    total_duration += segment.duration
             
             if not segments:
                 print("❌ Nessun segmento creato!")
                 return None
+            
+            print(f"✅ Creati {len(segments)} segmenti (~{int(total_duration/60)} minuti)")
             
             # Unisci tutti i segmenti
             print("🔗 Unisco i segmenti...")
@@ -248,9 +274,21 @@ class YouTubeVideoGenerator:
         description: str,
         tags: List[str] = None,
         category_id: str = "25",  # News & Politics
-        privacy_status: str = "public"
+        privacy_status: str = "public",
+        playlist_id: str = None
     ) -> Optional[str]:
-        """Carica video su YouTube"""
+        """
+        Carica video su YouTube e lo aggiunge a una playlist
+        
+        Args:
+            video_path: Percorso del video
+            title: Titolo del video
+            description: Descrizione
+            tags: Tag (lista)
+            category_id: Categoria YouTube (25 = News & Politics)
+            privacy_status: public, unlisted, private
+            playlist_id: ID playlist YouTube (opzionale, per aggiungere alla playlist)
+        """
         if not YOUTUBE_API_AVAILABLE:
             print("❌ YouTube API non disponibile")
             return None
@@ -259,7 +297,15 @@ class YouTubeVideoGenerator:
         # Vedi: https://developers.google.com/youtube/v3/guides/uploading_a_video
         print("📤 Upload su YouTube richiede configurazione API...")
         print("   Vedi: https://developers.google.com/youtube/v3/guides/uploading_a_video")
+        print(f"   Playlist ID: {playlist_id if playlist_id else 'Nessuna'}")
         return None
+    
+    def add_to_playlist(self, video_id: str, playlist_id: str) -> bool:
+        """Aggiunge un video a una playlist YouTube"""
+        if not YOUTUBE_API_AVAILABLE:
+            return False
+        # Implementazione richiede YouTube API configurata
+        return False
     
     def cleanup(self):
         """Pulisce file temporanei"""

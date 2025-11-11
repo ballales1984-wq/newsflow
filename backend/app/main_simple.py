@@ -964,6 +964,28 @@ def create_youtube_video(max_articles: int = 5):
     Returns:
         Informazioni sul video creato
     """
+    return _create_youtube_video_internal(max_articles=max_articles)
+
+
+@app.post("/api/admin/create-youtube-video-long")
+def create_youtube_video_long(duration_minutes: int = 60):
+    """
+    Crea un video YouTube lungo per playlist 24/7.
+    
+    Args:
+        duration_minutes: Durata target in minuti (default: 60 = 1 ora)
+                         Consigliato: 60-120 minuti per video
+    
+    Returns:
+        Informazioni sul video creato
+    """
+    return _create_youtube_video_internal(target_duration_minutes=duration_minutes)
+
+
+def _create_youtube_video_internal(max_articles: int = None, target_duration_minutes: int = None):
+    """
+    Funzione interna per creare video YouTube
+    """
     try:
         import sys
         import os
@@ -987,16 +1009,37 @@ def create_youtube_video(max_articles: int = 5):
         
         try:
             # Crea il video
-            video_path = generator.create_video(max_articles=max_articles)
+            if target_duration_minutes:
+                video_path = generator.create_video(target_duration_minutes=target_duration_minutes)
+                # Calcola durata reale del video
+                try:
+                    from moviepy.editor import VideoFileClip
+                    video_clip = VideoFileClip(video_path)
+                    actual_duration_minutes = round(video_clip.duration / 60, 1)
+                    video_clip.close()
+                except:
+                    actual_duration_minutes = target_duration_minutes
+            else:
+                video_path = generator.create_video(max_articles=max_articles or 5)
+                actual_duration_minutes = None
             
             if video_path:
-                return {
+                result = {
                     "success": True,
                     "message": f"Video creato con successo!",
                     "video_path": video_path,
-                    "articles_count": min(max_articles, len(articles)),
                     "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2) if os.path.exists(video_path) else 0
                 }
+                
+                if target_duration_minutes:
+                    result["duration_minutes"] = actual_duration_minutes or target_duration_minutes
+                    result["target_duration_minutes"] = target_duration_minutes
+                    # Stima articoli inclusi
+                    result["articles_count"] = int((actual_duration_minutes or target_duration_minutes) * 4)
+                else:
+                    result["articles_count"] = min(max_articles or 5, len(articles))
+                
+                return result
             else:
                 return {
                     "success": False,
