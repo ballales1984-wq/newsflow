@@ -17,38 +17,51 @@
       <button
         mat-icon-button
         (click)="toggleTheme()"
-        matTooltip="Toggle theme"
+        matTooltip="Cambia tema"
       >
         <mat-icon>
           {{ themeService.isDarkMode ? 'light_mode' : 'dark_mode' }}
         </mat-icon>
       </button>
       
-      <button mat-icon-button matTooltip="Notifiche">
-        <mat-icon matBadge="3" matBadgeColor="warn">notifications</mat-icon>
+      <button 
+        mat-icon-button 
+        matTooltip="Articoli salvati"
+        routerLink="/saved"
+      >
+        <mat-icon 
+          [matBadge]="savedCount > 0 ? savedCount : null" 
+          matBadgeColor="warn"
+        >
+          bookmark
+        </mat-icon>
       </button>
 
-      <button mat-icon-button [matMenuTriggerFor]="userMenu">
-        <mat-icon>account_circle</mat-icon>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" *ngIf="currentUser">
+        <div class="user-avatar">{{ currentUser.name.substring(0, 2).toUpperCase() }}</div>
       </button>
       
       <mat-menu #userMenu="matMenu">
-        <button mat-menu-item>
-          <mat-icon>person</mat-icon>
-          <span>Profilo</span>
-        </button>
-        <button mat-menu-item>
+        <div class="user-menu-header" *ngIf="currentUser">
+          <div class="user-avatar-large">{{ currentUser.name.substring(0, 2).toUpperCase() }}</div>
+          <div class="user-info">
+            <div class="user-name">{{ currentUser.name }}</div>
+            <div class="user-status">Lettore attivo</div>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item routerLink="/saved">
           <mat-icon>bookmark</mat-icon>
-          <span>Articoli salvati</span>
+          <span>Articoli salvati ({{ savedCount }})</span>
         </button>
         <button mat-menu-item>
           <mat-icon>settings</mat-icon>
           <span>Impostazioni</span>
         </button>
         <mat-divider></mat-divider>
-        <button mat-menu-item>
-          <mat-icon>logout</mat-icon>
-          <span>Logout</span>
+        <button mat-menu-item disabled>
+          <mat-icon>info</mat-icon>
+          <span class="small-text">Auto-login attivo</span>
         </button>
       </mat-menu>
     </div>
