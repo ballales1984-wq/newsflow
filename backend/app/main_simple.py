@@ -617,8 +617,10 @@ def trigger_news_collection():
                 count = 0
                 for entry in feed.entries[:5]:
                     try:
-                        summary = entry.get('summary', entry.get('description', ''))[:400]
-                        summary = summary.replace('<p>', '').replace('</p>', '').replace('<br>', ' ')
+                        summary = entry.get('summary', entry.get('description', ''))
+                        # Pulisce HTML da summary
+                        summary = clean_html(summary)
+                        summary = summary[:400]  # Limita lunghezza dopo pulizia
                         
                         language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
                                                            'Punto Informatico', 'Agenda Digitale', 'Wired IT'] else 'en'
