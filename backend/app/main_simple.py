@@ -51,16 +51,29 @@ def _load_articles():
         """Rimuove tutti i tag HTML dal testo"""
         if not text:
             return ""
+        import html
         # Rimuove tutti i tag HTML
         text = re.sub(r'<[^>]+>', '', text)
-        # Decodifica entità HTML comuni
-        text = text.replace('&nbsp;', ' ')
-        text = text.replace('&amp;', '&')
-        text = text.replace('&lt;', '<')
-        text = text.replace('&gt;', '>')
-        text = text.replace('&quot;', '"')
-        text = text.replace('&#39;', "'")
-        text = text.replace('&apos;', "'")
+        # Decodifica entità HTML (inclusi quelli numerici come &#8217;)
+        try:
+            text = html.unescape(text)
+        except:
+            # Fallback manuale se html.unescape non disponibile
+            text = text.replace('&nbsp;', ' ')
+            text = text.replace('&amp;', '&')
+            text = text.replace('&lt;', '<')
+            text = text.replace('&gt;', '>')
+            text = text.replace('&quot;', '"')
+            text = text.replace('&#39;', "'")
+            text = text.replace('&apos;', "'")
+            # Decodifica entità numeriche comuni
+            text = text.replace('&#8217;', "'")  # apostrofo
+            text = text.replace('&#8216;', "'")  # apostrofo sinistro
+            text = text.replace('&#8220;', '"')  # virgolette sinistre
+            text = text.replace('&#8221;', '"')  # virgolette destre
+            text = text.replace('&#8230;', '...')  # tre puntini
+            text = text.replace('&mdash;', '—')  # dash
+            text = text.replace('&ndash;', '–')  # en dash
         # Rimuove spazi multipli
         text = re.sub(r'\s+', ' ', text)
         return text.strip()
