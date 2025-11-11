@@ -47,17 +47,32 @@ export class ArticleDetailComponent implements OnInit {
   }
 
   saveArticle(): void {
-    // Implement save functionality
-    console.log('Save article');
+    if (this.article) {
+      const saved = localStorage.getItem('savedArticles');
+      const savedIds = saved ? JSON.parse(saved) : [];
+      
+      if (!savedIds.includes(this.article.id)) {
+        savedIds.push(this.article.id);
+        localStorage.setItem('savedArticles', JSON.stringify(savedIds));
+        alert('Articolo salvato!');
+      } else {
+        alert('Articolo già salvato!');
+      }
+    }
   }
 
   shareArticle(): void {
-    if (this.article && navigator.share) {
-      navigator.share({
-        title: this.article.title,
-        text: this.article.summary,
-        url: this.article.url
-      });
+    if (this.article) {
+      if (navigator.share) {
+        navigator.share({
+          title: this.article.title,
+          text: this.article.summary,
+          url: this.article.url
+        });
+      } else {
+        navigator.clipboard.writeText(this.article.url);
+        alert('Link copiato negli appunti!');
+      }
     }
   }
 

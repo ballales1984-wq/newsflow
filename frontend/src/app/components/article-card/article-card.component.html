@@ -31,15 +31,33 @@
 
   <mat-card-actions>
     <div class="actions-left">
-      <button mat-icon-button matTooltip="Salva">
-        <mat-icon>bookmark_border</mat-icon>
+      <button 
+        mat-icon-button 
+        matTooltip="Salva" 
+        (click)="saveArticle($event)"
+        [color]="isSaved() ? 'primary' : ''"
+      >
+        <mat-icon>{{ isSaved() ? 'bookmark' : 'bookmark_border' }}</mat-icon>
       </button>
-      <button mat-icon-button matTooltip="Condividi">
+      <button 
+        mat-icon-button 
+        matTooltip="Condividi" 
+        (click)="shareArticle($event)"
+      >
         <mat-icon>share</mat-icon>
       </button>
+      <a 
+        [href]="article.url" 
+        target="_blank" 
+        mat-icon-button 
+        matTooltip="Apri originale"
+        (click)="$event.stopPropagation()"
+      >
+        <mat-icon>open_in_new</mat-icon>
+      </a>
     </div>
     <div class="actions-right">
-      <button mat-button color="primary">
+      <button mat-button color="primary" (click)="viewArticle()">
         Leggi
         <mat-icon>arrow_forward</mat-icon>
       </button>
