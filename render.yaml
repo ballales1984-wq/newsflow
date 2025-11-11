@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: newsflow-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements-minimal.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        value: newsflow-super-secret-key-12345
+      - key: ALGORITHM
+        value: HS256
+      - key: CORS_ORIGINS
+        value: https://newsflow-orcin.vercel.app
+      - key: DATABASE_URL
+        value: sqlite:///./newsflow.db
+
