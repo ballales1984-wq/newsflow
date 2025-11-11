@@ -35,13 +35,13 @@ if CELERY_AVAILABLE and celery_app:
 
     # Scheduled tasks
     celery_app.conf.beat_schedule = {
-        "collect-news-hourly": {
+        "collect-news-every-4-hours": {
             "task": "app.services.tasks.collect_all_news",
-            "schedule": crontab(minute=0),  # Every hour
+            "schedule": crontab(hour="*/4", minute=0),  # Every 4 hours
         },
         "update-article-scores": {
             "task": "app.services.tasks.update_article_scores",
-            "schedule": crontab(hour="*/6", minute=0),  # Every 6 hours
+            "schedule": crontab(hour="*/8", minute=30),  # Every 8 hours
         },
         "cleanup-old-articles": {
             "task": "app.services.tasks.cleanup_old_articles",
