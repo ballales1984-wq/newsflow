@@ -381,6 +381,33 @@ def get_article_by_slug(slug: str):
     return {"error": "Article not found"}
 
 
+@app.get("/api/v1/articles/featured/list")
+def get_featured_articles(limit: int = 10):
+    """Get featured articles"""
+    articles = _load_articles()
+    
+    # Filtra solo gli articoli in evidenza
+    featured = [a for a in articles if a.get('is_featured', False)]
+    
+    # Ordina per quality score (decrescente)
+    featured.sort(key=lambda x: x.get('quality_score', 0), reverse=True)
+    
+    # Limita il numero
+    return featured[:limit]
+
+
+@app.get("/api/v1/articles/recent/list")
+def get_recent_articles(days: int = 7, limit: int = 20):
+    """Get recent articles"""
+    articles = _load_articles()
+    
+    # Ordina per data pubblicazione (più recenti prima)
+    articles.sort(key=lambda x: x.get('published_at', ''), reverse=True)
+    
+    # Limita il numero
+    return articles[:limit]
+
+
 @app.get("/api/v1/sources")
 def get_sources():
     """Get sources - demo data"""
