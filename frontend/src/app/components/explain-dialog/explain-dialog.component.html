@@ -14,7 +14,7 @@
       <h3>{{ article.title }}</h3>
     </div>
 
-    <mat-tab-group [(selectedIndex)]="selectedLevel === 'quick' ? 0 : selectedLevel === 'standard' ? 1 : 2">
+    <mat-tab-group [(selectedIndex)]="selectedTabIndex" (selectedIndexChange)="onTabChange($event)">
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon>flash_on</mat-icon>

@@ -15,6 +15,7 @@ export interface ExplainLevel {
 })
 export class ExplainDialogComponent {
   selectedLevel: 'quick' | 'standard' | 'deep' = 'standard';
+  selectedTabIndex = 1; // 0=quick, 1=standard, 2=deep
   
   explanations: Record<'quick' | 'standard' | 'deep', ExplainLevel> = {
     quick: {
@@ -189,6 +190,12 @@ e tratta temi rilevanti per chi si interessa di ${this.article.keywords?.slice(0
     }
     
     return glossary || '• Termini tecnici rilevanti non rilevati in questa notizia';
+  }
+
+  onTabChange(index: number): void {
+    if (index === 0) this.selectedLevel = 'quick';
+    else if (index === 1) this.selectedLevel = 'standard';
+    else this.selectedLevel = 'deep';
   }
 
   close(): void {
