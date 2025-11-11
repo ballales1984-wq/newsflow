@@ -1066,15 +1066,128 @@ def _create_youtube_video_internal(max_articles: int = None, target_duration_min
         }
 
 
+@app.post("/api/admin/create-daily-schedule")
+def create_daily_schedule():
+    """Crea programmazione giornaliera standard per YouTube Live"""
+    try:
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+        
+        # Programmazione standard: 4 live al giorno
+        schedule_config = [
+            {"hour": 8, "minute": 0, "duration_minutes": 30, "time_slot": "morning"},
+            {"hour": 12, "minute": 0, "duration_minutes": 30, "time_slot": "afternoon"},
+            {"hour": 18, "minute": 0, "duration_minutes": 30, "time_slot": "evening"},
+            {"hour": 22, "minute": 0, "duration_minutes": 60, "time_slot": "night"},
+        ]
+        
+        # Salva programmazione (puoi salvare su file JSON)
+        schedule_file = 'youtube_schedule.json'
+        with open(schedule_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                "created_at": datetime.now().isoformat(),
+                "scheduled_streams": schedule_config
+            }, f, indent=2, ensure_ascii=False)
+        
+        return {
+            "success": True,
+            "message": "Programmazione giornaliera creata!",
+            "scheduled_streams": schedule_config,
+            "total_streams": len(schedule_config),
+            "note": "Avvia AVVIA_SCHEDULER_LIVE.ps1 per eseguire i live automatici"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/admin/schedule-youtube-live")
+def schedule_youtube_live(hour: int, minute: int = 0, duration_minutes: int = 30):
+    """
+    Programma un singolo live stream
+    
+    Args:
+        hour: Ora (0-23)
+        minute: Minuto (0-59)
+        duration_minutes: Durata del live
+    """
+    try:
+        if not (0 <= hour <= 23):
+            return {"success": False, "error": "Ora deve essere tra 0 e 23"}
+        if not (0 <= minute <= 59):
+            return {"success": False, "error": "Minuto deve essere tra 0 e 59"}
+        
+        # Carica programmazione esistente
+        schedule_file = 'youtube_schedule.json'
+        if os.path.exists(schedule_file):
+            with open(schedule_file, 'r', encoding='utf-8') as f:
+                schedule_data = json.load(f)
+        else:
+            schedule_data = {"scheduled_streams": []}
+        
+        # Determina time slot
+        time_slot = "morning" if 6 <= hour < 12 else \
+                   "afternoon" if 12 <= hour < 18 else \
+                   "evening" if 18 <= hour < 22 else "night"
+        
+        # Aggiungi nuovo stream
+        new_stream = {
+            "hour": hour,
+            "minute": minute,
+            "duration_minutes": duration_minutes,
+            "time_slot": time_slot
+        }
+        
+        schedule_data["scheduled_streams"].append(new_stream)
+        schedule_data["updated_at"] = datetime.now().isoformat()
+        
+        # Salva
+        with open(schedule_file, 'w', encoding='utf-8') as f:
+            json.dump(schedule_data, f, indent=2, ensure_ascii=False)
+        
+        return {
+            "success": True,
+            "message": f"Live programmato alle {hour:02d}:{minute:02d}",
+            "scheduled_stream": new_stream
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
 @app.get("/api/admin/youtube-schedule")
 def get_youtube_schedule():
     """Ottieni la programmazione YouTube attuale"""
-    # Implementazione per salvare/caricare schedule da file
-    return {
-        "success": True,
-        "scheduled_streams": [],
-        "message": "Usa /api/admin/create-daily-schedule per creare programmazione"
-    }
+    try:
+        schedule_file = 'youtube_schedule.json'
+        if os.path.exists(schedule_file):
+            with open(schedule_file, 'r', encoding='utf-8') as f:
+                schedule_data = json.load(f)
+            return {
+                "success": True,
+                "scheduled_streams": schedule_data.get("scheduled_streams", []),
+                "created_at": schedule_data.get("created_at"),
+                "updated_at": schedule_data.get("updated_at")
+            }
+        else:
+            return {
+                "success": True,
+                "scheduled_streams": [],
+                "message": "Nessuna programmazione trovata. Usa /api/admin/create-daily-schedule per crearne una."
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 
 if __name__ == "__main__":
