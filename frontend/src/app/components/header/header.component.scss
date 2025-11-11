@@ -115,6 +115,33 @@
   justify-self: end;
 }
 
+// Dark mode styles
+:host-context(.dark-theme) {
+  .main-title {
+    .title-news {
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 50%, #e8e8e8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .title-flow {
+      background: linear-gradient(135deg, #ffd89b 0%, #ffb347 50%, #64b5f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  .logo-badge {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+    
+    &:hover {
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.8);
+    }
+  }
+}
+
 .user-avatar {
   width: 32px;
   height: 32px;
