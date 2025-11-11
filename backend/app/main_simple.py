@@ -740,12 +740,17 @@ def trigger_news_collection():
                     try:
                         # Estrae contenuto completo: prova content, poi description, poi summary
                         full_content = ""
+                        full_content_html = ""  # Mantiene HTML per estrarre immagini
                         if hasattr(entry, 'content') and entry.content:
                             # Alcuni feed hanno content[0].value con HTML completo
-                            full_content = entry.content[0].value if isinstance(entry.content, list) and len(entry.content) > 0 else ""
+                            if isinstance(entry.content, list) and len(entry.content) > 0:
+                                full_content_html = entry.content[0].value
+                                full_content = full_content_html
                         elif hasattr(entry, 'description'):
+                            full_content_html = entry.description
                             full_content = entry.description
                         elif hasattr(entry, 'summary'):
+                            full_content_html = entry.summary
                             full_content = entry.summary
                         
                         # Pulisce HTML dal contenuto completo
@@ -830,6 +835,61 @@ def trigger_news_collection():
                         content_length = len(content) if content else len(summary)
                         reading_time = max(1, int(content_length / 200))  # ~200 caratteri per minuto
                         
+                        # Estrae immagine da vari campi del feed RSS
+                        image_url = None
+                        
+                        # 1. Prova media_content (Media RSS standard)
+                        if hasattr(entry, 'media_content') and entry.media_content:
+                            if isinstance(entry.media_content, list) and len(entry.media_content) > 0:
+                                media_item = entry.media_content[0]
+                                if isinstance(media_item, dict) and 'url' in media_item:
+                                    image_url = media_item['url']
+                                elif isinstance(media_item, str):
+                                    image_url = media_item
+                        
+                        # 2. Prova media_thumbnail
+                        if not image_url and hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
+                            if isinstance(entry.media_thumbnail, list) and len(entry.media_thumbnail) > 0:
+                                thumb_item = entry.media_thumbnail[0]
+                                if isinstance(thumb_item, dict) and 'url' in thumb_item:
+                                    image_url = thumb_item['url']
+                                elif isinstance(thumb_item, str):
+                                    image_url = thumb_item
+                        
+                        # 3. Prova enclosures (allegati)
+                        if not image_url and hasattr(entry, 'enclosures') and entry.enclosures:
+                            for enc in entry.enclosures:
+                                if isinstance(enc, dict):
+                                    enc_type = enc.get('type', '').lower()
+                                    if 'image' in enc_type:
+                                        image_url = enc.get('href') or enc.get('url')
+                                        break
+                        
+                        # 4. Estrae immagine da HTML nel contenuto
+                        if not image_url and full_content_html:
+                            import re
+                            img_pattern = r'<img[^>]+src=["\']([^"\']+)["\']'
+                            img_matches = re.findall(img_pattern, full_content_html, re.IGNORECASE)
+                            if img_matches:
+                                # Prende la prima immagine trovata
+                                image_url = img_matches[0]
+                                # Se è un URL relativo, prova a renderlo assoluto
+                                if image_url.startswith('//'):
+                                    image_url = 'https:' + image_url
+                                elif image_url.startswith('/'):
+                                    # Prova a costruire URL assoluto dalla fonte
+                                    from urllib.parse import urljoin
+                                    if entry.get('link'):
+                                        image_url = urljoin(entry.get('link'), image_url)
+                        
+                        # 5. Valida e pulisce URL immagine
+                        if image_url:
+                            # Rimuove parametri di tracking comuni
+                            image_url = image_url.split('?')[0].split('&')[0]
+                            # Verifica che sia un URL valido
+                            if not image_url.startswith(('http://', 'https://')):
+                                image_url = None
+                        
                         article = {
                             "id": article_id,
                             "title": entry_title,
@@ -837,6 +897,7 @@ def trigger_news_collection():
                             "url": entry.get('link', ''),
                             "summary": summary,  # Summary più lungo (600 caratteri)
                             "content": content,  # Contenuto completo (fino a 5000 caratteri)
+                            "image_url": image_url,  # Immagine estratta dal feed
                             "author": entry.get('author', source_name) + (" (trad. auto)" if original_language == 'en' and language == 'it' else ""),
                             "published_at": datetime.now().isoformat(),
                             "collected_at": datetime.now().isoformat(),
