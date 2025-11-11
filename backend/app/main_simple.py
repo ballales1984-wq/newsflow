@@ -40,11 +40,21 @@ def health_check():
 
 
 def _load_articles():
-    """Helper to load articles - REAL NEWS from multiple sources"""
+    """Helper to load articles - 94 NEWS ALL IN ITALIAN"""
     import json
     import os
     
-    # Prova a caricare da file (se esiste)
+    # Usa il file finale con tutte le notizie in italiano
+    file_path = 'final_news_italian.json'
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('items', [])
+        except:
+            pass
+    
+    # Fallback su tutte le fonti
     file_path = 'all_sources_news.json'
     if os.path.exists(file_path):
         try:
