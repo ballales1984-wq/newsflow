@@ -28,7 +28,7 @@ export class HeaderComponent implements OnInit {
     });
 
     // Subscribe to saved articles count
-    this.savedArticleService.savedArticles$.subscribe(articles => {
+    this.savedArticleService.savedArticles$.subscribe((articles: number[]) => {
       this.savedCount = articles.length;
     });
   }
