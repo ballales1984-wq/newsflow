@@ -1,5 +1,12 @@
 # NewsFlow - Intelligent News Curation Platform
 
+**⚠️ PROPRIETÀ INTELLETTUALE PROTETTA ⚠️**
+
+**© 2025 Alessio Ballini - Tutti i diritti riservati**  
+**Licenza Proprietaria - Vedi [LICENSE](LICENSE) per dettagli**
+
+---
+
 NewsFlow è un'applicazione web autonoma per la cura intelligente di notizie da fonti autorevoli, con analisi semantica avanzata e interfaccia personalizzabile.
 
 ## 🎯 Caratteristiche Principali

@@ -1,22 +1,111 @@
-MIT License
+# LICENZA PROPRIETARIA - TUTTI I DIRITTI RISERVATI
 
-Copyright (c) 2024 NewsFlow
+**Copyright © 2025 Alessio Ballini - NewsFlow Project**  
+**Tutti i diritti riservati.**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+---
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+## 🔒 PROPRIETÀ INTELLETTUALE
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Questo software, inclusi codice sorgente, documentazione, design, architettura, algoritmi, 
+e qualsiasi altro materiale correlato (di seguito "Software"), è di proprietà esclusiva di:
 
+**Alessio Ballini**  
+**NewsFlow Project**
+
+---
+
+## ❌ DIVIETI
+
+È SEVERAMENTE VIETATO senza esplicita autorizzazione scritta del proprietario:
+
+1. **Copiare** il codice, in tutto o in parte
+2. **Modificare** il Software per qualsiasi scopo
+3. **Distribuire** il Software o sue copie
+4. **Vendere** o commercializzare il Software o sue derivazioni
+5. **Creare opere derivate** basate su questo Software
+6. **Reverse engineering** o decompilazione del codice
+7. **Utilizzare** il Software per scopi commerciali
+8. **Rimuovere** o modificare note di copyright
+9. **Pubblicare** o condividere il codice sorgente
+10. **Incorporare** parti del codice in altri progetti
+
+---
+
+## ✅ USO CONSENTITO
+
+L'unico uso consentito è:
+
+- **Visualizzazione** del codice per scopi dimostrativi
+- **Studio personale** senza riproduzione
+- **Testing** dell'applicazione deployata pubblicamente
+
+**TUTTO IL RESTO È VIETATO.**
+
+---
+
+## 🛡️ PROTEZIONE BREVETTUALE
+
+Tutti gli algoritmi, metodi, e sistemi implementati in questo Software 
+(inclusi ma non limitati a):
+
+- Sistema di autenticazione con fingerprint
+- Algoritmi di categorizzazione news
+- Sistema di traduzione e curation automatica
+- Architettura backend/frontend
+- Design patterns utilizzati
+
+Sono **proprietà intellettuale protetta** e soggetti a eventuali brevetti.
+
+---
+
+## ⚖️ CONSEGUENZE LEGALI
+
+Qualsiasi violazione di questa licenza comporterà:
+
+1. **Azioni legali immediate**
+2. **Richiesta di risarcimento danni**
+3. **Procedimenti penali** per violazione copyright (dove applicabile)
+4. **Blocco immediato** di qualsiasi uso non autorizzato
+5. **Segnalazione** alle autorità competenti
+
+---
+
+## 📄 LICENZE COMMERCIALI
+
+Per ottenere una licenza commerciale o autorizzazioni speciali, contattare:
+
+**Email:** alessioballini@email.com  
+**GitHub:** https://github.com/ballales1984-wq
+
+---
+
+## 🌍 GIURISDIZIONE
+
+Questa licenza è regolata dalle leggi italiane.  
+Foro competente: Tribunale di Padova, Italia.
+
+---
+
+## ⚠️ DISCLAIMER
+
+IL SOFTWARE È FORNITO "COSÌ COM'È", SENZA GARANZIE DI ALCUN TIPO.  
+IL PROPRIETARIO NON È RESPONSABILE PER DANNI DERIVANTI DALL'USO DEL SOFTWARE.
+
+---
+
+## 🔐 DEPOSITO LEGALE
+
+Questo software è stato depositato legalmente con timestamp e hash crittografico 
+per provare la paternità e la data di creazione.
+
+**Repository:** https://github.com/ballales1984-wq/newsflow  
+**Data deposito:** 11 Novembre 2025  
+**Autore:** Alessio Ballini
+
+---
+
+**© 2025 Alessio Ballini - NewsFlow. Tutti i diritti riservati.**  
+**Unauthorized copying, modification, or distribution is strictly prohibited.**
+
+🔒 PROPRIETARY LICENSE - ALL RIGHTS RESERVED 🔒
