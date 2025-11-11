@@ -22,10 +22,35 @@ except ImportError:
 class YouTubeLiveScheduler:
     """Sistema di scheduling per YouTube Live"""
     
-    def __init__(self, articles: List[Dict], youtube_credentials_path: str = None):
-        self.articles = articles
+    def __init__(self, articles: List[Dict] = None, youtube_credentials_path: str = None):
+        self.articles = articles or []
         self.youtube_credentials_path = youtube_credentials_path
         self.scheduled_streams = []
+        self._load_schedule_from_file()
+        
+    def _load_schedule_from_file(self):
+        """Carica programmazione da file JSON"""
+        schedule_file = 'youtube_schedule.json'
+        if os.path.exists(schedule_file):
+            try:
+                with open(schedule_file, 'r', encoding='utf-8') as f:
+                    schedule_data = json.load(f)
+                    self.scheduled_streams = schedule_data.get('scheduled_streams', [])
+            except Exception as e:
+                print(f"⚠️  Errore caricamento programmazione: {e}")
+                self.scheduled_streams = []
+        
+    def _load_articles_from_api(self):
+        """Carica articoli dal backend API"""
+        try:
+            import requests
+            response = requests.get('http://localhost:8000/api/v1/articles', timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get('items', [])
+        except Exception as e:
+            print(f"⚠️  Errore caricamento articoli: {e}")
+        return []
         
     def create_programmed_video(self, time_slot: str, duration_minutes: int = 30) -> Optional[str]:
         """
@@ -36,6 +61,10 @@ class YouTubeLiveScheduler:
             duration_minutes: Durata del video
         """
         from youtube_video_generator import YouTubeVideoGenerator
+        
+        # Carica articoli se non disponibili
+        if not self.articles:
+            self.articles = self._load_articles_from_api()
         
         # Filtra articoli per slot temporale (es. notizie più recenti per mattina)
         filtered_articles = self._filter_articles_by_time_slot(self.articles, time_slot)
