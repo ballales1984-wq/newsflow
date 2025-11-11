@@ -14,6 +14,5 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Run application (versione semplificata funzionante)
+# Start command
 CMD ["uvicorn", "app.main_simple:app", "--host", "0.0.0.0", "--port", "8000"]
-
