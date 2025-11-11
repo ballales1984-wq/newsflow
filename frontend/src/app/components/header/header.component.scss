@@ -22,18 +22,53 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   text-decoration: none;
   color: inherit;
-  font-size: 20px;
-  font-weight: 500;
+  transition: opacity 0.2s;
   
   &:hover {
-    opacity: 0.8;
+    opacity: 0.9;
+    
+    .logo-badge {
+      transform: scale(1.05);
+    }
   }
 }
 
+.logo-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 900;
+  font-size: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -1px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: transform 0.2s;
+}
+
 .logo-text {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+
+  .logo-primary {
+    color: white;
+  }
+
+  .logo-secondary {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+  }
+
   @media (max-width: 600px) {
     display: none;
   }
