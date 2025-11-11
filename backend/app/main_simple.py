@@ -588,7 +588,25 @@ def trigger_news_collection():
     import feedparser
     import json
     import os
+    import re
     from datetime import datetime
+    
+    def clean_html(text):
+        """Rimuove tutti i tag HTML dal testo"""
+        if not text:
+            return ""
+        # Rimuove tutti i tag HTML
+        text = re.sub(r'<[^>]+>', '', text)
+        # Decodifica entità HTML comuni
+        text = text.replace('&nbsp;', ' ')
+        text = text.replace('&amp;', '&')
+        text = text.replace('&lt;', '<')
+        text = text.replace('&gt;', '>')
+        text = text.replace('&quot;', '"')
+        text = text.replace('&#39;', "'")
+        # Rimuove spazi multipli
+        text = re.sub(r'\s+', ' ', text)
+        return text.strip()
     
     try:
         print("🔄 Aggiornamento automatico notizie iniziato...")
