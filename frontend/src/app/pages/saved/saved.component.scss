@@ -25,23 +25,25 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: rgba(0, 0, 0, 0.4);
+  color: rgba(0, 0, 0, 0.75);
 
   mat-icon {
     font-size: 64px;
     width: 64px;
     height: 64px;
     margin-bottom: 16px;
+    color: rgba(0, 0, 0, 0.75);
   }
 
   p {
     font-size: 18px;
     margin: 8px 0;
+    color: rgba(0, 0, 0, 0.75);
   }
 
   .hint {
     font-size: 14px;
-    color: rgba(0, 0, 0, 0.6);
+    color: rgba(0, 0, 0, 0.75);
   }
 }
 
@@ -51,10 +53,18 @@
   }
 
   .no-saved {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.75);
+
+    mat-icon {
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.75);
+    }
 
     .hint {
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.75);
     }
   }
 }

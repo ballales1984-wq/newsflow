@@ -35,7 +35,7 @@
   flex-wrap: wrap;
   gap: 24px;
   margin-bottom: 24px;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(0, 0, 0, 0.75);
   font-size: 14px;
 
   span {
@@ -117,7 +117,7 @@
   h4 {
     font-size: 14px;
     text-transform: uppercase;
-    color: rgba(0, 0, 0, 0.6);
+    color: rgba(0, 0, 0, 0.75);
     margin: 16px 0 8px;
   }
 
@@ -176,7 +176,7 @@
   }
 
   .article-info {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.75);
   }
 
   .article-actions {
@@ -199,7 +199,7 @@
     }
 
     h4 {
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.75);
     }
   }
 }

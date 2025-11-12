@@ -13,13 +13,13 @@
   margin: 0;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(0, 0, 0, 0.75);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .dark-theme .section-title {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 mat-nav-list {
@@ -53,7 +53,7 @@ mat-nav-list {
       top: 50%;
       transform: translateY(-50%);
       background-color: rgba(0, 0, 0, 0.08);
-      color: rgba(0, 0, 0, 0.6);
+      color: rgba(0, 0, 0, 0.75);
       padding: 2px 8px;
       border-radius: 12px;
       font-size: 12px;
