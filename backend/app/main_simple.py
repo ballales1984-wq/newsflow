@@ -152,9 +152,18 @@ def _load_articles():
     if not file_path:
         print(f"❌ Nessun file final_news_italian.json trovato. Path provati:")
         for path in possible_paths:
-            print(f"   - {path} (exists: {os.path.exists(path)})")
+            exists = os.path.exists(path)
+            print(f"   - {path} (exists: {exists})")
+            if exists:
+                try:
+                    size = os.path.getsize(path)
+                    print(f"     Size: {size} bytes")
+                except:
+                    pass
         print(f"   Current working directory: {os.getcwd()}")
         print(f"   File location: {__file__}")
+        print(f"   List files in backend/: {os.listdir(os.path.join(os.getcwd(), 'backend')) if os.path.exists(os.path.join(os.getcwd(), 'backend')) else 'backend/ does not exist'}")
+        return []  # Restituisci array vuoto invece di None
     if file_path and os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
