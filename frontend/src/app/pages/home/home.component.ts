@@ -83,7 +83,7 @@ export class HomeComponent implements OnInit {
 
     this.articleService.getArticles(this.currentPage, this.pageSize, filters)
       .pipe(
-        timeout(30000), // 30 secondi timeout
+        timeout(60000), // 60 secondi timeout per permettere wake-up Render
         catchError(error => {
           console.error('Error loading articles:', error);
           return of({
