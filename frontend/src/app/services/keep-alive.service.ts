@@ -51,8 +51,7 @@ export class KeepAliveService {
   private pingBackend(): void {
     // Usa catchError per evitare che gli errori interferiscano con altre richieste
     this.http.get(this.apiUrl, { 
-      timeout: 30000,
-      observe: 'response'
+      timeout: 30000
     }).pipe(
       catchError(() => {
         // Ignora silenziosamente gli errori del keep-alive
