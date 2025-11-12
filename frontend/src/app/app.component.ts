@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, HostListener } from '@angular/core';
 import { MatDrawer } from '@angular/material/sidenav';
 import { ThemeService } from './services/theme.service';
 import { KeepAliveService } from './services/keep-alive.service';
@@ -8,7 +8,7 @@ import { KeepAliveService } from './services/keep-alive.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   title = 'NewsFlow';
   @ViewChild('drawer') drawer!: MatDrawer;
   isMobile = false;
@@ -20,17 +20,23 @@ export class AppComponent implements OnInit, OnDestroy {
     this.checkScreenSize();
   }
 
+  ngAfterViewInit(): void {
+    // Assicurati che il drawer sia nello stato corretto dopo che la view è inizializzata
+    setTimeout(() => {
+      if (this.drawer) {
+        if (this.isMobile) {
+          this.drawer.close();
+        } else {
+          // Su desktop, apri il drawer
+          this.drawer.open();
+        }
+      }
+    }, 100);
+  }
+
   @HostListener('window:resize', ['$event'])
   onResize() {
     this.checkScreenSize();
-    // Aggiorna lo stato del drawer quando cambia la dimensione dello schermo
-    if (this.drawer) {
-      if (this.isMobile && this.drawer.opened) {
-        this.drawer.close();
-      } else if (!this.isMobile && !this.drawer.opened) {
-        this.drawer.open();
-      }
-    }
   }
 
   checkScreenSize() {
@@ -38,10 +44,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isMobile = window.innerWidth < 768;
     
     // Se passa da mobile a desktop o viceversa, aggiorna il drawer
-    if (this.drawer && wasMobile !== this.isMobile) {
-      if (this.isMobile) {
+    if (this.drawer) {
+      if (this.isMobile && this.drawer.opened) {
         this.drawer.close();
-      } else {
+      } else if (!this.isMobile && !this.drawer.opened) {
         this.drawer.open();
       }
     }

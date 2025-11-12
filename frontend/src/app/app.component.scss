@@ -27,14 +27,26 @@
   
   .main-content {
     padding: 12px;
-    width: 100%;
+    width: 100% !important;
     margin-left: 0 !important;
   }
   
-  /* Su mobile il drawer è overlay, quindi il contenuto occupa tutta la larghezza */
+  /* Su mobile il drawer è overlay, quindi il contenuto occupa SEMPRE tutta la larghezza */
   .main-container {
-    ::ng-deep .mat-drawer-content {
-      margin-left: 0 !important;
+    ::ng-deep {
+      .mat-drawer-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+      }
+      
+      /* Assicura che il drawer non occupi spazio quando è chiuso */
+      .mat-drawer-side {
+        transform: translateX(-100%);
+      }
+      
+      .mat-drawer-opened .mat-drawer-side {
+        transform: translateX(0);
+      }
     }
   }
 }
