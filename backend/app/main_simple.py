@@ -3,7 +3,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
-from app.core.auth_fingerprint import FingerprintAuth
+
+# Import opzionale di FingerprintAuth per evitare crash su Vercel
+try:
+    from app.core.auth_fingerprint import FingerprintAuth
+except ImportError:
+    FingerprintAuth = None
+    print("WARNING: FingerprintAuth non disponibile")
 
 # Create FastAPI app
 app = FastAPI(
@@ -660,6 +666,13 @@ def whoami(request: Request):
     Returns user data (esistente o nuovo)
     """
     # Genera fingerprint da request
+    if FingerprintAuth is None:
+        # Fallback se FingerprintAuth non disponibile
+        return {
+            "success": False,
+            "error": "Authentication service not available"
+        }
+    
     request_data = {
         'ip': request.client.host if request.client else 'unknown',
         'user_agent': request.headers.get('user-agent', 'unknown'),
