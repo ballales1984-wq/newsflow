@@ -18,6 +18,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     public themeService: ThemeService,
     private keepAliveService: KeepAliveService
   ) {
+    console.log('🏗️ AppComponent constructor');
     this.checkScreenSize();
   }
 
@@ -70,8 +71,14 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    console.log('🎯 AppComponent ngOnInit');
     // Avvia il servizio keep-alive per mantenere il backend sveglio
-    this.keepAliveService.start();
+    try {
+      this.keepAliveService.start();
+      console.log('✅ Keep-alive service started');
+    } catch (error) {
+      console.error('❌ Error starting keep-alive:', error);
+    }
   }
 
   ngOnDestroy(): void {
