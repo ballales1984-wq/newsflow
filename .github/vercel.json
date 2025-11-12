@@ -1,27 +1,27 @@
 {
-  "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build -- --configuration production",
   "outputDirectory": "frontend/dist/newsflow",
-  "installCommand": "cd frontend && npm install",
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.9"
-    },
-    "api/[...path].py": {
-      "runtime": "python3.9"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/api/[...path]"
     }
   ],
-  "env": {
-    "CORS_ORIGINS": "https://newsflow-orcin.vercel.app,https://newsflow-three.vercel.app"
+  "functions": {
+    "api/[...path].py": {
+      "includeFiles": [
+        "api/final_news_italian.json",
+        "api/all_sources_news.json",
+        "backend/final_news_italian.json",
+        "backend/all_sources_news.json"
+      ]
+    },
+    "api/index.py": {
+      "includeFiles": [
+        "api/final_news_italian.json",
+        "api/all_sources_news.json",
+        "backend/final_news_italian.json",
+        "backend/all_sources_news.json"
+      ]
+    }
   }
 }
