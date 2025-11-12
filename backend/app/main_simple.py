@@ -130,16 +130,28 @@ def _load_articles():
     
     # Determina il path base (directory corrente o backend/)
     # Su Vercel, i file sono nella root del progetto
-    # Prova diversi path per trovare i file JSON
+    # Prova MOLTI più path per trovare i file JSON
+    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root_from_file = os.path.dirname(current_file_dir)  # backend/app -> backend
+    project_root_from_file2 = os.path.dirname(project_root_from_file)  # backend -> root
+    
     possible_paths = [
-        # Path 1: backend/final_news_italian.json dalla root (Vercel)
+        # Path 1: backend/final_news_italian.json dalla root (Vercel standard)
         os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
         # Path 2: backend/final_news_italian.json relativo al file corrente
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
+        os.path.join(project_root_from_file, 'final_news_italian.json'),
         # Path 3: final_news_italian.json nella root
         os.path.join(os.getcwd(), 'final_news_italian.json'),
-        # Path 4: backend/final_news_italian.json dalla directory del file
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'final_news_italian.json'),
+        # Path 4: backend/final_news_italian.json dalla directory del file (2 livelli su)
+        os.path.join(project_root_from_file2, 'backend', 'final_news_italian.json'),
+        # Path 5: final_news_italian.json nella root (2 livelli su)
+        os.path.join(project_root_from_file2, 'final_news_italian.json'),
+        # Path 6: Prova anche con /vercel/path0 (Vercel build path)
+        '/vercel/path0/backend/final_news_italian.json',
+        '/vercel/path0/final_news_italian.json',
+        # Path 7: Prova anche nella directory corrente se siamo già in backend/
+        os.path.join(current_file_dir, 'final_news_italian.json'),
+        os.path.join(current_file_dir, '..', 'final_news_italian.json'),
     ]
     
     file_path = None
