@@ -29,23 +29,37 @@
     padding: 12px;
     width: 100% !important;
     margin-left: 0 !important;
+    max-width: 100% !important;
   }
   
   /* Su mobile il drawer è overlay, quindi il contenuto occupa SEMPRE tutta la larghezza */
   .main-container {
+    width: 100% !important;
+    
     ::ng-deep {
+      /* Forza il contenuto a occupare tutta la larghezza */
       .mat-drawer-content {
         margin-left: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
       }
       
-      /* Assicura che il drawer non occupi spazio quando è chiuso */
-      .mat-drawer-side {
-        transform: translateX(-100%);
+      /* Assicura che il drawer sia sempre overlay su mobile */
+      .mat-drawer-container {
+        width: 100% !important;
       }
       
-      .mat-drawer-opened .mat-drawer-side {
-        transform: translateX(0);
+      /* Drawer nascosto quando chiuso */
+      .mat-drawer-side:not(.mat-drawer-opened) {
+        transform: translateX(-100%) !important;
+        visibility: hidden !important;
+      }
+      
+      /* Drawer visibile quando aperto (overlay) */
+      .mat-drawer-side.mat-drawer-opened {
+        transform: translateX(0) !important;
+        visibility: visible !important;
       }
     }
   }

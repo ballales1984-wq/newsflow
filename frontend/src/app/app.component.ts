@@ -24,14 +24,18 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     // Assicurati che il drawer sia nello stato corretto dopo che la view è inizializzata
     setTimeout(() => {
       if (this.drawer) {
+        // Forza la chiusura su mobile
         if (this.isMobile) {
           this.drawer.close();
+          // Forza anche la modalità overlay
+          this.drawer.mode = 'over';
         } else {
           // Su desktop, apri il drawer
+          this.drawer.mode = 'side';
           this.drawer.open();
         }
       }
-    }, 100);
+    }, 200);
   }
 
   @HostListener('window:resize', ['$event'])
@@ -45,10 +49,18 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     
     // Se passa da mobile a desktop o viceversa, aggiorna il drawer
     if (this.drawer) {
-      if (this.isMobile && this.drawer.opened) {
-        this.drawer.close();
-      } else if (!this.isMobile && !this.drawer.opened) {
-        this.drawer.open();
+      if (this.isMobile) {
+        // Su mobile: chiudi e usa overlay
+        this.drawer.mode = 'over';
+        if (this.drawer.opened) {
+          this.drawer.close();
+        }
+      } else {
+        // Su desktop: apri e usa side
+        this.drawer.mode = 'side';
+        if (!this.drawer.opened) {
+          this.drawer.open();
+        }
       }
     }
   }

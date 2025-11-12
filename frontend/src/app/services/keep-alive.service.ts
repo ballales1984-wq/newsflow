@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { interval, Subscription, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, timeout } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -50,9 +50,8 @@ export class KeepAliveService {
    */
   private pingBackend(): void {
     // Usa catchError per evitare che gli errori interferiscano con altre richieste
-    this.http.get(this.apiUrl, { 
-      timeout: 30000
-    }).pipe(
+    this.http.get(this.apiUrl).pipe(
+      timeout(30000), // Timeout di 30 secondi usando l'operatore RxJS
       catchError(() => {
         // Ignora silenziosamente gli errori del keep-alive
         return of(null);
