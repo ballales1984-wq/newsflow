@@ -1,0 +1,18 @@
+# Ignora file non necessari per Vercel deploy
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.pytest_cache/
+backend/tests/
+backend/*.log
+backend/Dockerfile
+backend/*.ps1
+backend/*.bat
+backend/*.sh
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+*.md
+.git/
+.github/
+
