@@ -24,18 +24,25 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     // Assicurati che il drawer sia nello stato corretto dopo che la view è inizializzata
     setTimeout(() => {
       if (this.drawer) {
-        // Forza la chiusura su mobile
         if (this.isMobile) {
-          this.drawer.close();
-          // Forza anche la modalità overlay
+          // Su mobile: chiudi e usa overlay
           this.drawer.mode = 'over';
+          this.drawer.close();
         } else {
-          // Su desktop, apri il drawer
+          // Su desktop: FORZA apertura e modalità side
           this.drawer.mode = 'side';
-          this.drawer.open();
+          if (!this.drawer.opened) {
+            this.drawer.open();
+          }
+          // Forza apertura anche se già aperto (per sicurezza)
+          setTimeout(() => {
+            if (this.drawer && !this.drawer.opened && !this.isMobile) {
+              this.drawer.open();
+            }
+          }, 100);
         }
       }
-    }, 200);
+    }, 300);
   }
 
   @HostListener('window:resize', ['$event'])
