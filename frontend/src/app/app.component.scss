@@ -20,10 +20,21 @@
   width: 100%;
 }
 
-/* Desktop: sidebar sempre visibile */
+/* Desktop: Angular Material gestisce automaticamente il layout quando drawer è aperto */
 @media (min-width: 769px) {
-  .main-content {
-    margin-left: 280px; /* Larghezza sidebar */
+  .main-container {
+    ::ng-deep {
+      /* Assicura che il drawer sia sempre visibile su desktop */
+      .mat-drawer-side {
+        transform: translateX(0) !important;
+        visibility: visible !important;
+      }
+      
+      /* Il contenuto si sposta automaticamente quando drawer è aperto */
+      .mat-drawer-opened .mat-drawer-content {
+        margin-left: 280px !important;
+      }
+    }
   }
 }
 

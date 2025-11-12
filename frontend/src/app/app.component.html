@@ -6,6 +6,7 @@
       #drawer
       [mode]="isMobile ? 'over' : 'side'" 
       [opened]="!isMobile"
+      [disableClose]="!isMobile"
       class="sidebar">
       <app-sidebar (linkClicked)="toggleSidebar()"></app-sidebar>
     </mat-drawer>
