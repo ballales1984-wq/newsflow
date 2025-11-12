@@ -10,7 +10,7 @@
 }
 
 .sidebar {
-  width: 280px;
+  width: 220px;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
 }
 
@@ -34,7 +34,7 @@
       
       /* Il contenuto si sposta automaticamente quando drawer è aperto */
       .mat-drawer-container.mat-drawer-opened .mat-drawer-content {
-        margin-left: 280px !important;
+        margin-left: 220px !important;
       }
     }
   }
@@ -43,7 +43,7 @@
 /* Mobile: sidebar nascosta, contenuto a tutta larghezza */
 @media (max-width: 768px) {
   .sidebar {
-    width: 280px;
+    width: 220px;
   }
   
   .main-content {
