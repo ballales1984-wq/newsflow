@@ -18,26 +18,33 @@
   padding: 24px;
   overflow-y: auto;
   width: 100%;
+  min-height: calc(100vh - 64px);
+  background-color: transparent;
 }
 
 /* Desktop: sidebar sempre visibile */
 @media (min-width: 769px) {
   .main-container {
     ::ng-deep {
-      /* FORZA drawer sempre visibile e aperto su desktop */
+      /* FORZA drawer sempre visibile e aperto su desktop - REGOLE MOLTO AGGRESSIVE */
       .mat-drawer-side {
         transform: translateX(0) !important;
         visibility: visible !important;
         display: block !important;
         position: relative !important;
         width: 280px !important;
+        opacity: 1 !important;
+        z-index: 1 !important;
       }
       
-      /* FORZA contenuto spostato quando drawer è aperto */
-      .mat-drawer-container.mat-drawer-opened .mat-drawer-content,
+      /* FORZA contenuto spostato SEMPRE su desktop (anche se drawer non è "opened") */
       .mat-drawer-container .mat-drawer-content {
         margin-left: 280px !important;
         width: calc(100% - 280px) !important;
+        max-width: calc(100% - 280px) !important;
+        min-height: calc(100vh - 64px) !important;
+        position: relative !important;
+        z-index: 0 !important;
       }
       
       /* Assicura che il drawer container abbia il drawer aperto */
@@ -46,8 +53,15 @@
       }
       
       /* Forza il drawer a essere aperto su desktop */
-      .mat-drawer-container.mat-drawer-opened .mat-drawer-side {
+      .mat-drawer-container.mat-drawer-opened .mat-drawer-side,
+      .mat-drawer-container .mat-drawer-side {
         transform: translateX(0) !important;
+        visibility: visible !important;
+      }
+      
+      /* Assicura che il contenuto sia sempre spostato su desktop */
+      .mat-drawer-container:not(.mat-drawer-opened) .mat-drawer-content {
+        margin-left: 280px !important;
       }
     }
   }
@@ -56,7 +70,11 @@
   .sidebar {
     display: block !important;
     visibility: visible !important;
+    width: 280px !important;
   }
+  
+  /* NON applicare margin-left a .main-content perché è già applicato a .mat-drawer-content */
+  /* Il contenuto principale è già dentro .mat-drawer-content che ha margin-left: 280px */
 }
 
 /* Mobile: sidebar nascosta, contenuto a tutta larghezza */
