@@ -79,13 +79,25 @@ def _load_articles():
         return text.strip()
     
     # Determina il path base (directory corrente o backend/)
+    # Su Vercel, i file sono nella root del progetto
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Torna alla root backend
     if not os.path.exists(os.path.join(base_dir, 'final_news_italian.json')):
-        # Se non trovato, prova directory corrente
+        # Se non trovato, prova directory corrente (per Vercel)
         base_dir = os.getcwd()
+        # Se ancora non trovato, prova backend/ dalla root
+        if not os.path.exists(os.path.join(base_dir, 'backend', 'final_news_italian.json')):
+            # Ultimo tentativo: cerca nella directory backend
+            backend_dir = os.path.join(os.getcwd(), 'backend')
+            if os.path.exists(os.path.join(backend_dir, 'final_news_italian.json')):
+                base_dir = backend_dir
     
     # Usa il file finale con tutte le notizie in italiano
     file_path = os.path.join(base_dir, 'final_news_italian.json')
+    # Se non trovato, prova anche backend/final_news_italian.json
+    if not os.path.exists(file_path):
+        backend_path = os.path.join(os.getcwd(), 'backend', 'final_news_italian.json')
+        if os.path.exists(backend_path):
+            file_path = backend_path
     if os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -104,6 +116,11 @@ def _load_articles():
     
     # Fallback su tutte le fonti
     file_path = os.path.join(base_dir, 'all_sources_news.json')
+    # Se non trovato, prova anche backend/all_sources_news.json
+    if not os.path.exists(file_path):
+        backend_path = os.path.join(os.getcwd(), 'backend', 'all_sources_news.json')
+        if os.path.exists(backend_path):
+            file_path = backend_path
     if os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
