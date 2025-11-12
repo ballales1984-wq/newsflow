@@ -36,6 +36,13 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
           this.drawer.mode = 'side';
           this.drawer.open();
           this.drawerOpened = true;
+          // Forza aggiornamento dopo apertura
+          setTimeout(() => {
+            if (this.drawer && !this.drawer.opened) {
+              this.drawer.open();
+              this.drawerOpened = true;
+            }
+          }, 200);
         }
       }
     }, 100);

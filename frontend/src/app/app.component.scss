@@ -28,19 +28,34 @@
       .mat-drawer-side {
         transform: translateX(0) !important;
         visibility: visible !important;
+        display: block !important;
         position: relative !important;
+        width: 280px !important;
       }
       
-      /* FORZA contenuto spostato SOLO quando drawer è aperto */
-      .mat-drawer-container.mat-drawer-opened .mat-drawer-content {
+      /* FORZA contenuto spostato quando drawer è aperto */
+      .mat-drawer-container.mat-drawer-opened .mat-drawer-content,
+      .mat-drawer-container .mat-drawer-content {
         margin-left: 280px !important;
+        width: calc(100% - 280px) !important;
       }
       
       /* Assicura che il drawer container abbia il drawer aperto */
       .mat-drawer-container {
         position: relative;
       }
+      
+      /* Forza il drawer a essere aperto su desktop */
+      .mat-drawer-container.mat-drawer-opened .mat-drawer-side {
+        transform: translateX(0) !important;
+      }
     }
+  }
+  
+  /* Assicura che la sidebar sia visibile */
+  .sidebar {
+    display: block !important;
+    visibility: visible !important;
   }
 }
 
