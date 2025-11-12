@@ -5,6 +5,8 @@ import { CategoryService } from '../../services/category.service';
 import { Article } from '../../models/article.model';
 import { Category } from '../../models/category.model';
 import { PageEvent } from '@angular/material/paginator';
+import { timeout, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -34,7 +36,7 @@ export class HomeComponent implements OnInit {
     this.loadCategories();
     this.loadFeaturedArticles();
     
-    // Listen to query params
+    // Load articles immediately on init
     this.route.queryParams.subscribe(params => {
       const previousCategoryId = this.selectedCategoryId;
       this.selectedCategoryId = params['category'] ? +params['category'] : null;
@@ -48,6 +50,11 @@ export class HomeComponent implements OnInit {
         }, 300);
       }
     });
+    
+    // Also load articles immediately if no query params
+    if (!this.route.snapshot.queryParams['category']) {
+      this.loadArticles();
+    }
   }
 
   loadCategories(): void {
@@ -79,17 +86,33 @@ export class HomeComponent implements OnInit {
       ? { category_id: this.selectedCategoryId } 
       : {};
 
-    this.articleService.getArticles(this.currentPage, this.pageSize, filters).subscribe({
-      next: (response) => {
-        this.articles = response.items;
-        this.totalArticles = response.total;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading articles:', error);
-        this.loading = false;
-      }
-    });
+    this.articleService.getArticles(this.currentPage, this.pageSize, filters)
+      .pipe(
+        timeout(30000), // 30 secondi timeout
+        catchError(error => {
+          console.error('Error loading articles:', error);
+          return of({
+            items: [],
+            total: 0,
+            page: 1,
+            size: 0,
+            pages: 1
+          });
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.articles = response.items || [];
+          this.totalArticles = response.total || 0;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error loading articles:', error);
+          this.articles = [];
+          this.totalArticles = 0;
+          this.loading = false;
+        }
+      });
   }
 
   onCategoryChange(categoryId: number | null): void {
