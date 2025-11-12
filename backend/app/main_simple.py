@@ -136,6 +136,10 @@ def _load_articles():
     project_root_from_file2 = os.path.dirname(project_root_from_file)  # backend -> root
     
     possible_paths = [
+        # Path 0: api/final_news_italian.json (PRIORITÀ - sempre incluso su Vercel)
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'final_news_italian.json'),
+        os.path.join(os.getcwd(), 'api', 'final_news_italian.json'),
+        '/vercel/path0/api/final_news_italian.json',
         # Path 1: backend/final_news_italian.json dalla root (Vercel standard)
         os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
         # Path 2: backend/final_news_italian.json relativo al file corrente
@@ -196,6 +200,10 @@ def _load_articles():
     
     # Fallback su tutte le fonti (stessi path migliorati)
     possible_paths_all = [
+        # Path 0: api/all_sources_news.json (PRIORITÀ - sempre incluso su Vercel)
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'all_sources_news.json'),
+        os.path.join(os.getcwd(), 'api', 'all_sources_news.json'),
+        '/vercel/path0/api/all_sources_news.json',
         os.path.join(os.getcwd(), 'backend', 'all_sources_news.json'),
         os.path.join(project_root_from_file, 'all_sources_news.json'),
         os.path.join(os.getcwd(), 'all_sources_news.json'),
