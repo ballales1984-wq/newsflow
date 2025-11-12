@@ -22,18 +22,24 @@ export class ArticleCardComponent {
   ) {}
 
   viewArticle(): void {
-    this.analytics.trackArticleView(this.article.id, this.article.title);
-    this.router.navigate(['/article', this.article.slug]);
+    // Usa setTimeout per non bloccare il thread principale
+    setTimeout(() => {
+      this.analytics.trackArticleView(this.article.id, this.article.title);
+      this.router.navigate(['/article', this.article.slug]);
+    }, 0);
   }
 
   saveArticle(event: Event): void {
     event.stopPropagation();
-    if (this.isSaved()) {
-      this.savedArticleService.unsaveArticle(this.article.id);
-    } else {
-      this.savedArticleService.saveArticle(this.article.id);
-      this.analytics.trackArticleSave(this.article.id, this.article.title);
-    }
+    // Usa setTimeout per non bloccare il thread principale
+    setTimeout(() => {
+      if (this.isSaved()) {
+        this.savedArticleService.unsaveArticle(this.article.id);
+      } else {
+        this.savedArticleService.saveArticle(this.article.id);
+        this.analytics.trackArticleSave(this.article.id, this.article.title);
+      }
+    }, 0);
   }
 
   shareArticle(event: Event): void {

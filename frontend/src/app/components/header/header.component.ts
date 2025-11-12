@@ -45,11 +45,17 @@ export class HeaderComponent implements OnInit {
   }
 
   toggleTheme(): void {
-    this.themeService.toggleTheme();
+    // Usa setTimeout per non bloccare il thread principale
+    setTimeout(() => {
+      this.themeService.toggleTheme();
+    }, 0);
   }
 
   onMenuClick(): void {
-    this.menuToggle.emit();
+    // Usa setTimeout per non bloccare il thread principale
+    setTimeout(() => {
+      this.menuToggle.emit();
+    }, 0);
   }
 }
 

@@ -25,16 +25,22 @@ export class ThemeService {
   toggleTheme(): void {
     const newValue = !this.darkMode.value;
     this.darkMode.next(newValue);
-    this.applyTheme(newValue);
-    localStorage.setItem('darkMode', newValue.toString());
+    // Usa requestAnimationFrame per non bloccare il thread principale
+    requestAnimationFrame(() => {
+      this.applyTheme(newValue);
+      localStorage.setItem('darkMode', newValue.toString());
+    });
   }
 
   private applyTheme(isDark: boolean): void {
-    if (isDark) {
-      document.body.classList.add('dark-theme');
-    } else {
-      document.body.classList.remove('dark-theme');
-    }
+    // Usa requestAnimationFrame per modifiche DOM non bloccanti
+    requestAnimationFrame(() => {
+      if (isDark) {
+        document.body.classList.add('dark-theme');
+      } else {
+        document.body.classList.remove('dark-theme');
+      }
+    });
   }
 
   get isDarkMode(): boolean {
