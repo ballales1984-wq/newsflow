@@ -80,29 +80,37 @@ def _load_articles():
     
     # Determina il path base (directory corrente o backend/)
     # Su Vercel, i file sono nella root del progetto
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Torna alla root backend
-    if not os.path.exists(os.path.join(base_dir, 'final_news_italian.json')):
-        # Se non trovato, prova directory corrente (per Vercel)
-        base_dir = os.getcwd()
-        # Se ancora non trovato, prova backend/ dalla root
-        if not os.path.exists(os.path.join(base_dir, 'backend', 'final_news_italian.json')):
-            # Ultimo tentativo: cerca nella directory backend
-            backend_dir = os.path.join(os.getcwd(), 'backend')
-            if os.path.exists(os.path.join(backend_dir, 'final_news_italian.json')):
-                base_dir = backend_dir
+    # Prova diversi path per trovare i file JSON
+    possible_paths = [
+        # Path 1: backend/final_news_italian.json dalla root (Vercel)
+        os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
+        # Path 2: backend/final_news_italian.json relativo al file corrente
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
+        # Path 3: final_news_italian.json nella root
+        os.path.join(os.getcwd(), 'final_news_italian.json'),
+        # Path 4: backend/final_news_italian.json dalla directory del file
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'final_news_italian.json'),
+    ]
     
-    # Usa il file finale con tutte le notizie in italiano
-    file_path = os.path.join(base_dir, 'final_news_italian.json')
-    # Se non trovato, prova anche backend/final_news_italian.json
-    if not os.path.exists(file_path):
-        backend_path = os.path.join(os.getcwd(), 'backend', 'final_news_italian.json')
-        if os.path.exists(backend_path):
-            file_path = backend_path
-    if os.path.exists(file_path):
+    file_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            file_path = path
+            print(f"✅ Trovato final_news_italian.json: {path}")
+            break
+    
+    if not file_path:
+        print(f"❌ Nessun file final_news_italian.json trovato. Path provati:")
+        for path in possible_paths:
+            print(f"   - {path} (exists: {os.path.exists(path)})")
+        print(f"   Current working directory: {os.getcwd()}")
+        print(f"   File location: {__file__}")
+    if file_path and os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 articles = data.get('items', [])
+                print(f"✅ Caricati {len(articles)} articoli da final_news_italian.json")
                 # Pulisce HTML da tutte le notizie esistenti
                 for article in articles:
                     if 'summary' in article:
@@ -111,17 +119,26 @@ def _load_articles():
                         article['title'] = clean_html(article['title'])
                 return articles
         except Exception as e:
-            print(f"Errore caricamento final_news_italian.json: {e}")
-            pass
+            print(f"❌ Errore caricamento final_news_italian.json: {e}")
+            import traceback
+            traceback.print_exc()
     
     # Fallback su tutte le fonti
-    file_path = os.path.join(base_dir, 'all_sources_news.json')
-    # Se non trovato, prova anche backend/all_sources_news.json
-    if not os.path.exists(file_path):
-        backend_path = os.path.join(os.getcwd(), 'backend', 'all_sources_news.json')
-        if os.path.exists(backend_path):
-            file_path = backend_path
-    if os.path.exists(file_path):
+    possible_paths_all = [
+        os.path.join(os.getcwd(), 'backend', 'all_sources_news.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'all_sources_news.json'),
+        os.path.join(os.getcwd(), 'all_sources_news.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'all_sources_news.json'),
+    ]
+    
+    file_path = None
+    for path in possible_paths_all:
+        if os.path.exists(path):
+            file_path = path
+            print(f"✅ Trovato all_sources_news.json: {path}")
+            break
+    
+    if file_path and os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
