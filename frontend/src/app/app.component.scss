@@ -20,6 +20,14 @@
   width: 100%;
 }
 
+/* Desktop: sidebar sempre visibile */
+@media (min-width: 769px) {
+  .main-content {
+    margin-left: 280px; /* Larghezza sidebar */
+  }
+}
+
+/* Mobile: sidebar nascosta, contenuto a tutta larghezza */
 @media (max-width: 768px) {
   .sidebar {
     width: 280px;
