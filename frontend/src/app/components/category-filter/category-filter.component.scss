@@ -1,15 +1,33 @@
 .category-filter {
   margin-bottom: 24px;
 
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+  }
+
   mat-chip-set {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+
+    @media (max-width: 480px) {
+      gap: 6px;
+    }
   }
 
   mat-chip {
     cursor: pointer;
     transition: all 0.2s;
+
+    @media (max-width: 480px) {
+      font-size: 12px;
+      height: 32px;
+      padding: 0 12px;
+    }
 
     &:hover {
       transform: translateY(-2px);

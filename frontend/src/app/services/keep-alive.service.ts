@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { interval, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { interval, Subscription, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -49,15 +49,25 @@ export class KeepAliveService {
    * Esegue un ping al backend
    */
   private pingBackend(): void {
-    this.http.get(this.apiUrl, { timeout: 30000 })
-      .subscribe({
-        next: () => {
+    // Usa catchError per evitare che gli errori interferiscano con altre richieste
+    this.http.get(this.apiUrl, { 
+      timeout: 30000,
+      observe: 'response'
+    }).pipe(
+      catchError(() => {
+        // Ignora silenziosamente gli errori del keep-alive
+        return of(null);
+      })
+    ).subscribe({
+      next: (response) => {
+        if (response) {
           console.log('✅ Backend sveglio');
-        },
-        error: (error) => {
-          console.log('⏳ Backend in risveglio...', error);
         }
-      });
+      },
+      error: () => {
+        // Errore già gestito dal catchError
+      }
+    });
   }
 }
 

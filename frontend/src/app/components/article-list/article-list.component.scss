@@ -52,6 +52,12 @@
   }
 }
 
+@media (max-width: 480px) {
+  .articles-grid {
+    gap: 12px;
+  }
+}
+
 .dark-theme .no-articles {
   color: rgba(255, 255, 255, 0.4);
 }

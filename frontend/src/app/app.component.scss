@@ -26,7 +26,7 @@
   }
   
   .main-content {
-    padding: 16px;
+    padding: 12px;
     width: 100%;
     margin-left: 0 !important;
   }
@@ -36,6 +36,12 @@
     ::ng-deep .mat-drawer-content {
       margin-left: 0 !important;
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
   }
 }
 
