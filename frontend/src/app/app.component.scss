@@ -28,11 +28,11 @@
       .mat-drawer-side {
         transform: translateX(0) !important;
         visibility: visible !important;
+        position: relative !important;
       }
       
-      /* FORZA contenuto spostato quando drawer è aperto */
-      .mat-drawer-container.mat-drawer-opened .mat-drawer-content,
-      .mat-drawer-container .mat-drawer-content {
+      /* FORZA contenuto spostato SOLO quando drawer è aperto */
+      .mat-drawer-container.mat-drawer-opened .mat-drawer-content {
         margin-left: 280px !important;
       }
       
@@ -41,11 +41,6 @@
         position: relative;
       }
     }
-  }
-  
-  /* Sidebar sempre visibile su desktop */
-  .sidebar {
-    display: block !important;
   }
 }
 
@@ -82,8 +77,9 @@
         max-width: 100% !important;
       }
       
-      /* Drawer in modalità overlay non deve occupare spazio quando chiuso */
-      .mat-drawer.mat-drawer-side {
+      /* Drawer in modalità overlay (SOLO su mobile) non deve occupare spazio quando chiuso */
+      .mat-drawer.mat-drawer-side[style*="position: fixed"],
+      .mat-drawer.mat-drawer-side.mat-drawer-over {
         position: fixed !important;
         top: 64px !important; /* Altezza header */
         height: calc(100vh - 64px) !important;
