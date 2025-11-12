@@ -1,4 +1,5 @@
 <div class="home-container">
+  <h1 class="sr-only">NewsFlow - Notizie Italiane</h1>
   <section class="hero-section" *ngIf="featuredArticles.length > 0">
     <h2 class="section-title">
       <mat-icon>star</mat-icon>
@@ -19,11 +20,11 @@
         {{ selectedCategoryId ? 'Articoli Filtrati' : 'Tutte le Notizie' }}
       </h2>
       <div class="filters">
-        <button mat-stroked-button>
+        <button mat-stroked-button aria-label="Filtra articoli">
           <mat-icon>filter_list</mat-icon>
           Filtri
         </button>
-        <button mat-stroked-button>
+        <button mat-stroked-button aria-label="Ordina articoli">
           <mat-icon>sort</mat-icon>
           Ordina
         </button>

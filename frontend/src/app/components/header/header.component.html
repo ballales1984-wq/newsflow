@@ -1,7 +1,7 @@
 <mat-toolbar color="primary" class="header">
   <div class="header-content">
     <div class="logo-section">
-      <button mat-icon-button (click)="onMenuClick()" matTooltip="Menu">
+      <button mat-icon-button (click)="onMenuClick()" matTooltip="Menu" aria-label="Apri menu laterale">
         <mat-icon>menu</mat-icon>
       </button>
       <a routerLink="/" class="logo-badge">NF</a>
@@ -19,6 +19,7 @@
         mat-icon-button
         (click)="toggleTheme()"
         matTooltip="Cambia tema"
+        [attr.aria-label]="themeService.isDarkMode ? 'Attiva tema chiaro' : 'Attiva tema scuro'"
       >
         <mat-icon>
           {{ themeService.isDarkMode ? 'light_mode' : 'dark_mode' }}
@@ -29,6 +30,7 @@
         mat-icon-button 
         matTooltip="Articoli salvati"
         routerLink="/saved"
+        [attr.aria-label]="'Articoli salvati' + (savedCount > 0 ? ': ' + savedCount : '')"
       >
         <mat-icon 
           [matBadge]="savedCount > 0 ? savedCount : null" 
@@ -38,7 +40,7 @@
         </mat-icon>
       </button>
 
-      <button mat-icon-button [matMenuTriggerFor]="userMenu" *ngIf="currentUser">
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" *ngIf="currentUser" [attr.aria-label]="'Menu utente: ' + currentUser.name">
         <div class="user-avatar">{{ currentUser.name.substring(0, 2).toUpperCase() }}</div>
       </button>
       

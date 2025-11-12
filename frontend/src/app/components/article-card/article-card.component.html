@@ -42,6 +42,7 @@
         matTooltip="Salva" 
         (click)="saveArticle($event)"
         [color]="isSaved() ? 'primary' : ''"
+        [attr.aria-label]="isSaved() ? 'Rimuovi dai salvati' : 'Salva articolo'"
       >
         <mat-icon>{{ isSaved() ? 'bookmark' : 'bookmark_border' }}</mat-icon>
       </button>
@@ -49,6 +50,7 @@
         mat-icon-button 
         matTooltip="Condividi" 
         (click)="shareArticle($event)"
+        aria-label="Condividi articolo"
       >
         <mat-icon>share</mat-icon>
       </button>
@@ -58,6 +60,7 @@
         mat-icon-button 
         matTooltip="Apri originale"
         (click)="$event.stopPropagation()"
+        aria-label="Apri articolo originale in nuova scheda"
       >
         <mat-icon>open_in_new</mat-icon>
       </a>
