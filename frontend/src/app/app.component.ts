@@ -12,6 +12,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   title = 'NewsFlow';
   @ViewChild('drawer') drawer!: MatDrawer;
   isMobile = false;
+  drawerOpened = true; // Inizia sempre aperto, poi si chiude su mobile
 
   constructor(
     public themeService: ThemeService,
@@ -28,10 +29,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
           // Su mobile: chiudi e usa overlay
           this.drawer.mode = 'over';
           this.drawer.close();
+          this.drawerOpened = false;
         } else {
           // Su desktop: FORZA apertura e modalità side
           this.drawer.mode = 'side';
           this.drawer.open();
+          this.drawerOpened = true;
         }
       }
     }, 100);
@@ -54,12 +57,14 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.drawer.opened) {
           this.drawer.close();
         }
+        this.drawerOpened = false;
       } else {
         // Su desktop: apri e usa side
         this.drawer.mode = 'side';
         if (!this.drawer.opened) {
           this.drawer.open();
         }
+        this.drawerOpened = true;
       }
     }
   }
