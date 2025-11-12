@@ -17,15 +17,25 @@
 .main-content {
   padding: 24px;
   overflow-y: auto;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
   .sidebar {
-    width: 240px;
+    width: 280px;
   }
   
   .main-content {
     padding: 16px;
+    width: 100%;
+    margin-left: 0 !important;
+  }
+  
+  /* Su mobile il drawer è overlay, quindi il contenuto occupa tutta la larghezza */
+  .main-container {
+    ::ng-deep .mat-drawer-content {
+      margin-left: 0 !important;
+    }
   }
 }
 

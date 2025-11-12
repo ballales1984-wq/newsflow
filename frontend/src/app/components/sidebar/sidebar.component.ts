@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
 import { ArticleService } from '../../services/article.service';
@@ -11,10 +11,12 @@ import { Category } from '../../models/category.model';
   styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit {
+  @Output() linkClicked = new EventEmitter<void>();
   categories: Category[] = [];
   selectedCategoryId: number | null = null;
   categoryCounts: { [key: number]: number } = {};
   totalArticles: number = 0;
+  isMobile = false;
 
   constructor(
     private categoryService: CategoryService,
@@ -23,7 +25,13 @@ export class SidebarComponent implements OnInit {
     private router: Router
   ) {}
 
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.isMobile = window.innerWidth < 768;
+  }
+
   ngOnInit(): void {
+    this.isMobile = window.innerWidth < 768;
     this.loadCategories();
     this.loadArticleCounts();
   }
@@ -70,6 +78,17 @@ export class SidebarComponent implements OnInit {
       this.router.navigate(['/'], { queryParams: { category: categoryId } });
     } else {
       this.router.navigate(['/']);
+    }
+    
+    // Chiudi drawer su mobile dopo la selezione
+    if (this.isMobile) {
+      this.linkClicked.emit();
+    }
+  }
+
+  onLinkClick(): void {
+    if (this.isMobile) {
+      this.linkClicked.emit();
     }
   }
 

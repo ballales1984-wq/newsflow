@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { AuthService, User } from '../../services/auth.service';
@@ -10,6 +10,7 @@ import { SavedArticleService } from '../../services/saved-article.service';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
+  @Output() menuToggle = new EventEmitter<void>();
   searchQuery = '';
   currentUser: User | null = null;
   savedCount = 0;
@@ -45,6 +46,10 @@ export class HeaderComponent implements OnInit {
 
   toggleTheme(): void {
     this.themeService.toggleTheme();
+  }
+
+  onMenuClick(): void {
+    this.menuToggle.emit();
   }
 }
 

@@ -1,7 +1,7 @@
 <mat-toolbar color="primary" class="header">
   <div class="header-content">
     <div class="logo-section">
-      <button mat-icon-button>
+      <button mat-icon-button (click)="onMenuClick()" matTooltip="Menu">
         <mat-icon>menu</mat-icon>
       </button>
       <a routerLink="/" class="logo-badge">NF</a>

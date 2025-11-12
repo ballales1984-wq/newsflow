@@ -994,6 +994,74 @@ def create_youtube_video_long(duration_minutes: int = 60):
     return _create_youtube_video_internal(target_duration_minutes=duration_minutes)
 
 
+@app.post("/api/admin/create-youtube-short-video")
+def create_youtube_short_video():
+    """
+    Crea video corto da 2 minuti con solo notizie che hanno immagini.
+    Perfetto per live brevi ogni 20 minuti.
+    
+    Returns:
+        Informazioni sul video creato
+    """
+    try:
+        import sys
+        import os
+        
+        # Aggiungi il percorso del backend al PYTHONPATH
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        
+        from youtube_short_video_generator import create_short_video_2min
+        
+        # Carica articoli
+        articles = _load_articles()
+        
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessun articolo disponibile"
+            }
+        
+        # Crea video corto (solo notizie con immagini)
+        video_path = create_short_video_2min(articles)
+        
+        if video_path:
+            # Calcola durata reale
+            try:
+                from moviepy.editor import VideoFileClip
+                video_clip = VideoFileClip(video_path)
+                actual_duration_minutes = round(video_clip.duration / 60, 1)
+                video_clip.close()
+            except:
+                actual_duration_minutes = 2.0
+            
+            file_size_mb = round(os.path.getsize(video_path) / (1024 * 1024), 2)
+            
+            return {
+                "success": True,
+                "video_path": video_path,
+                "duration_minutes": actual_duration_minutes,
+                "target_duration_minutes": 2,
+                "file_size_mb": file_size_mb,
+                "articles_count": len(articles),
+                "message": "Video corto da 2 minuti creato con successo!"
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Errore durante la creazione del video"
+            }
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
 @app.post("/api/admin/create-youtube-live-video")
 def create_youtube_live_video(duration_minutes: int = 30):
     """

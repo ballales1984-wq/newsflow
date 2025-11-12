@@ -71,8 +71,8 @@ class YouTubeVideoGenerator:
             print(f"⚠️  Errore download immagine {image_url}: {e}")
         return None
     
-    def text_to_speech(self, text: str, lang: str = 'it') -> Optional[str]:
-        """Converte testo in audio usando gTTS"""
+    def text_to_speech(self, text: str, lang: str = 'it', tld: str = 'it') -> Optional[str]:
+        """Converte testo in audio usando gTTS con voce femminile italiana"""
         if not GTTS_AVAILABLE:
             return None
         
@@ -80,7 +80,9 @@ class YouTubeVideoGenerator:
             # Limita testo per evitare errori
             text = text[:500] if len(text) > 500 else text
             
-            tts = gTTS(text=text, lang=lang, slow=False)
+            # gTTS italiano usa già voce femminile di default
+            # Usa tld='it' per assicurarsi voce italiana femminile
+            tts = gTTS(text=text, lang=lang, slow=False, tld=tld)
             temp_file = tempfile.NamedTemporaryFile(
                 delete=False, suffix='.mp3', dir=self.output_dir
             )
@@ -333,7 +335,7 @@ class YouTubeVideoGenerator:
             traceback.print_exc()
             return None
     
-    def create_video(self, max_articles: int = 5, output_filename: str = None, target_duration_minutes: int = None) -> Optional[str]:
+    def create_video(self, max_articles: int = 5, output_filename: str = None, target_duration_minutes: int = None, only_with_images: bool = False) -> Optional[str]:
         """
         Crea video completo con più notizie
         
@@ -341,30 +343,40 @@ class YouTubeVideoGenerator:
             max_articles: Numero massimo di articoli (ignorato se target_duration_minutes è specificato)
             output_filename: Nome file output
             target_duration_minutes: Durata target in minuti (es. 60 per 1 ora). Se specificato, aggiunge articoli fino a raggiungere la durata.
+            only_with_images: Se True, usa solo articoli che hanno immagini
         """
         if not MOVIEPY_AVAILABLE:
             print("❌ moviepy non disponibile. Installa con: pip install moviepy")
             return None
         
         try:
+            # Filtra articoli con immagini se richiesto
+            articles_to_use = self.articles
+            if only_with_images:
+                articles_to_use = [a for a in self.articles if a.get('image_url') and a.get('image_url', '').startswith('http')]
+                print(f"📸 Filtro: {len(articles_to_use)} articoli con immagini su {len(self.articles)} totali")
+                if not articles_to_use:
+                    print("❌ Nessun articolo con immagini disponibile!")
+                    return None
+            
             # Se target_duration è specificato, calcola quanti articoli servono
             if target_duration_minutes:
                 # Stima: ~15 secondi per articolo (con audio + 1 secondo pausa)
                 articles_per_minute = 4  # ~4 articoli al minuto
                 estimated_articles_needed = int(target_duration_minutes * articles_per_minute)
-                max_articles = min(estimated_articles_needed, len(self.articles))
+                max_articles = min(estimated_articles_needed, len(articles_to_use))
                 print(f"📹 Creo video di ~{target_duration_minutes} minuti (~{max_articles} articoli)...")
             else:
                 # Se max_articles è molto grande (>= 999) o è il default (5), usa TUTTE le notizie
                 if max_articles >= 999 or max_articles == 5:
-                    max_articles = len(self.articles)
+                    max_articles = len(articles_to_use)
                     print(f"📹 Creo video con TUTTE le {max_articles} notizie disponibili...")
                 else:
                     print(f"📹 Creo video con {max_articles} notizie...")
             
             # Seleziona le notizie migliori (featured o più recenti)
             selected_articles = sorted(
-                self.articles[:max_articles * 2] if max_articles < len(self.articles) else self.articles,
+                articles_to_use[:max_articles * 2] if max_articles < len(articles_to_use) else articles_to_use,
                 key=lambda x: (x.get('is_featured', False), x.get('quality_score', 0)),
                 reverse=True
             )
