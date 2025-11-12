@@ -36,7 +36,7 @@ export class HomeComponent implements OnInit {
     this.loadCategories();
     this.loadFeaturedArticles();
     
-    // Load articles immediately on init
+    // Load articles immediately on init and listen to query params changes
     this.route.queryParams.subscribe(params => {
       const previousCategoryId = this.selectedCategoryId;
       this.selectedCategoryId = params['category'] ? +params['category'] : null;
@@ -50,11 +50,6 @@ export class HomeComponent implements OnInit {
         }, 300);
       }
     });
-    
-    // Also load articles immediately if no query params
-    if (!this.route.snapshot.queryParams['category']) {
-      this.loadArticles();
-    }
   }
 
   loadCategories(): void {
