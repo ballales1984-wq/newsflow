@@ -194,12 +194,17 @@ def _load_articles():
             import traceback
             traceback.print_exc()
     
-    # Fallback su tutte le fonti
+    # Fallback su tutte le fonti (stessi path migliorati)
     possible_paths_all = [
         os.path.join(os.getcwd(), 'backend', 'all_sources_news.json'),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'all_sources_news.json'),
+        os.path.join(project_root_from_file, 'all_sources_news.json'),
         os.path.join(os.getcwd(), 'all_sources_news.json'),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'all_sources_news.json'),
+        os.path.join(project_root_from_file2, 'backend', 'all_sources_news.json'),
+        os.path.join(project_root_from_file2, 'all_sources_news.json'),
+        '/vercel/path0/backend/all_sources_news.json',
+        '/vercel/path0/all_sources_news.json',
+        os.path.join(current_file_dir, 'all_sources_news.json'),
+        os.path.join(current_file_dir, '..', 'all_sources_news.json'),
     ]
     
     file_path = None
