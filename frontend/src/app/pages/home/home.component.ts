@@ -33,23 +33,29 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadCategories();
-    this.loadFeaturedArticles();
-    
-    // Load articles immediately on init and listen to query params changes
-    this.route.queryParams.subscribe(params => {
-      const previousCategoryId = this.selectedCategoryId;
-      this.selectedCategoryId = params['category'] ? +params['category'] : null;
-      this.currentPage = 1;
-      this.loadArticles();
+    console.log('🏠 HomeComponent initialized');
+    try {
+      this.loadCategories();
+      this.loadFeaturedArticles();
       
-      // Scroll to filtered articles section when category changes
-      if (this.selectedCategoryId !== null && previousCategoryId !== this.selectedCategoryId) {
-        setTimeout(() => {
-          this.scrollToFilteredArticles();
-        }, 300);
-      }
-    });
+      // Load articles immediately on init and listen to query params changes
+      this.route.queryParams.subscribe(params => {
+        console.log('📋 Query params changed:', params);
+        const previousCategoryId = this.selectedCategoryId;
+        this.selectedCategoryId = params['category'] ? +params['category'] : null;
+        this.currentPage = 1;
+        this.loadArticles();
+        
+        // Scroll to filtered articles section when category changes
+        if (this.selectedCategoryId !== null && previousCategoryId !== this.selectedCategoryId) {
+          setTimeout(() => {
+            this.scrollToFilteredArticles();
+          }, 300);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error in ngOnInit:', error);
+    }
   }
 
   loadCategories(): void {
