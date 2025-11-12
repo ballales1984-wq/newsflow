@@ -38,11 +38,14 @@
       }
       
       /* FORZA contenuto spostato SEMPRE su desktop (anche se drawer non è "opened") */
+      /* Usa le stesse proprietà flex che funzionano su mobile */
       .mat-drawer-container .mat-drawer-content {
         margin-left: 280px !important;
         width: calc(100% - 280px) !important;
         max-width: calc(100% - 280px) !important;
         min-height: calc(100vh - 64px) !important;
+        flex: 1 1 calc(100% - 280px) !important;
+        min-width: 0 !important;
         position: relative !important;
         z-index: 0 !important;
       }
@@ -50,6 +53,8 @@
       /* Assicura che il drawer container abbia il drawer aperto */
       .mat-drawer-container {
         position: relative;
+        display: flex !important;
+        flex-direction: row !important;
       }
       
       /* Forza il drawer a essere aperto su desktop */
