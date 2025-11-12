@@ -39,6 +39,7 @@ export class ArticleService {
       }
     }
 
+    console.log('📡 API Request:', { url: this.apiUrl, params: params.toString() });
     return this.http.get<ArticleList>(this.apiUrl, { params });
   }
 

@@ -76,6 +76,7 @@ export class HomeComponent implements OnInit {
 
   loadArticles(): void {
     this.loading = true;
+    console.log('🔄 Loading articles...', { page: this.currentPage, size: this.pageSize, category: this.selectedCategoryId });
     
     const filters = this.selectedCategoryId 
       ? { category_id: this.selectedCategoryId } 
@@ -85,7 +86,12 @@ export class HomeComponent implements OnInit {
       .pipe(
         timeout(60000), // 60 secondi timeout per permettere wake-up Render
         catchError(error => {
-          console.error('Error loading articles:', error);
+          console.error('❌ Error loading articles:', error);
+          console.error('Error details:', {
+            message: error?.message,
+            status: error?.status,
+            url: error?.url
+          });
           return of({
             items: [],
             total: 0,
@@ -97,12 +103,13 @@ export class HomeComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
+          console.log('✅ Articles loaded:', { count: response.items?.length || 0, total: response.total });
           this.articles = response.items || [];
           this.totalArticles = response.total || 0;
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading articles:', error);
+          console.error('❌ Subscribe error loading articles:', error);
           this.articles = [];
           this.totalArticles = 0;
           this.loading = false;
