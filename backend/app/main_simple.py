@@ -342,8 +342,8 @@ def _load_articles():
 
 
 @app.get("/api/v1/articles")
-def get_articles(category_id: int = None):
-    """Get articles - REAL NEWS from RSS feeds - WITH CATEGORY FILTER"""
+def get_articles(category_id: int = None, skip: int = 0, limit: int = 20):
+    """Get articles - REAL NEWS from RSS feeds - WITH CATEGORY FILTER AND PAGINATION"""
     articles = _load_articles()
     
     # Mappa categorie → keywords da cercare
@@ -386,12 +386,16 @@ def get_articles(category_id: int = None):
             
             articles = filtered
         
+        # Applica paginazione
+        total = len(articles)
+        paginated_articles = articles[skip:skip + limit]
+        
         return {
-            "items": articles,
-            "total": len(articles),
-            "page": 1,
-            "size": len(articles),
-            "pages": 1
+            "items": paginated_articles,
+            "total": total,
+            "page": (skip // limit) + 1,
+            "size": len(paginated_articles),
+            "pages": (total + limit - 1) // limit if limit > 0 else 1
         }
     
     # Fallback to demo if file not found
@@ -399,7 +403,7 @@ def get_articles(category_id: int = None):
         "items": [],
         "total": 0,
         "page": 1,
-        "size": 20,
+        "size": 0,
         "pages": 1
         }
 
