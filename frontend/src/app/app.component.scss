@@ -20,21 +20,34 @@
   width: 100%;
 }
 
-/* Desktop: Angular Material gestisce automaticamente il layout quando drawer è aperto */
+/* Desktop: sidebar sempre visibile */
 @media (min-width: 769px) {
   .main-container {
     ::ng-deep {
-      /* Assicura che il drawer sia sempre visibile su desktop */
+      /* FORZA drawer sempre visibile su desktop */
       .mat-drawer-side {
         transform: translateX(0) !important;
         visibility: visible !important;
+        display: block !important;
+        position: relative !important;
       }
       
-      /* Il contenuto si sposta automaticamente quando drawer è aperto */
-      .mat-drawer-opened .mat-drawer-content {
+      /* FORZA contenuto spostato quando drawer è aperto */
+      .mat-drawer-container.mat-drawer-opened .mat-drawer-content {
         margin-left: 280px !important;
       }
+      
+      /* Assicura che il drawer container abbia il drawer aperto */
+      .mat-drawer-container {
+        position: relative;
+      }
     }
+  }
+  
+  /* Assicura che la sidebar sia visibile */
+  .sidebar {
+    display: block !important;
+    visibility: visible !important;
   }
 }
 
