@@ -78,8 +78,14 @@ def _load_articles():
         text = re.sub(r'\s+', ' ', text)
         return text.strip()
     
+    # Determina il path base (directory corrente o backend/)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Torna alla root backend
+    if not os.path.exists(os.path.join(base_dir, 'final_news_italian.json')):
+        # Se non trovato, prova directory corrente
+        base_dir = os.getcwd()
+    
     # Usa il file finale con tutte le notizie in italiano
-    file_path = 'final_news_italian.json'
+    file_path = os.path.join(base_dir, 'final_news_italian.json')
     if os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -92,11 +98,12 @@ def _load_articles():
                     if 'title' in article:
                         article['title'] = clean_html(article['title'])
                 return articles
-        except:
+        except Exception as e:
+            print(f"Errore caricamento final_news_italian.json: {e}")
             pass
     
     # Fallback su tutte le fonti
-    file_path = 'all_sources_news.json'
+    file_path = os.path.join(base_dir, 'all_sources_news.json')
     if os.path.exists(file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -109,7 +116,8 @@ def _load_articles():
                     if 'title' in article:
                         article['title'] = clean_html(article['title'])
                 return articles
-        except:
+        except Exception as e:
+            print(f"Errore caricamento all_sources_news.json: {e}")
             pass
     
     # Fallback: notizie embedded (le 12 migliori)
