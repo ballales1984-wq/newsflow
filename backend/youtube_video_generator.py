@@ -93,11 +93,32 @@ class YouTubeVideoGenerator:
             return None
     
     def create_news_segment(self, article: Dict, duration: int = 10, article_id: int = 0):
-        """Crea un segmento video per una notizia"""
+        """Crea un segmento video per una notizia
+        
+        La durata viene calcolata automaticamente: durata audio + 1 secondo di pausa
+        """
         if not MOVIEPY_AVAILABLE or VideoFileClip is None:
             return None
         
         try:
+            # PRIMA: Crea l'audio per calcolare la durata corretta
+            title = article.get('title', 'Notizia')[:100]
+            summary = article.get('summary', article.get('content', ''))[:300]
+            audio_text = f"{title}. {summary[:200] if summary else ''}"
+            audio_path = self.text_to_speech(audio_text, lang='it')
+            
+            # Calcola durata basata sull'audio + 1 secondo di pausa
+            if audio_path:
+                try:
+                    audio_clip = AudioFileClip(audio_path)
+                    # Durata = durata audio + 1 secondo di pausa
+                    duration = audio_clip.duration + 1.0
+                except Exception as e:
+                    print(f"⚠️  Errore lettura audio: {e}")
+                    duration = 10  # Fallback se audio non disponibile
+            else:
+                duration = 10  # Fallback se audio non disponibile
+            
             clips = []
             
             # 1. Immagine di sfondo (se disponibile)
@@ -129,7 +150,6 @@ class YouTubeVideoGenerator:
                     return None
             
             # 2. Titolo come testo sovrapposto (con fallback PIL)
-            title = article.get('title', 'Notizia')[:100]  # Limita lunghezza
             try:
                 title_clip = TextClip(
                     title,
@@ -164,7 +184,6 @@ class YouTubeVideoGenerator:
                     print(f"⚠️  Errore fallback titolo: {e2}")
             
             # 3. Summary come testo (opzionale, può essere saltato se TextClip non funziona)
-            summary = article.get('summary', article.get('content', ''))[:300]
             if summary:
                 try:
                     summary_clip = TextClip(
@@ -181,17 +200,10 @@ class YouTubeVideoGenerator:
                     print(f"⚠️  Errore creazione summary (saltato): {e}")
                     # Skip summary se TextClip non funziona - il video funzionerà comunque
             
-            # 4. Audio narrante (se disponibile)
-            audio_text = f"{title}. {summary[:200] if summary else ''}"
-            audio_path = self.text_to_speech(audio_text, lang='it')
+            # 4. Aggiungi audio al clip principale (se disponibile)
             if audio_path:
                 try:
                     audio_clip = AudioFileClip(audio_path)
-                    # Adatta durata video all'audio
-                    if audio_clip.duration > duration:
-                        duration = min(audio_clip.duration + 2, 30)  # Max 30 secondi
-                        for clip in clips:
-                            clip.duration = duration
                     clips[0] = clips[0].set_audio(audio_clip)
                 except Exception as e:
                     print(f"⚠️  Errore aggiunta audio: {e}")
@@ -205,6 +217,118 @@ class YouTubeVideoGenerator:
             
         except Exception as e:
             print(f"⚠️  Errore creazione segmento: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    def create_live_video(self, duration_minutes: int = 30, output_filename: str = None) -> Optional[str]:
+        """
+        Crea un video per YouTube Live che ripete le notizie fino a raggiungere la durata desiderata.
+        Perfetto per trasmettere un telegiornale continuo.
+        
+        Args:
+            duration_minutes: Durata target del video per la live (es. 30, 60 minuti)
+            output_filename: Nome file output (opzionale)
+        
+        Returns:
+            Percorso del video creato
+        """
+        if not MOVIEPY_AVAILABLE:
+            print("❌ moviepy non disponibile. Installa con: pip install moviepy")
+            return None
+        
+        try:
+            print(f"📺 Creo video per LIVE di {duration_minutes} minuti...")
+            print(f"   Notizie disponibili: {len(self.articles)}")
+            
+            # Calcola quante volte ripetere le notizie
+            # Stima: ~13 secondi per notizia (audio + 1 secondo pausa)
+            seconds_per_article = 13
+            total_seconds_needed = duration_minutes * 60
+            articles_needed = int(total_seconds_needed / seconds_per_article)
+            repetitions = int(articles_needed / len(self.articles)) + 1
+            
+            print(f"   Articoli necessari: ~{articles_needed}")
+            print(f"   Ripetizioni delle notizie: ~{repetitions} volte")
+            
+            # Crea tutti i segmenti ripetendo le notizie
+            segments = []
+            total_duration = 0
+            target_duration_seconds = duration_minutes * 60
+            
+            article_index = 0
+            repetition_count = 0
+            
+            while total_duration < target_duration_seconds:
+                # Prendi la notizia corrente (con ciclo sulle 85 notizie)
+                article = self.articles[article_index % len(self.articles)]
+                
+                # Se è la prima notizia di una nuova ripetizione, aggiungi un breve intro
+                if article_index % len(self.articles) == 0 and article_index > 0:
+                    repetition_count += 1
+                    print(f"   Ripetizione {repetition_count}: notizie {article_index // len(self.articles) + 1}...")
+                
+                print(f"   {article_index + 1}: {article.get('title', '')[:50]}...")
+                
+                # Crea il segmento (durata calcolata automaticamente: audio + 1 secondo)
+                segment = self.create_news_segment(article, duration=15, article_id=article_index)
+                
+                if segment:
+                    segments.append(segment)
+                    total_duration += segment.duration
+                    
+                    # Se abbiamo raggiunto la durata target, fermati
+                    if total_duration >= target_duration_seconds:
+                        break
+                
+                article_index += 1
+                
+                # Limite di sicurezza: non superare il doppio della durata target
+                if article_index > articles_needed * 2:
+                    break
+            
+            if not segments:
+                print("❌ Nessun segmento creato!")
+                return None
+            
+            actual_duration_minutes = total_duration / 60
+            print(f"✅ Creati {len(segments)} segmenti (~{actual_duration_minutes:.1f} minuti)")
+            
+            # Unisci tutti i segmenti
+            print("🔗 Unisco i segmenti...")
+            final_video = concatenate_videoclips(segments, method="compose")
+            
+            # Genera nome file
+            if not output_filename:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_filename = f"newsflow_live_{duration_minutes}min_{timestamp}.mp4"
+            
+            output_path = os.path.join(self.output_dir, output_filename)
+            
+            # Salva video
+            print(f"💾 Salvo video: {output_path}")
+            final_video.write_videofile(
+                output_path,
+                fps=24,
+                codec='libx264',
+                audio_codec='aac',
+                temp_audiofile=os.path.join(self.output_dir, 'temp_audio.m4a'),
+                remove_temp=True
+            )
+            
+            # Chiudi i clip per liberare memoria
+            final_video.close()
+            for segment in segments:
+                segment.close()
+            
+            print(f"✅ Video per LIVE creato: {output_path}")
+            print(f"   Durata: {actual_duration_minutes:.1f} minuti")
+            print(f"   Dimensione: {os.path.getsize(output_path) / (1024 * 1024):.2f} MB")
+            
+            return output_path
+            
+        except Exception as e:
+            print(f"❌ Errore creazione video live: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -225,17 +349,22 @@ class YouTubeVideoGenerator:
         try:
             # Se target_duration è specificato, calcola quanti articoli servono
             if target_duration_minutes:
-                # Stima: ~15 secondi per articolo (con audio)
+                # Stima: ~15 secondi per articolo (con audio + 1 secondo pausa)
                 articles_per_minute = 4  # ~4 articoli al minuto
                 estimated_articles_needed = int(target_duration_minutes * articles_per_minute)
                 max_articles = min(estimated_articles_needed, len(self.articles))
                 print(f"📹 Creo video di ~{target_duration_minutes} minuti (~{max_articles} articoli)...")
             else:
-                print(f"📹 Creo video con {max_articles} notizie...")
+                # Se max_articles è molto grande (>= 999) o è il default (5), usa TUTTE le notizie
+                if max_articles >= 999 or max_articles == 5:
+                    max_articles = len(self.articles)
+                    print(f"📹 Creo video con TUTTE le {max_articles} notizie disponibili...")
+                else:
+                    print(f"📹 Creo video con {max_articles} notizie...")
             
             # Seleziona le notizie migliori (featured o più recenti)
             selected_articles = sorted(
-                self.articles[:max_articles * 2],  # Prendi il doppio per avere scelta
+                self.articles[:max_articles * 2] if max_articles < len(self.articles) else self.articles,
                 key=lambda x: (x.get('is_featured', False), x.get('quality_score', 0)),
                 reverse=True
             )
@@ -251,10 +380,12 @@ class YouTubeVideoGenerator:
                     break
                     
                 print(f"   {i+1}: {article.get('title', '')[:50]}...")
-                segment = self.create_news_segment(article, duration=15, article_id=i)  # Passa article_id
+                # La durata viene calcolata automaticamente dall'audio + 1 secondo
+                segment = self.create_news_segment(article, duration=15, article_id=i)  # duration=15 è solo fallback
                 if segment:
                     segments.append(segment)
                     total_duration += segment.duration
+                    print(f"      Durata segmento: {segment.duration:.1f}s")
             
             if not segments:
                 print("❌ Nessun segmento creato!")

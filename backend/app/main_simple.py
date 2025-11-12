@@ -982,6 +982,362 @@ def create_youtube_video_long(duration_minutes: int = 60):
     return _create_youtube_video_internal(target_duration_minutes=duration_minutes)
 
 
+@app.post("/api/admin/create-youtube-live-video")
+def create_youtube_live_video(duration_minutes: int = 30):
+    """
+    Crea un video per YouTube Live che ripete le notizie fino a raggiungere la durata desiderata.
+    Perfetto per trasmettere un telegiornale continuo durante una live.
+    
+    Args:
+        duration_minutes: Durata target del video per la live (default: 30 minuti)
+                         Consigliato: 30-60 minuti per live, 240 per TG 4 ore
+    
+    Returns:
+        Informazioni sul video creato
+    """
+    try:
+        import sys
+        import os
+        # Aggiungi il percorso del backend al PYTHONPATH
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        
+        from youtube_video_generator import YouTubeVideoGenerator
+        
+        # Carica le notizie
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+        
+        # Crea il generatore video
+        generator = YouTubeVideoGenerator(articles)
+        
+        try:
+            # Crea il video per live (ripete le notizie fino alla durata target)
+            video_path = generator.create_live_video(duration_minutes=duration_minutes)
+            
+            if video_path:
+                # Calcola durata reale del video
+                try:
+                    from moviepy.editor import VideoFileClip
+                    video_clip = VideoFileClip(video_path)
+                    actual_duration_minutes = round(video_clip.duration / 60, 1)
+                    video_clip.close()
+                except:
+                    actual_duration_minutes = duration_minutes
+                
+                result = {
+                    "success": True,
+                    "message": f"Video per LIVE creato con successo!",
+                    "video_path": video_path,
+                    "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2) if os.path.exists(video_path) else 0,
+                    "duration_minutes": actual_duration_minutes,
+                    "target_duration_minutes": duration_minutes,
+                    "articles_count": len(articles),
+                    "repetitions": round(actual_duration_minutes * 60 / (len(articles) * 13), 1)
+                }
+                
+                return result
+            else:
+                return {
+                    "success": False,
+                    "error": "Errore nella creazione del video"
+                }
+        finally:
+            try:
+                generator.cleanup()
+            except:
+                pass
+                
+    except ImportError as e:
+        return {
+            "success": False,
+            "error": f"Dipendenze mancanti: {str(e)}",
+            "hint": "Installa con: pip install moviepy gtts pillow"
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/upload-tg-to-youtube")
+def upload_tg_to_youtube():
+    """
+    Carica automaticamente il video TG su YouTube.
+    Richiede YouTube API credentials configurate.
+    
+    Returns:
+        Informazioni sull'upload
+    """
+    try:
+        import sys
+        import os
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        
+        from youtube_api_manager import YouTubeAPIManager
+        
+        # Verifica che il video esista
+        video_path = os.path.join(backend_path, "youtube_videos", "newsflow_tg.mp4")
+        if not os.path.exists(video_path):
+            return {
+                "success": False,
+                "error": "Video TG non trovato. Crea prima il video con /api/admin/create-tg-video"
+            }
+        
+        # Crea manager YouTube
+        manager = YouTubeAPIManager()
+        
+        # Autentica
+        if not manager.authenticate():
+            return {
+                "success": False,
+                "error": "Autenticazione YouTube fallita. Configura le credenziali.",
+                "hint": "Vedi: CONFIGURA_YOUTUBE_API.ps1"
+            }
+        
+        # Upload video
+        title = f"TG NewsFlow - Notizie del {datetime.now().strftime('%d/%m/%Y')}"
+        description = "Telegiornale automatico con le ultime notizie. Aggiornato automaticamente."
+        tags = ["notizie", "telegiornale", "news", "italia", "informazione"]
+        
+        video_id = manager.upload_video(
+            video_path=video_path,
+            title=title,
+            description=description,
+            tags=tags,
+            privacy_status="public"
+        )
+        
+        if video_id:
+            return {
+                "success": True,
+                "message": "Video caricato su YouTube con successo!",
+                "video_id": video_id,
+                "video_url": f"https://www.youtube.com/watch?v={video_id}",
+                "title": title
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Errore durante l'upload del video"
+            }
+            
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/create-youtube-live-auto")
+def create_youtube_live_auto(hour: int, minute: int = 0):
+    """
+    Crea una live YouTube programmata automaticamente.
+    Richiede YouTube API credentials configurate.
+    
+    Args:
+        hour: Ora (0-23)
+        minute: Minuto (0-59)
+    
+    Returns:
+        Informazioni sulla live creata
+    """
+    try:
+        import sys
+        import os
+        from datetime import datetime, timedelta
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        
+        from youtube_api_manager import YouTubeAPIManager
+        
+        # Calcola data/ora programmata
+        now = datetime.now()
+        scheduled_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        
+        # Se l'ora è già passata oggi, programma per domani
+        if scheduled_time < now:
+            scheduled_time += timedelta(days=1)
+        
+        # Crea manager YouTube
+        manager = YouTubeAPIManager()
+        
+        # Autentica
+        if not manager.authenticate():
+            return {
+                "success": False,
+                "error": "Autenticazione YouTube fallita. Configura le credenziali.",
+                "hint": "Vedi: CONFIGURA_YOUTUBE_API.ps1"
+            }
+        
+        # Crea live broadcast
+        title = f"TG NewsFlow Live - {scheduled_time.strftime('%d/%m/%Y %H:%M')}"
+        description = "Telegiornale in diretta con le ultime notizie."
+        
+        broadcast = manager.create_live_broadcast(
+            title=title,
+            description=description,
+            scheduled_start_time=scheduled_time,
+            privacy_status="public"
+        )
+        
+        if broadcast:
+            return {
+                "success": True,
+                "message": "Live YouTube creata con successo!",
+                "broadcast_id": broadcast['broadcast_id'],
+                "title": title,
+                "scheduled_start_time": scheduled_time.isoformat(),
+                "note": "La live partirà automaticamente all'orario programmato"
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Errore durante la creazione della live"
+            }
+            
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/create-tg-video")
+def create_tg_video():
+    """
+    Crea un video TG con tutte le notizie disponibili (~18-20 minuti).
+    Perfetto per live brevi che si accendono e spengono automaticamente.
+    
+    Returns:
+        Informazioni sul video creato
+    """
+    try:
+        import sys
+        import os
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        
+        from youtube_video_generator import YouTubeVideoGenerator
+        
+        # Carica le notizie
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+        
+        # Crea il generatore video
+        generator = YouTubeVideoGenerator(articles)
+        
+        try:
+            # Crea video TG con TUTTE le notizie (non ripete, solo le 85 notizie)
+            # Durata stimata: ~18-20 minuti
+            output_filename = "newsflow_tg.mp4"
+            
+            # Usa create_video con tutte le notizie (non create_live_video che ripete)
+            video_path = generator.create_video(max_articles=999, output_filename=output_filename)
+            
+            if video_path:
+                # Calcola durata reale
+                try:
+                    from moviepy.editor import VideoFileClip
+                    video_clip = VideoFileClip(video_path)
+                    actual_duration_minutes = round(video_clip.duration / 60, 1)
+                    video_clip.close()
+                except:
+                    # Stima basata su numero articoli
+                    actual_duration_minutes = round(len(articles) * 13 / 60, 1)
+                
+                result = {
+                    "success": True,
+                    "message": "Video TG creato con successo!",
+                    "video_path": video_path,
+                    "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2) if os.path.exists(video_path) else 0,
+                    "duration_minutes": actual_duration_minutes,
+                    "articles_count": len(articles),
+                    "note": "Video pronto per live di ~20 minuti. Usa AVVIA_SCHEDULER_LIVE.ps1 per programmare live automatiche"
+                }
+                
+                return result
+            else:
+                return {
+                    "success": False,
+                    "error": "Errore nella creazione del video"
+                }
+        finally:
+            try:
+                generator.cleanup()
+            except:
+                pass
+                
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.get("/api/admin/check-tg-sync")
+def check_tg_sync():
+    """
+    Controlla se il video TG deve essere rigenerato (notizie aggiornate)
+    
+    Returns:
+        Stato della sincronizzazione
+    """
+    try:
+        import sys
+        import os
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        
+        from news_sync_monitor import NewsSyncMonitor
+        
+        monitor = NewsSyncMonitor(
+            news_file="final_news_italian.json",
+            video_file="youtube_videos/newsflow_live_4h.mp4"
+        )
+        
+        should_regenerate = monitor.should_regenerate_video()
+        news_update_time = monitor.get_news_update_time()
+        
+        return {
+            "success": True,
+            "should_regenerate": should_regenerate,
+            "news_update_time": news_update_time.isoformat() if news_update_time else None,
+            "video_exists": os.path.exists(monitor.video_file),
+            "message": "Video deve essere rigenerato" if should_regenerate else "Video aggiornato"
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
 def _create_youtube_video_internal(max_articles: int = None, target_duration_minutes: int = None):
     """
     Funzione interna per creare video YouTube
@@ -1182,7 +1538,7 @@ def get_youtube_schedule():
                 "success": True,
                 "scheduled_streams": [],
                 "message": "Nessuna programmazione trovata. Usa /api/admin/create-daily-schedule per crearne una."
-            }
+        }
     except Exception as e:
         return {
             "success": False,

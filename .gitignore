@@ -76,3 +76,11 @@ coverage/
 # Docker
 .dockerignore
 
+# Credentials and sensitive files
+youtube_credentials.json
+users_db.json
+*.credentials.json
+
+# YouTube videos (temporary files)
+backend/youtube_videos/
+
