@@ -1,11 +1,11 @@
 <div class="app-container">
   <app-header (menuToggle)="toggleSidebar()"></app-header>
   
-  <mat-drawer-container class="main-container">
+  <mat-drawer-container class="main-container" [hasBackdrop]="isMobile">
     <mat-drawer 
       #drawer
       [mode]="isMobile ? 'over' : 'side'" 
-      [opened]="false"
+      [opened]="!isMobile"
       class="sidebar">
       <app-sidebar (linkClicked)="toggleSidebar()"></app-sidebar>
     </mat-drawer>

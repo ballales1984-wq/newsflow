@@ -37,29 +37,32 @@
     width: 100% !important;
     
     ::ng-deep {
-      /* Forza il contenuto a occupare tutta la larghezza */
+      /* CRITICO: Forza il contenuto a occupare tutta la larghezza su mobile */
       .mat-drawer-content {
         margin-left: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         flex: 1 1 100% !important;
+        min-width: 0 !important;
       }
       
-      /* Assicura che il drawer sia sempre overlay su mobile */
+      /* Assicura che il container occupi tutta la larghezza */
       .mat-drawer-container {
         width: 100% !important;
+        max-width: 100% !important;
       }
       
-      /* Drawer nascosto quando chiuso */
-      .mat-drawer-side:not(.mat-drawer-opened) {
-        transform: translateX(-100%) !important;
-        visibility: hidden !important;
+      /* Drawer in modalità overlay non deve occupare spazio quando chiuso */
+      .mat-drawer.mat-drawer-side {
+        position: fixed !important;
+        top: 64px !important; /* Altezza header */
+        height: calc(100vh - 64px) !important;
       }
       
-      /* Drawer visibile quando aperto (overlay) */
-      .mat-drawer-side.mat-drawer-opened {
-        transform: translateX(0) !important;
-        visibility: visible !important;
+      /* Quando il drawer è chiuso su mobile, assicurati che non occupi spazio */
+      .mat-drawer-container:not(.mat-drawer-opened) .mat-drawer-content {
+        margin-left: 0 !important;
+        width: 100% !important;
       }
     }
   }
