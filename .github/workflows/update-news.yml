@@ -1,4 +1,5 @@
 name: Update News Automatically
+# Workflow per aggiornare automaticamente le notizie ogni 6 ore
 
 on:
   schedule:
