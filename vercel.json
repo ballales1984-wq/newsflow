@@ -1,21 +1,16 @@
-{
+﻿{
   "version": 2,
   "buildCommand": "cd frontend && npm install && npm run build -- --configuration production",
   "outputDirectory": "frontend/dist/newsflow",
   "installCommand": "cd frontend && npm install",
-  "functions": {
-    "api/[...path].py": {
-      "runtime": "python3.9"
-    }
-  },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/[...path].py"
+      "source": "/api/(.*)",
+      "destination": "/api/index"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "env": {
