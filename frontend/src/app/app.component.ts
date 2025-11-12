@@ -31,18 +31,10 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         } else {
           // Su desktop: FORZA apertura e modalità side
           this.drawer.mode = 'side';
-          if (!this.drawer.opened) {
-            this.drawer.open();
-          }
-          // Forza apertura anche se già aperto (per sicurezza)
-          setTimeout(() => {
-            if (this.drawer && !this.drawer.opened && !this.isMobile) {
-              this.drawer.open();
-            }
-          }, 100);
+          this.drawer.open();
         }
       }
-    }, 300);
+    }, 100);
   }
 
   @HostListener('window:resize', ['$event'])
