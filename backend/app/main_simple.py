@@ -41,6 +41,50 @@ def health_check():
     return {"status": "healthy"}
 
 
+@app.get("/api/debug/files")
+def debug_files():
+    """Debug endpoint per verificare se i file JSON sono accessibili"""
+    import os
+    import json
+    
+    debug_info = {
+        "current_working_directory": os.getcwd(),
+        "file_location": __file__,
+        "possible_paths": [],
+        "files_found": []
+    }
+    
+    # Prova diversi path
+    possible_paths = [
+        os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
+        os.path.join(os.getcwd(), 'final_news_italian.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'final_news_italian.json'),
+    ]
+    
+    for path in possible_paths:
+        exists = os.path.exists(path)
+        debug_info["possible_paths"].append({
+            "path": path,
+            "exists": exists,
+            "size": os.path.getsize(path) if exists else None
+        })
+        if exists:
+            debug_info["files_found"].append(path)
+    
+    # Prova a caricare gli articoli
+    try:
+        articles = _load_articles()
+        debug_info["articles_loaded"] = len(articles) if articles else 0
+        debug_info["articles_sample"] = articles[:3] if articles else []
+    except Exception as e:
+        debug_info["error_loading_articles"] = str(e)
+        import traceback
+        debug_info["traceback"] = traceback.format_exc()
+    
+    return debug_info
+
+
 def _load_articles():
     """Helper to load articles - 94 NEWS ALL IN ITALIAN"""
     import json
