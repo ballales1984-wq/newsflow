@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  // Backend su Vercel serverless functions (stesso dominio del frontend)
-  apiUrl: '/api/v1'
+  // Backend su ngrok (PC locale)
+  apiUrl: 'https://tonita-deposable-manneristically.ngrok-free.dev/api/v1'
 };
 
