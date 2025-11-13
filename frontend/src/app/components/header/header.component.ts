@@ -10,7 +10,6 @@ import { SavedArticleService } from '../../services/saved-article.service';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
-  @Output() menuToggle = new EventEmitter<void>();
   searchQuery = '';
   currentUser: User | null = null;
   savedCount = 0;
@@ -48,13 +47,6 @@ export class HeaderComponent implements OnInit {
     // Usa setTimeout per non bloccare il thread principale
     setTimeout(() => {
       this.themeService.toggleTheme();
-    }, 0);
-  }
-
-  onMenuClick(): void {
-    // Usa setTimeout per non bloccare il thread principale
-    setTimeout(() => {
-      this.menuToggle.emit();
     }, 0);
   }
 }

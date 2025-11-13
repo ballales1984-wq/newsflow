@@ -7,11 +7,7 @@
 .main-container {
   flex: 1;
   height: calc(100vh - 64px);
-}
-
-.sidebar {
-  width: 220px;
-  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  width: 100%;
 }
 
 .main-content {
@@ -22,71 +18,9 @@
   background-color: transparent;
 }
 
-/* Desktop: sidebar sempre visibile */
-@media (min-width: 769px) {
-  .main-container {
-    ::ng-deep {
-      /* Assicura che il drawer sia aperto e visibile su desktop */
-      .mat-drawer-container.mat-drawer-opened .mat-drawer-side {
-        transform: translateX(0) !important;
-        visibility: visible !important;
-      }
-      
-      /* Il contenuto si sposta automaticamente quando drawer è aperto */
-      .mat-drawer-container.mat-drawer-opened .mat-drawer-content {
-        margin-left: 220px !important;
-      }
-    }
-  }
-}
-
-/* Mobile: sidebar nascosta, contenuto a tutta larghezza */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 220px;
-  }
-  
   .main-content {
     padding: 12px;
-    width: 100% !important;
-    margin-left: 0 !important;
-    max-width: 100% !important;
-  }
-  
-  /* Su mobile il drawer è overlay, quindi il contenuto occupa SEMPRE tutta la larghezza */
-  .main-container {
-    width: 100% !important;
-    
-    ::ng-deep {
-      /* CRITICO: Forza il contenuto a occupare tutta la larghezza su mobile */
-      .mat-drawer-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        flex: 1 1 100% !important;
-        min-width: 0 !important;
-      }
-      
-      /* Assicura che il container occupi tutta la larghezza */
-      .mat-drawer-container {
-        width: 100% !important;
-        max-width: 100% !important;
-      }
-      
-      /* Drawer in modalità overlay (SOLO su mobile) non deve occupare spazio quando chiuso */
-      .mat-drawer.mat-drawer-side[style*="position: fixed"],
-      .mat-drawer.mat-drawer-side.mat-drawer-over {
-        position: fixed !important;
-        top: 64px !important; /* Altezza header */
-        height: calc(100vh - 64px) !important;
-      }
-      
-      /* Quando il drawer è chiuso su mobile, assicurati che non occupi spazio */
-      .mat-drawer-container:not(.mat-drawer-opened) .mat-drawer-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-      }
-    }
   }
 }
 

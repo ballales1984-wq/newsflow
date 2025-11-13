@@ -16,7 +16,6 @@ import { of } from 'rxjs';
 export class HomeComponent implements OnInit {
   articles: Article[] = [];
   categories: Category[] = [];
-  featuredArticles: Article[] = [];
   loading = false;
   selectedCategoryId: number | null = null;
   
@@ -36,7 +35,6 @@ export class HomeComponent implements OnInit {
     console.log('🏠 HomeComponent initialized');
     try {
       this.loadCategories();
-      this.loadFeaturedArticles();
       
       // Load articles immediately on init and listen to query params changes
       this.route.queryParams.subscribe(params => {
@@ -47,10 +45,13 @@ export class HomeComponent implements OnInit {
         this.loadArticles();
         
         // Scroll to filtered articles section when category changes
+        // Scroll sempre quando c'è una categoria selezionata (anche se è la stessa)
+        // Lo scroll verrà fatto anche dopo il caricamento degli articoli (nel subscribe)
+        // Questo è un backup nel caso il componente sia già caricato
         if (this.selectedCategoryId !== null && previousCategoryId !== this.selectedCategoryId) {
           setTimeout(() => {
             this.scrollToFilteredArticles();
-          }, 300);
+          }, 1000); // Aspetta che gli articoli siano caricati
         }
       });
     } catch (error) {
@@ -69,16 +70,6 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  loadFeaturedArticles(): void {
-    this.articleService.getFeaturedArticles(5).subscribe({
-      next: (articles) => {
-        this.featuredArticles = articles;
-      },
-      error: (error) => {
-        console.error('Error loading featured articles:', error);
-      }
-    });
-  }
 
   loadArticles(): void {
     this.loading = true;
@@ -113,6 +104,13 @@ export class HomeComponent implements OnInit {
           this.articles = response.items || [];
           this.totalArticles = response.total || 0;
           this.loading = false;
+          
+          // Scroll agli articoli filtrati dopo che sono stati caricati (se c'è una categoria selezionata)
+          if (this.selectedCategoryId !== null) {
+            setTimeout(() => {
+              this.scrollToFilteredArticles();
+            }, 300); // Aspetta che il DOM sia aggiornato
+          }
         },
         error: (error) => {
           console.error('❌ Subscribe error loading articles:', error);
@@ -138,17 +136,36 @@ export class HomeComponent implements OnInit {
   }
 
   scrollToFilteredArticles(): void {
-    const element = document.getElementById('articoli-filtrati');
-    if (element) {
-      const headerOffset = 80; // Offset per l'header fisso
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+    // Cerca l'elemento degli articoli filtrati con retry multipli
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    const tryScroll = () => {
+      attempts++;
+      const element = document.getElementById('articoli-filtrati');
+      
+      if (element) {
+        const headerOffset = 80; // Offset per l'header fisso
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
+        console.log('📍 Scrolling to filtered articles:', { offsetPosition, elementPosition, scrollY: window.pageYOffset });
+        
+        // Scroll fluido agli articoli filtrati
+        window.scrollTo({
+          top: Math.max(0, offsetPosition), // Assicura che non vada in negativo
+          behavior: 'smooth'
+        });
+      } else if (attempts < maxAttempts) {
+        // Retry se l'elemento non è ancora disponibile
+        console.log(`⏳ Retry scroll (attempt ${attempts}/${maxAttempts})...`);
+        setTimeout(tryScroll, 200);
+      } else {
+        console.warn('⚠️ Elemento articoli-filtrati non trovato dopo', maxAttempts, 'tentativi');
+      }
+    };
+    
+    tryScroll();
   }
 }
 

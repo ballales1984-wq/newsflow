@@ -74,16 +74,52 @@ export class SidebarComponent implements OnInit {
       : 'All';
     this.analytics.trackCategoryFilter(categoryName);
     
+    // Chiudi sidebar immediatamente (sia mobile che desktop)
+    this.linkClicked.emit();
+    
     if (categoryId) {
       this.router.navigate(['/'], { queryParams: { category: categoryId } });
     } else {
       this.router.navigate(['/']);
     }
     
-    // Chiudi drawer su mobile dopo la selezione
-    if (this.isMobile) {
-      this.linkClicked.emit();
-    }
+    // Scroll automatico agli articoli filtrati dopo navigazione e caricamento
+    // Aspetta più tempo per assicurarsi che gli articoli siano caricati
+    setTimeout(() => {
+      this.scrollToFilteredArticles();
+    }, 800); // Aumentato a 800ms per dare tempo agli articoli di caricarsi
+  }
+
+  scrollToFilteredArticles(): void {
+    // Cerca l'elemento degli articoli filtrati con retry multipli
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    const tryScroll = () => {
+      attempts++;
+      const element = document.getElementById('articoli-filtrati');
+      
+      if (element) {
+        const headerOffset = 80; // Offset per l'header fisso
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        console.log('📍 Scrolling to filtered articles:', { offsetPosition, elementPosition });
+        
+        window.scrollTo({
+          top: Math.max(0, offsetPosition), // Assicura che non vada in negativo
+          behavior: 'smooth'
+        });
+      } else if (attempts < maxAttempts) {
+        // Retry se l'elemento non è ancora disponibile
+        console.log(`⏳ Retry scroll (attempt ${attempts}/${maxAttempts})...`);
+        setTimeout(tryScroll, 200);
+      } else {
+        console.warn('⚠️ Elemento articoli-filtrati non trovato dopo', maxAttempts, 'tentativi');
+      }
+    };
+    
+    tryScroll();
   }
 
   onLinkClick(): void {

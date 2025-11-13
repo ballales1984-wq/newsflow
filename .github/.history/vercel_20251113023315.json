@@ -1,0 +1,27 @@
+{
+  "outputDirectory": "frontend/dist/newsflow",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/[...path]"
+    }
+  ],
+  "functions": {
+    "api/[...path].py": {
+      "includeFiles": [
+        "api/final_news_italian.json",
+        "api/all_sources_news.json",
+        "backend/final_news_italian.json",
+        "backend/all_sources_news.json"
+      ]
+    },
+    "api/index.py": {
+      "includeFiles": [
+        "api/final_news_italian.json",
+        "api/all_sources_news.json",
+        "backend/final_news_italian.json",
+        "backend/all_sources_news.json"
+      ]
+    }
+  }
+}

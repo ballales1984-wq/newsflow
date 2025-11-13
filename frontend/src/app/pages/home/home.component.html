@@ -1,18 +1,7 @@
 <div class="home-container">
   <h1 class="sr-only">NewsFlow - Notizie Italiane</h1>
-  <section class="hero-section" *ngIf="featuredArticles.length > 0">
-    <h2 class="section-title">
-      <mat-icon>star</mat-icon>
-      In Evidenza
-    </h2>
-    <div class="featured-grid">
-      <app-article-card
-        *ngFor="let article of featuredArticles.slice(0, 3)"
-        [article]="article"
-      ></app-article-card>
-    </div>
-  </section>
-
+  
+  <!-- Articoli Filtrati -->
   <section class="main-section" id="articoli-filtrati">
     <div class="section-header">
       <h2 class="section-title">
