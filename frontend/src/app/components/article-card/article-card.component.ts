@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Article } from '../../models/article.model';
 import { SavedArticleService } from '../../services/saved-article.service';
 import { AnalyticsService } from '../../services/analytics.service';
+import { ScrollPositionService } from '../../services/scroll-position.service';
 import { ExplainDialogComponent } from '../explain-dialog/explain-dialog.component';
 
 @Component({
@@ -18,10 +19,14 @@ export class ArticleCardComponent {
     private router: Router,
     public savedArticleService: SavedArticleService,
     private dialog: MatDialog,
-    private analytics: AnalyticsService
+    private analytics: AnalyticsService,
+    private scrollPositionService: ScrollPositionService
   ) {}
 
   viewArticle(): void {
+    // Salva la posizione di scroll prima di navigare
+    this.scrollPositionService.saveScrollPosition('home');
+    
     // Usa setTimeout per non bloccare il thread principale
     setTimeout(() => {
       this.analytics.trackArticleView(this.article.id, this.article.title);

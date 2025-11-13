@@ -1,25 +1,27 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { ArticleService } from '../../services/article.service';
 import { CategoryService } from '../../services/category.service';
 import { SpeechService } from '../../services/speech.service';
+import { ScrollPositionService } from '../../services/scroll-position.service';
 import { Article } from '../../models/article.model';
 import { Category } from '../../models/category.model';
 import { PageEvent } from '@angular/material/paginator';
-import { timeout, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { timeout, catchError, filter } from 'rxjs/operators';
+import { of, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   articles: Article[] = [];
   categories: Category[] = [];
   categoryCounts: { [categoryId: number]: number } = {}; // Conteggio articoli per categoria
   loading = false;
   selectedCategoryId: number | null = null;
+  private routerSubscription?: Subscription;
   
   // Pagination
   totalArticles = 0;
@@ -30,6 +32,7 @@ export class HomeComponent implements OnInit {
     private articleService: ArticleService,
     private categoryService: CategoryService,
     private speechService: SpeechService,
+    private scrollPositionService: ScrollPositionService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -38,6 +41,18 @@ export class HomeComponent implements OnInit {
     console.log('🏠 HomeComponent initialized');
     try {
       this.loadCategories();
+      
+      // Ascolta navigazione per ripristinare scroll quando si torna dalla pagina articolo
+      this.routerSubscription = this.router.events
+        .pipe(filter(event => event instanceof NavigationEnd))
+        .subscribe((event: any) => {
+          // Se torniamo alla home da un articolo, ripristina la posizione
+          if (event.url === '/' || event.urlAfterRedirects === '/') {
+            setTimeout(() => {
+              this.scrollPositionService.restoreScrollPosition('home');
+            }, 100);
+          }
+        });
       
       // Load articles immediately on init and listen to query params changes
       this.route.queryParams.subscribe(params => {
@@ -60,6 +75,12 @@ export class HomeComponent implements OnInit {
       });
     } catch (error) {
       console.error('❌ Error in ngOnInit:', error);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
     }
   }
 

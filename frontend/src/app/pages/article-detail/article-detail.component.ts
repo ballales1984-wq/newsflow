@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { ArticleService } from '../../services/article.service';
+import { ScrollPositionService } from '../../services/scroll-position.service';
 import { Article } from '../../models/article.model';
 
 @Component({
@@ -15,7 +17,9 @@ export class ArticleDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private articleService: ArticleService
+    private location: Location,
+    private articleService: ArticleService,
+    private scrollPositionService: ScrollPositionService
   ) {}
 
   ngOnInit(): void {
@@ -43,7 +47,16 @@ export class ArticleDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/']);
+    // Usa location.back() per mantenere la storia del browser
+    // Questo permette di ripristinare automaticamente la posizione scroll
+    this.location.back();
+    
+    // Fallback: se location.back() non funziona, naviga alla home
+    setTimeout(() => {
+      if (this.router.url.includes('/article')) {
+        this.router.navigate(['/']);
+      }
+    }, 100);
   }
 
   saveArticle(): void {
