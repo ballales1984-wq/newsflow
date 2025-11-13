@@ -22,11 +22,21 @@ app = FastAPI(
 )
 
 # Configure CORS
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:4200").split(",")
+# Permetti richieste da localhost, Vercel e ngrok
+default_origins = [
+    "http://localhost:4200",
+    "http://localhost:3000",
+    "https://newsflow-orcin.vercel.app",  # Dominio Vercel
+    "https://*.vercel.app",  # Tutti i domini Vercel
+    "https://*.ngrok-free.app",  # Domini ngrok
+    "https://*.ngrok.io",
+]
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
 
+# Per ngrok e Vercel, usa allow_origin_regex invece di allow_origins per supportare wildcard
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=["*"],  # Permetti tutti per ngrok e Vercel
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
