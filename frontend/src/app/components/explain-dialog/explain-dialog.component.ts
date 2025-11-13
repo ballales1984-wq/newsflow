@@ -1,23 +1,106 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { HttpClient } from '@angular/common/http';
 import { Article } from '../../models/article.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-explain-dialog',
   templateUrl: './explain-dialog.component.html',
   styleUrls: ['./explain-dialog.component.scss']
 })
-export class ExplainDialogComponent {
+export class ExplainDialogComponent implements OnInit {
   selectedTabIndex = 1; // Start con tab "3 minuti"
+  
+  // Cache per spiegazioni AI
+  explanations: { [key: string]: string } = {};
+  loading: { [key: string]: boolean } = {};
+  aiUsed: string = '';
 
   constructor(
     public dialogRef: MatDialogRef<ExplainDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public article: Article
+    @Inject(MAT_DIALOG_DATA) public article: Article,
+    private http: HttpClient
   ) {}
 
-  // Spiegazione rapida (30 secondi)
+  ngOnInit(): void {
+    // Pre-carica spiegazione standard quando si apre il dialog
+    this.loadExplanation('standard');
+  }
+
+  // Carica spiegazione AI dall'API
+  loadExplanation(type: 'quick' | 'standard' | 'deep'): void {
+    const cacheKey = type;
+    
+    // Se già in cache, usa quella
+    if (this.explanations[cacheKey]) {
+      return;
+    }
+    
+    // Se già in caricamento, aspetta
+    if (this.loading[cacheKey]) {
+      return;
+    }
+    
+    this.loading[cacheKey] = true;
+    
+    // Chiama API per spiegazione AI
+    const apiUrl = environment.apiUrl.replace('/v1', '/v1/articles/explain');
+    this.http.post<any>(apiUrl, {
+      article_id: this.article.id,
+      slug: this.article.slug,
+      explanation_type: type
+    }).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.explanations[cacheKey] = response.explanation;
+          this.aiUsed = response.ai_used || 'Static';
+        } else {
+          // Fallback a spiegazione statica
+          this.explanations[cacheKey] = this.getStaticExplanation(type);
+        }
+        this.loading[cacheKey] = false;
+      },
+      error: (error) => {
+        console.error('Errore caricamento spiegazione AI:', error);
+        // Fallback a spiegazione statica
+        this.explanations[cacheKey] = this.getStaticExplanation(type);
+        this.loading[cacheKey] = false;
+      }
+    });
+  }
+
+  // Spiegazione rapida (30 secondi) - ora usa AI
   getQuickExplanation(): string {
-    return `🎯 IN BREVE:
+    if (!this.explanations['quick']) {
+      this.loadExplanation('quick');
+      return this.getStaticExplanation('quick');
+    }
+    return this.explanations['quick'];
+  }
+
+  // Spiegazione standard (3 minuti) - ora usa AI
+  getStandardExplanation(): string {
+    if (!this.explanations['standard']) {
+      this.loadExplanation('standard');
+      return this.getStaticExplanation('standard');
+    }
+    return this.explanations['standard'];
+  }
+
+  // Spiegazione approfondita - ora usa AI
+  getDeepExplanation(): string {
+    if (!this.explanations['deep']) {
+      this.loadExplanation('deep');
+      return this.getStaticExplanation('deep');
+    }
+    return this.explanations['deep'];
+  }
+
+  // Spiegazione statica migliorata (fallback)
+  getStaticExplanation(type: 'quick' | 'standard' | 'deep'): string {
+    if (type === 'quick') {
+      return `🎯 IN BREVE:
 
 ${this.article.title}
 
@@ -30,11 +113,10 @@ Questa notizia tratta di ${this.article.keywords?.join(', ')} ed è rilevante pe
 ⏱️ Tempo lettura completa: ${this.article.reading_time_minutes} minuti
 
 🔗 Fonte: ${this.article.author}`;
-  }
-
-  // Spiegazione standard (3 minuti)
-  getStandardExplanation(): string {
-    return `📰 CONTESTO:
+    }
+    
+    if (type === 'standard') {
+      return `📰 CONTESTO:
 
 ${this.article.title}
 
@@ -69,10 +151,9 @@ e tratta temi rilevanti nell'attuale panorama ${this.getCategory()}.
 
 🔗 PER APPROFONDIRE:
 Leggi l'articolo completo su: ${this.article.url}`;
-  }
-
-  // Spiegazione approfondita
-  getDeepExplanation(): string {
+    }
+    
+    // deep
     return `📚 ANALISI APPROFONDITA:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -253,6 +334,21 @@ l'impatto a medio-lungo termine.`;
     }
     
     return result || '• Nessun termine tecnico specifico rilevato in questa notizia';
+  }
+
+  onTabChange(event: any): void {
+    const tabIndex = event.index;
+    if (tabIndex === 0 && !this.explanations['quick']) {
+      this.loadExplanation('quick');
+    } else if (tabIndex === 1 && !this.explanations['standard']) {
+      this.loadExplanation('standard');
+    } else if (tabIndex === 2 && !this.explanations['deep']) {
+      this.loadExplanation('deep');
+    }
+  }
+
+  isLoading(type: string): boolean {
+    return this.loading[type] || false;
   }
 
   close(): void {

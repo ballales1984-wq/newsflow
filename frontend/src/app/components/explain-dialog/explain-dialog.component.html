@@ -14,22 +14,43 @@
       <h3>{{ article.title }}</h3>
     </div>
 
-    <mat-tab-group>
+    <mat-tab-group (selectedTabChange)="onTabChange($event)">
       <mat-tab label="⚡ 30 secondi">
         <div class="explanation-content">
-          <pre>{{ getQuickExplanation() }}</pre>
+          <div *ngIf="loading['quick']" class="loading-indicator">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Generazione spiegazione AI...</span>
+          </div>
+          <pre *ngIf="!loading['quick']">{{ getQuickExplanation() }}</pre>
+          <div *ngIf="aiUsed && !loading['quick']" class="ai-badge">
+            🤖 Powered by {{ aiUsed }}
+          </div>
         </div>
       </mat-tab>
 
       <mat-tab label="📄 3 minuti">
         <div class="explanation-content">
-          <pre>{{ getStandardExplanation() }}</pre>
+          <div *ngIf="loading['standard']" class="loading-indicator">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Generazione spiegazione AI...</span>
+          </div>
+          <pre *ngIf="!loading['standard']">{{ getStandardExplanation() }}</pre>
+          <div *ngIf="aiUsed && !loading['standard']" class="ai-badge">
+            🤖 Powered by {{ aiUsed }}
+          </div>
         </div>
       </mat-tab>
 
       <mat-tab label="📚 Approfondimento">
         <div class="explanation-content">
-          <pre>{{ getDeepExplanation() }}</pre>
+          <div *ngIf="loading['deep']" class="loading-indicator">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Generazione analisi approfondita AI...</span>
+          </div>
+          <pre *ngIf="!loading['deep']">{{ getDeepExplanation() }}</pre>
+          <div *ngIf="aiUsed && !loading['deep']" class="ai-badge">
+            🤖 Powered by {{ aiUsed }}
+          </div>
         </div>
       </mat-tab>
     </mat-tab-group>

@@ -1,6 +1,8 @@
 """Versione semplificata di main.py per deploy veloce senza dipendenze complesse"""
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
 import os
 import json
 
@@ -569,6 +571,109 @@ def get_article_by_slug(slug: str):
             return article
     
     return {"error": "Article not found"}
+
+
+def _get_ai_service_used() -> str:
+    """Determina quale servizio AI è disponibile"""
+    import os
+    import requests
+    
+    # Controlla Ollama (locale) - PRIMA SCELTA
+    try:
+        response = requests.get(f"{os.getenv('OLLAMA_URL', 'http://localhost:11434')}/api/tags", timeout=2)
+        if response.status_code == 200:
+            models = response.json().get('models', [])
+            model_names = [m.get('name', '') for m in models]
+            return f"Ollama (Gratuito) - Modelli: {', '.join(model_names[:3])}"
+    except:
+        pass
+    
+    # Controlla AI Locale Integrata
+    try:
+        from app.local_ai_explainer import TRANSFORMERS_AVAILABLE, TORCH_AVAILABLE
+        if TRANSFORMERS_AVAILABLE and TORCH_AVAILABLE:
+            return "AI Locale Integrata (T5/GPT-2, Offline)"
+    except:
+        pass
+    
+    # Controlla Hugging Face
+    if os.getenv("HUGGINGFACE_API_KEY"):
+        return "Hugging Face (Gratuito)"
+    
+    # Controlla DeepSeek
+    if os.getenv("DEEPSEEK_API_KEY"):
+        return "DeepSeek (Gratuito)"
+    
+    # Controlla ChatGPT
+    if os.getenv("OPENAI_API_KEY"):
+        return "ChatGPT"
+    
+    return "Static (Nessuna AI configurata)"
+
+
+class ExplanationRequest(BaseModel):
+    article_id: Optional[int] = None
+    slug: Optional[str] = None
+    explanation_type: str = "quick"  # "quick", "standard", "deep"
+
+
+@app.post("/api/v1/articles/explain")
+def explain_article(request: ExplanationRequest):
+    """
+    Genera spiegazione AI dell'articolo usando ChatGPT o DeepSeek
+    
+    Args:
+        request: ExplanationRequest con article_id o slug e explanation_type
+    
+    Returns:
+        Spiegazione generata dall'AI
+    """
+    articles = _load_articles()
+    
+    # Trova l'articolo
+    article = None
+    if request.article_id:
+        for a in articles:
+            if a.get('id') == request.article_id:
+                article = a
+                break
+    elif request.slug:
+        for a in articles:
+            if a.get('slug') == request.slug:
+                article = a
+                break
+    
+    if not article:
+        return {"error": "Article not found"}
+    
+    # Importa il servizio AI
+    try:
+        from app.ai_explainer import generate_explanation
+        
+        # Genera spiegazione con AI
+        explanation = generate_explanation(article, request.explanation_type)
+        
+        return {
+            "success": True,
+            "article_id": article.get('id'),
+            "article_title": article.get('title'),
+            "explanation_type": request.explanation_type,
+            "explanation": explanation,
+            "ai_used": _get_ai_service_used()
+        }
+    except ImportError:
+        # Fallback se il modulo AI non è disponibile
+        return {
+            "success": False,
+            "error": "AI explainer module not available",
+            "message": "Installa le dipendenze: pip install requests"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Errore durante la generazione della spiegazione"
+        }
 
 
 @app.get("/api/v1/articles/featured/list")
