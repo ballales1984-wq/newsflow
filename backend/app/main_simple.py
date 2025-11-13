@@ -771,120 +771,23 @@ def explain_article(request: ExplanationRequest):
             "pre_generated": True
         }
     
-    # Fallback: genera al volo se non esiste (per articoli vecchi o nuovi)
-    print(f"⚠️  Spiegazione non trovata nel JSON, generazione al volo per articolo {article.get('id')}...")
+    # VERCEL FREE VERSION: Non genera al volo, solo lettura da JSON
+    # Le spiegazioni devono essere generate sul backend PC/Render
+    print(f"⚠️  Spiegazione non trovata nel JSON per articolo {article.get('id')}")
+    print(f"💡 Genera le spiegazioni sul backend PC/Render usando POST /api/admin/generate-explanations")
     
-    # Controlla cache in memoria (evita rigenerazioni multiple)
-    cache_key = f"{article.get('id')}_{request.explanation_type}"
-    if cache_key in _explanation_cache:
-        print(f"✅ Cache hit per {cache_key}")
-        return {
-            "success": True,
-            "article_id": article.get('id'),
-            "article_title": article.get('title'),
-            "explanation_type": request.explanation_type,
-            "explanation": _explanation_cache[cache_key],
-            "ai_used": _get_ai_service_used(),
-            "cached": True,
-            "generation_time": 0,
-            "pre_generated": False
-        }
+    return {
+        "success": False,
+        "error": "Explanation not available",
+        "message": f"Spiegazione '{request.explanation_type}' non disponibile per questo articolo. Genera le spiegazioni sul backend PC/Render usando POST /api/admin/generate-explanations",
+        "article_id": article.get('id'),
+        "article_title": article.get('title'),
+        "explanation_type": request.explanation_type,
+        "note": "Questo è il backend Vercel (read-only). Per generare spiegazioni, usa il backend PC/Render."
+    }
     
-    # Importa il servizio AI
-    try:
-        from app.ai_explainer import generate_explanation
-        
-        # Genera spiegazione con AI (ottimizzato per velocità)
-        explanation = generate_explanation(article, request.explanation_type)
-        
-        # Salva in cache
-        _explanation_cache[cache_key] = explanation
-        
-        # SALVA PERMANENTEMENTE NEL JSON per non rigenerarla
-        article[explanation_field] = explanation
-        
-        # Salva anche le altre spiegazioni se non esistono (per efficienza futura)
-        if request.explanation_type == 'standard' and not article.get('explanation_quick'):
-            try:
-                article['explanation_quick'] = generate_explanation(article, 'quick')
-            except:
-                pass
-        
-        # Salva il file JSON aggiornato
-        try:
-            import json
-            # Trova il file JSON
-            json_file_path = None
-            for path in [
-                'final_news_italian.json',
-                os.path.join('backend', 'final_news_italian.json'),
-                os.path.join('api', 'final_news_italian.json')
-            ]:
-                if os.path.exists(path):
-                    json_file_path = path
-                    break
-            
-            if json_file_path:
-                # Ricarica tutti gli articoli (forza reload per avere dati aggiornati)
-                all_articles = _load_articles(force_reload=True)
-                # Aggiorna l'articolo specifico
-                for idx, a in enumerate(all_articles):
-                    if a.get('id') == article.get('id') or a.get('slug') == article.get('slug'):
-                        all_articles[idx] = article
-                        break
-                
-                # Salva il file aggiornato
-                output_data = {
-                    "items": all_articles,
-                    "total": len(all_articles),
-                    "page": 1,
-                    "size": len(all_articles),
-                    "pages": 1,
-                    "updated_at": datetime.now().isoformat()
-                }
-                
-                with open(json_file_path, 'w', encoding='utf-8') as f:
-                    json.dump(output_data, f, indent=2, ensure_ascii=False)
-                
-                # Invalida la cache dopo il salvataggio
-                global _articles_cache, _cache_timestamp, _cache_file_path
-                _articles_cache = None
-                _cache_timestamp = None
-                _cache_file_path = None
-                
-                print(f"✅ Spiegazione salvata permanentemente nel JSON: {json_file_path}")
-                print(f"🔄 Cache invalidata")
-        except Exception as save_error:
-            print(f"⚠️  Errore salvataggio JSON (ma spiegazione generata): {save_error}")
-        
-        generation_time = time.time() - start_time
-        print(f"✅ Spiegazione generata e salvata in {generation_time:.2f} secondi")
-        
-        return {
-            "success": True,
-            "article_id": article.get('id'),
-            "article_title": article.get('title'),
-            "explanation_type": request.explanation_type,
-            "explanation": explanation,
-            "ai_used": _get_ai_service_used(),
-            "cached": False,
-            "generation_time": round(generation_time, 2),
-            "pre_generated": False,
-            "saved": True
-        }
-    except ImportError:
-        # Fallback se il modulo AI non è disponibile
-        return {
-            "success": False,
-            "error": "AI explainer module not available",
-            "message": "Installa le dipendenze: pip install requests"
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": "Errore durante la generazione della spiegazione"
-        }
+    # NOTA: La generazione AI è stata rimossa per Vercel Free Plan.
+    # Le spiegazioni devono essere generate sul backend PC/Render e salvate nel JSON.
 
 
 @app.get("/api/v1/articles/featured/list")

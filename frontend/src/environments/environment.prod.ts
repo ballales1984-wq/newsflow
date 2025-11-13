@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
-  // Backend su PC locale tramite ngrok
-  // IMPORTANTE: Il backend locale deve essere sempre acceso!
-  apiUrl: 'https://tonita-deposable-manneristically.ngrok-free.dev/api/v1'
+  // Backend su Vercel (read-only, veloce!)
+  // Le operazioni lunghe (collect-news, generate-explanations) rimangono su PC/Render
+  apiUrl: '/api/v1'  // Usa backend Vercel integrato (stesso dominio)
 };
 
