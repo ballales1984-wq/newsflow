@@ -1884,7 +1884,24 @@ def trigger_news_collection():
             "updated_at": datetime.now().isoformat()
         }
         
-        file_path = 'final_news_italian.json'
+        # Salva in TUTTI i path necessari (backend, api, root)
+        file_paths = [
+            'final_news_italian.json',  # Root
+            os.path.join('backend', 'final_news_italian.json'),  # Backend
+            os.path.join('api', 'final_news_italian.json')  # API per Vercel
+        ]
+        
+        for file_path in file_paths:
+            try:
+                # Crea directory se non esiste
+                os.makedirs(os.path.dirname(file_path), exist_ok=True) if os.path.dirname(file_path) else None
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(output_data, f, indent=2, ensure_ascii=False)
+                print(f"✅ File salvato: {file_path}")
+            except Exception as e:
+                print(f"⚠️  Errore salvataggio {file_path}: {e}")
+        
+        file_path = file_paths[0]  # Usa il primo per il messaggio
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         
