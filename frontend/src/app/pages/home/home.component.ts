@@ -42,6 +42,7 @@ export class HomeComponent implements OnInit {
       this.route.queryParams.subscribe(params => {
         console.log('📋 Query params changed:', params);
         const previousCategoryId = this.selectedCategoryId;
+        const isFirstLoad = this.selectedCategoryId === null && previousCategoryId === null;
         this.selectedCategoryId = params['category'] ? +params['category'] : null;
         this.currentPage = 1;
         this.loadArticles();
@@ -108,9 +109,13 @@ export class HomeComponent implements OnInit {
           this.loading = false;
           
           // Riproduci messaggio vocale quando gli articoli vengono caricati per la prima volta
+          // Solo quando non c'è una categoria selezionata (homepage principale)
           if (this.articles.length > 0 && !this.selectedCategoryId) {
+            // Resetta il flag per permettere la riproduzione anche dopo refresh
+            this.speechService.reset();
             // Aspetta un po' per permettere al browser di caricare le voci
             setTimeout(() => {
+              console.log('🔊 Riproduzione messaggio vocale di benvenuto');
               this.speechService.speakWelcome();
             }, 500);
           }
