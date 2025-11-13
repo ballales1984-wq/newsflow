@@ -48,12 +48,13 @@ try:
     print("DEBUG: app.main_simple imported successfully")
 
     # Crea handler Mangum per Vercel
-    handler = Mangum(app, lifespan="off")
+    mangum_handler = Mangum(app, lifespan="off")
     print("DEBUG: Mangum handler created successfully")
 
 except Exception as e:
     print(f"ERROR during initialization: {str(e)}")
     print(f"ERROR traceback: {traceback.format_exc()}")
+    import json
     # Crea un handler di fallback che restituisce un errore
     def error_handler(event, context):
         return {
@@ -65,14 +66,14 @@ except Exception as e:
                 "traceback": traceback.format_exc()
             })
         }
-    handler = error_handler
+    mangum_handler = error_handler
 
-def lambda_handler(event, context):
+def handler(event, context):
     """Handler per Vercel serverless functions"""
     try:
-        return handler(event, context)
+        return mangum_handler(event, context)
     except Exception as e:
-        print(f"ERROR in lambda_handler: {str(e)}")
+        print(f"ERROR in handler: {str(e)}")
         print(f"ERROR traceback: {traceback.format_exc()}")
         import json
         return {
