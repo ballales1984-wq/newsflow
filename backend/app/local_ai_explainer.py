@@ -20,8 +20,16 @@ except ImportError:
 try:
     import torch
     TORCH_AVAILABLE = True
+    # Verifica se CUDA è disponibile per GPU
+    CUDA_AVAILABLE = torch.cuda.is_available()
+    if CUDA_AVAILABLE:
+        print(f"✅ GPU disponibile: {torch.cuda.get_device_name(0)}")
+        print(f"   Memoria GPU: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB")
+    else:
+        print("⚠️ CUDA non disponibile, userà CPU")
 except ImportError:
     TORCH_AVAILABLE = False
+    CUDA_AVAILABLE = False
     print("⚠️ torch non installato. Installa con: pip install torch")
 
 # Cache per modelli caricati (evita ricaricare ogni volta)
@@ -43,6 +51,13 @@ def _load_t5_model():
         
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        
+        # Sposta modello su GPU se disponibile (fin dall'inizio)
+        if CUDA_AVAILABLE:
+            model = model.to("cuda")
+            print(f"✅ Modello T5 caricato su GPU: {torch.cuda.get_device_name(0)}")
+        else:
+            print("⚠️ Modello T5 caricato su CPU (GPU non disponibile)")
         
         # Metti in modalità eval per inferenza più veloce
         model.eval()
@@ -73,6 +88,13 @@ def _load_gpt2_model():
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForCausalLM.from_pretrained(model_name)
         
+        # Sposta modello su GPU se disponibile (fin dall'inizio)
+        if CUDA_AVAILABLE:
+            model = model.to("cuda")
+            print(f"✅ Modello GPT-2 caricato su GPU: {torch.cuda.get_device_name(0)}")
+        else:
+            print("⚠️ Modello GPT-2 caricato su CPU (GPU non disponibile)")
+        
         # Metti in modalità eval
         model.eval()
         
@@ -99,6 +121,11 @@ def _generate_with_t5(prompt: str, max_length: int = 200) -> Optional[str]:
         
         # Tokenizza
         inputs = tokenizer.encode(input_text, return_tensors="pt", max_length=512, truncation=True)
+        
+        # Modello è già su GPU se disponibile (caricato all'inizio)
+        # Sposta solo gli input
+        device = "cuda" if CUDA_AVAILABLE else "cpu"
+        inputs = inputs.to(device)
         
         # Genera
         with torch.no_grad():
@@ -130,6 +157,11 @@ def _generate_with_gpt2(prompt: str, max_length: int = 200) -> Optional[str]:
     try:
         # Tokenizza
         inputs = tokenizer.encode(prompt, return_tensors="pt", max_length=400, truncation=True)
+        
+        # Modello è già su GPU se disponibile (caricato all'inizio)
+        # Sposta solo gli input
+        device = "cuda" if CUDA_AVAILABLE else "cpu"
+        inputs = inputs.to(device)
         
         # Genera
         with torch.no_grad():
