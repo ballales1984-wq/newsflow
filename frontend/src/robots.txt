@@ -1,0 +1,20 @@
+# robots.txt per NewsFlow
+# Permette l'indicizzazione da parte di tutti i motori di ricerca
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://newsflow-orcin.vercel.app/sitemap.xml
+
+# Disabilita indicizzazione di file tecnici
+Disallow: /api/
+Disallow: /ngsw-worker.js
+Disallow: /ngsw.json
+
+# Permetti indicizzazione di tutte le pagine pubbliche
+Allow: /
+Allow: /article/
+Allow: /category/
+Allow: /search/
+
