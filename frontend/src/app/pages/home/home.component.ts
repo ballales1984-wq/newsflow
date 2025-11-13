@@ -169,6 +169,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loading = true;
     console.log('🔄 Loading articles...', { page: this.currentPage, size: this.pageSize, category: this.selectedCategoryId });
     
+    // Log API URL per debug
+    const apiUrl = (this.articleService as any).apiUrl || 'N/A';
+    console.log('🌐 API URL:', apiUrl);
+    
     const filters = this.selectedCategoryId 
       ? { category_id: this.selectedCategoryId } 
       : {};
@@ -178,11 +182,27 @@ export class HomeComponent implements OnInit, OnDestroy {
         timeout(60000), // 60 secondi timeout per permettere wake-up Render
         catchError(error => {
           console.error('❌ Error loading articles:', error);
-          console.error('Error details:', {
+          console.error('❌ Error details:', {
             message: error?.message,
             status: error?.status,
-            url: error?.url
+            statusText: error?.statusText,
+            url: error?.url,
+            error: error?.error,
+            name: error?.name
           });
+          console.error('❌ Full error:', JSON.stringify(error, null, 2));
+          
+          // Alert visibile per debug
+          const errorMsg = `Errore caricamento articoli:\n\n` +
+            `Messaggio: ${error?.message || 'N/A'}\n` +
+            `Status: ${error?.status || 'N/A'}\n` +
+            `URL: ${error?.url || apiUrl}\n\n` +
+            `Verifica:\n` +
+            `1. Backend locale attivo?\n` +
+            `2. Ngrok attivo?\n` +
+            `3. Console per dettagli`;
+          alert(errorMsg);
+          
           return of({
             items: [],
             total: 0,
@@ -195,9 +215,15 @@ export class HomeComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           console.log('✅ Articles loaded:', { count: response.items?.length || 0, total: response.total });
+          console.log('✅ First article:', response.items?.[0]?.title || 'N/A');
           this.articles = response.items || [];
           this.totalArticles = response.total || 0;
           this.loading = false;
+          
+          if (this.articles.length === 0) {
+            console.warn('⚠️  ATTENZIONE: Nessun articolo caricato!');
+            console.warn('⚠️  Response:', response);
+          }
           
           // Riproduci messaggio vocale quando gli articoli vengono caricati per la prima volta
           // Solo quando non c'è una categoria selezionata (homepage principale)
@@ -220,9 +246,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('❌ Subscribe error loading articles:', error);
+          console.error('❌ Full error object:', JSON.stringify(error, null, 2));
           this.articles = [];
           this.totalArticles = 0;
           this.loading = false;
+          alert(`Errore subscribe: ${error?.message || 'Errore sconosciuto'}\n\nControlla la console per dettagli.`);
         }
       });
   }
