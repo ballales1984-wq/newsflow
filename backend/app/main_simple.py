@@ -43,6 +43,18 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Precarica la cache degli articoli all'avvio per evitare timeout"""
+    print("🚀 Startup: precaricamento cache articoli...")
+    try:
+        _load_articles(force_reload=False)  # Carica e salva in cache
+        print("✅ Cache precaricata con successo!")
+    except Exception as e:
+        print(f"⚠️  Errore precaricamento cache: {e}")
+        print("   La cache verrà caricata alla prima richiesta")
+
+
 @app.get("/")
 def root():
     """Root endpoint"""
