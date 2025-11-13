@@ -28,11 +28,15 @@ try:
     print(f"DEBUG: cwd={os.getcwd()}")
     print(f"DEBUG: sys.path={sys.path[:3]}")
     
-    # Verifica file JSON
-    json_path = os.path.join(project_root, 'backend', 'final_news_italian.json')
-    print(f"DEBUG: final_news exists={os.path.exists(json_path)}")
-    if os.path.exists(json_path):
-        print(f"DEBUG: final_news size={os.path.getsize(json_path)}")
+    # Verifica file JSON (controlla sia api/ che backend/)
+    json_path_api = os.path.join(project_root, 'api', 'final_news_italian.json')
+    json_path_backend = os.path.join(project_root, 'backend', 'final_news_italian.json')
+    print(f"DEBUG: api/final_news exists={os.path.exists(json_path_api)}")
+    print(f"DEBUG: backend/final_news exists={os.path.exists(json_path_backend)}")
+    if os.path.exists(json_path_api):
+        print(f"DEBUG: api/final_news size={os.path.getsize(json_path_api)}")
+    if os.path.exists(json_path_backend):
+        print(f"DEBUG: backend/final_news size={os.path.getsize(json_path_backend)}")
 
     # Import con gestione errori
     print("DEBUG: Importing mangum...")
