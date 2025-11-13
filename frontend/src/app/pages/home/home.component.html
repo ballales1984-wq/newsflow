@@ -8,21 +8,13 @@
         <mat-icon>article</mat-icon>
         {{ selectedCategoryId ? 'Articoli Filtrati' : 'Tutte le Notizie' }}
       </h2>
-      <div class="filters">
-        <button mat-stroked-button aria-label="Filtra articoli">
-          <mat-icon>filter_list</mat-icon>
-          Filtra articoli
-        </button>
-        <button mat-stroked-button aria-label="Ordina articoli">
-          <mat-icon>sort</mat-icon>
-          Ordina articoli
-        </button>
-      </div>
     </div>
 
     <app-category-filter
       [categories]="categories"
       [selectedCategoryId]="selectedCategoryId"
+      [categoryCounts]="categoryCounts"
+      [totalArticles]="totalArticles"
       (categoryChange)="onCategoryChange($event)"
     ></app-category-filter>
 

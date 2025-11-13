@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { ThemeService } from '../../services/theme.service';
 import { AuthService, User } from '../../services/auth.service';
 import { SavedArticleService } from '../../services/saved-article.service';
 import { WeatherService, WeatherData } from '../../services/weather.service';
@@ -20,7 +19,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private dateTimeInterval: any;
 
   constructor(
-    public themeService: ThemeService,
     public authService: AuthService,
     public savedArticleService: SavedArticleService,
     private weatherService: WeatherService,
@@ -82,13 +80,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       // Reset dopo navigazione
       // this.searchQuery = '';
     }
-  }
-
-  toggleTheme(): void {
-    // Usa setTimeout per non bloccare il thread principale
-    setTimeout(() => {
-      this.themeService.toggleTheme();
-    }, 0);
   }
 
   loadWeather(): void {

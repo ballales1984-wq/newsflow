@@ -1,13 +1,47 @@
 .article-card {
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
   height: 100%;
+  min-height: 450px; // Altezza minima per card più quadrate
   display: flex;
   flex-direction: column;
-
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background: #ffffff;
+  aspect-ratio: 0.85; // Proporzione più quadrata (meno rettangolare)
+  
+  // Effetto 3D statico con illuminazione (come il titolo)
+  // Ombreggiatura multipla per profondità e illuminazione dall'alto
+  box-shadow: 
+    // Ombra principale (profondità)
+    0 4px 8px rgba(0, 0, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.08),
+    0 16px 32px rgba(0, 0, 0, 0.04),
+    // Illuminazione dall'alto (come il titolo)
+    inset 0 2px 4px rgba(255, 255, 255, 0.9),
+    inset 0 1px 2px rgba(255, 255, 255, 0.95),
+    // Ombra interna inferiore per profondità
+    inset 0 -2px 4px rgba(0, 0, 0, 0.05),
+    // Bordo illuminato
+    0 0 0 1px rgba(0, 0, 0, 0.08);
+  
+  // Bordo nero sottile
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  
+  // Nessun movimento, solo effetto statico 3D
+  transition: box-shadow 0.3s ease;
+  
+  // Leggero effetto hover solo sulle ombre (senza movimento)
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 
+      0 6px 12px rgba(0, 0, 0, 0.15),
+      0 12px 24px rgba(0, 0, 0, 0.1),
+      0 20px 40px rgba(0, 0, 0, 0.06),
+      inset 0 2px 4px rgba(255, 255, 255, 0.95),
+      inset 0 1px 2px rgba(255, 255, 255, 1),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.08),
+      0 0 0 1px rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.18);
   }
 }
 
@@ -19,6 +53,10 @@
 
   @media (max-width: 480px) {
     height: 180px;
+  }
+  
+  @media (min-width: 769px) {
+    height: 220px; // Immagine più alta su desktop per card più quadrate
   }
 
   img {
@@ -55,13 +93,17 @@ mat-card-header {
 
 mat-card-title {
   font-size: 18px;
-  font-weight: 500;
-  line-height: 1.4;
+  font-weight: 600;
+  line-height: 1.5;
   margin-bottom: 8px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  color: rgba(0, 0, 0, 0.9);
+  letter-spacing: -0.2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: color 0.3s ease, transform 0.2s ease;
 
   @media (max-width: 480px) {
     font-size: 16px;
@@ -69,9 +111,24 @@ mat-card-title {
   }
 }
 
+.article-card:hover mat-card-title {
+  color: rgba(63, 81, 181, 0.9);
+  transform: translateX(2px);
+}
+
 mat-card-subtitle {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.75);
+  color: rgba(0, 0, 0, 0.65);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  font-size: 11px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.article-card:hover mat-card-subtitle {
+  opacity: 1;
 }
 
 mat-card-content {
@@ -84,18 +141,24 @@ mat-card-content {
 
   .summary {
     font-size: 14px;
-    line-height: 1.6;
-    color: rgba(0, 0, 0, 0.8);
+    line-height: 1.7;
+    color: rgba(0, 0, 0, 0.75);
     margin-bottom: 12px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    font-weight: 400;
+    letter-spacing: 0.1px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 
     @media (max-width: 480px) {
       font-size: 13px;
       margin-bottom: 8px;
       -webkit-line-clamp: 2;
+      line-height: 1.6;
     }
   }
 
@@ -143,17 +206,4 @@ mat-card-actions {
   }
 }
 
-.dark-theme {
-  mat-card-subtitle {
-    color: rgba(255, 255, 255, 0.75);
-  }
-
-  mat-card-content .summary {
-    color: rgba(255, 255, 255, 0.85);
-  }
-
-  mat-card-actions {
-    border-top-color: rgba(255, 255, 255, 0.12);
-  }
-}
 

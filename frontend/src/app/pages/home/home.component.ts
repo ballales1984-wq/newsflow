@@ -17,6 +17,7 @@ import { of } from 'rxjs';
 export class HomeComponent implements OnInit {
   articles: Article[] = [];
   categories: Category[] = [];
+  categoryCounts: { [categoryId: number]: number } = {}; // Conteggio articoli per categoria
   loading = false;
   selectedCategoryId: number | null = null;
   
@@ -66,9 +67,78 @@ export class HomeComponent implements OnInit {
     this.categoryService.getCategories().subscribe({
       next: (categories) => {
         this.categories = categories;
+        // Carica conteggi articoli per categoria
+        this.loadCategoryCounts();
       },
       error: (error) => {
         console.error('Error loading categories:', error);
+      }
+    });
+  }
+
+  loadCategoryCounts(): void {
+    // Carica tutti gli articoli per contare quelli per categoria
+    this.articleService.getArticles(1, 1000, {}).subscribe({
+      next: (response) => {
+        const allArticles = response.items || [];
+        
+        // Mappa keywords → category_id (come nel backend)
+        const KEYWORD_TO_CATEGORY_ID: { [key: string]: number } = {
+          'technology': 1, 'tech': 1, 'tecnologia': 1,
+          'science': 2, 'scienz': 2,
+          'philosophy': 3, 'filosofia': 3,
+          'cybersecurity': 4, 'security': 4, 'sicurezza': 4,
+          'ai': 5, 'artificial intelligence': 5, 'intelligenza artificiale': 5,
+          'innovation': 6, 'innovazione': 6,
+          'culture': 7, 'cultura': 7,
+          'ethics': 8, 'etica': 8,
+          'sport': 9, 'calcio': 9, 'football': 9,
+          'nature': 10, 'ambiente': 10, 'environment': 10,
+          'business': 11, 'economia': 11, 'finance': 11,
+          'health': 12, 'salute': 12, 'medical': 12,
+          'politics': 13, 'politica': 13,
+          'entertainment': 14, 'intrattenimento': 14
+        };
+        
+        // Inizializza conteggi
+        this.categoryCounts = {};
+        this.categoryCounts[0] = allArticles.length; // "Tutte"
+        
+        // Conta articoli per categoria usando category_id o keywords come fallback
+        this.categories.forEach(category => {
+          const count = allArticles.filter(article => {
+            // Prima prova con category_id
+            if (article.category_id === category.id) {
+              return true;
+            }
+            
+            // Fallback: cerca nei keywords
+            const keywords = article.keywords || [];
+            for (const kw of keywords) {
+              const kwLower = String(kw).toLowerCase();
+              const mappedId = KEYWORD_TO_CATEGORY_ID[kwLower];
+              if (mappedId === category.id) {
+                return true;
+              }
+              // Cerca anche parziali
+              for (const [key, catId] of Object.entries(KEYWORD_TO_CATEGORY_ID)) {
+                if (key.includes(kwLower) || kwLower.includes(key)) {
+                  if (catId === category.id) {
+                    return true;
+                  }
+                }
+              }
+            }
+            return false;
+          }).length;
+          
+          this.categoryCounts[category.id] = count;
+        });
+        
+        console.log('✅ Conteggi categorie:', this.categoryCounts);
+      },
+      error: (error) => {
+        console.error('Error loading category counts:', error);
       }
     });
   }

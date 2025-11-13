@@ -6,6 +6,7 @@
     >
       <mat-icon matChipAvatar>all_inclusive</mat-icon>
       Tutte
+      <span class="count-badge">{{ getCategoryCount(null) }}</span>
     </mat-chip>
     
     <mat-chip
@@ -17,6 +18,7 @@
         {{ category.icon || 'folder' }}
       </mat-icon>
       {{ category.name }}
+      <span class="count-badge">{{ getCategoryCount(category.id) }}</span>
     </mat-chip>
   </mat-chip-set>
 </div>

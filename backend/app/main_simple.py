@@ -188,12 +188,52 @@ def _load_articles():
                 data = json.load(f)
                 articles = data.get('items', [])
                 print(f"✅ Caricati {len(articles)} articoli da final_news_italian.json")
-                # Pulisce HTML da tutte le notizie esistenti
+                
+                # Mappa keywords → category_id per articoli esistenti senza category_id
+                KEYWORD_TO_CATEGORY_ID = {
+                    'technology': 1, 'tech': 1, 'tecnologia': 1,
+                    'science': 2, 'scienz': 2,
+                    'philosophy': 3, 'filosofia': 3,
+                    'cybersecurity': 4, 'security': 4, 'sicurezza': 4,
+                    'ai': 5, 'artificial intelligence': 5, 'intelligenza artificiale': 5,
+                    'innovation': 6, 'innovazione': 6,
+                    'culture': 7, 'cultura': 7,
+                    'ethics': 8, 'etica': 8,
+                    'sport': 9, 'calcio': 9, 'football': 9,
+                    'nature': 10, 'ambiente': 10, 'environment': 10,
+                    'business': 11, 'economia': 11, 'finance': 11,
+                    'health': 12, 'salute': 12, 'medical': 12,
+                    'politics': 13, 'politica': 13,
+                    'entertainment': 14, 'intrattenimento': 14
+                }
+                
+                # Pulisce HTML e aggiunge category_id se mancante
                 for article in articles:
                     if 'summary' in article:
                         article['summary'] = clean_html(article['summary'])
                     if 'title' in article:
                         article['title'] = clean_html(article['title'])
+                    
+                    # Aggiungi category_id se mancante
+                    if 'category_id' not in article or article.get('category_id') is None:
+                        # Cerca nei keywords
+                        keywords = article.get('keywords', [])
+                        category_id = None
+                        for kw in keywords:
+                            kw_lower = str(kw).lower()
+                            for key, cat_id in KEYWORD_TO_CATEGORY_ID.items():
+                                if key in kw_lower:
+                                    category_id = cat_id
+                                    break
+                            if category_id:
+                                break
+                        
+                        # Se non trovato nei keywords, default a Technology
+                        if not category_id:
+                            category_id = 1
+                        
+                        article['category_id'] = category_id
+                
                 return articles
         except Exception as e:
             print(f"❌ Errore caricamento final_news_italian.json: {e}")
@@ -1109,28 +1149,57 @@ def trigger_news_collection():
                             entry_title = entry.get('title', '').strip()[:200]
                         
                         # Determina categoria basandosi sulla fonte
+                        # Mappa nome categoria → ID categoria
+                        CATEGORY_NAME_TO_ID = {
+                            'Technology': 1,
+                            'Science': 2,
+                            'Philosophy': 3,
+                            'Cybersecurity': 4,
+                            'AI': 5,
+                            'Innovation': 6,
+                            'Culture': 7,
+                            'Ethics': 8,
+                            'Sport': 9,
+                            'Nature': 10,
+                            'Business': 11,
+                            'Health': 12,
+                            'Politics': 13,
+                            'Entertainment': 14
+                        }
+                        
                         if 'Security' in source_name or 'Hacker' in source_name:
                             category = 'Cybersecurity'
+                            category_id = CATEGORY_NAME_TO_ID.get('Cybersecurity', 1)
                         elif 'ArXiv' in source_name or 'Science' in source_name:
                             category = 'Science'
+                            category_id = CATEGORY_NAME_TO_ID.get('Science', 2)
                         elif 'MicroMega' in source_name:
                             category = 'Philosophy'
+                            category_id = CATEGORY_NAME_TO_ID.get('Philosophy', 3)
                         elif 'Sport' in source_name or 'Gazzetta' in source_name:
                             category = 'Sport'
+                            category_id = CATEGORY_NAME_TO_ID.get('Sport', 9)
                         elif 'Business' in source_name or 'AI4Business' in source_name:
                             category = 'Business'
+                            category_id = CATEGORY_NAME_TO_ID.get('Business', 11)
                         elif 'Health' in source_name:
                             category = 'Health'
+                            category_id = CATEGORY_NAME_TO_ID.get('Health', 12)
                         elif 'Politics' in source_name:
                             category = 'Politics'
+                            category_id = CATEGORY_NAME_TO_ID.get('Politics', 13)
                         elif 'Entertainment' in source_name:
                             category = 'Entertainment'
+                            category_id = CATEGORY_NAME_TO_ID.get('Entertainment', 14)
                         elif 'Environment' in source_name:
                             category = 'Nature'
+                            category_id = CATEGORY_NAME_TO_ID.get('Nature', 10)
                         elif 'AI' in source_name or 'artificial intelligence' in summary.lower():
                             category = 'AI'
+                            category_id = CATEGORY_NAME_TO_ID.get('AI', 5)
                         else:
                             category = 'Technology'
+                            category_id = CATEGORY_NAME_TO_ID.get('Technology', 1)
                         
                         # Calcola reading_time basato sulla lunghezza del contenuto
                         content_length = len(content) if content else len(summary)
@@ -1203,6 +1272,7 @@ def trigger_news_collection():
                             "published_at": datetime.now().isoformat(),
                             "collected_at": datetime.now().isoformat(),
                             "source_id": 1,
+                            "category_id": category_id,  # ID categoria aggiunto
                             "is_featured": count == 0,
                             "is_verified": True,
                             "is_archived": False,

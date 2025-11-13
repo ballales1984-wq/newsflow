@@ -33,9 +33,28 @@
 
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
   animation: fadeIn 0.5s ease-in;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  
+  // Limita la larghezza massima per mantenere proporzioni più quadrate
+  max-width: 100%;
+  
+  @media (min-width: 1400px) {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+  
+  // Effetto 3D sulle card con profondità variabile
+  app-article-card {
+    transform-style: preserve-3d;
+    transform: rotateY(0deg); // Card dritte all'inizio
+    
+    &:hover {
+      z-index: 10;
+    }
+  }
 }
 
 @keyframes fadeIn {
