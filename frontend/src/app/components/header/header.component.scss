@@ -34,6 +34,14 @@
   align-items: center;
   width: 100%;
   gap: 16px;
+  
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 4px;
+  }
 }
 
 .logo-section {
@@ -41,6 +49,17 @@
   align-items: center;
   gap: 12px;
   justify-self: start;
+  flex-wrap: wrap;
+  min-width: 0; // Permette al contenuto di ridursi
+  
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 4px;
+    flex-wrap: nowrap; // Mantieni tutto su una riga su mobile
+  }
 }
 
 .datetime-display {
@@ -79,7 +98,16 @@
   }
   
   @media (max-width: 480px) {
-    display: none; // Nascondi su schermi molto piccoli per risparmiare spazio
+    font-size: 9px;
+    gap: 1px;
+    
+    .date {
+      font-size: 8px;
+    }
+    
+    .time {
+      font-size: 10px;
+    }
   }
 }
 
