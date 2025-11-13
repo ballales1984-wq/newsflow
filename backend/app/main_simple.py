@@ -1222,39 +1222,87 @@ def trigger_news_collection():
                 print(f"Errore fonte {source_name}: {e}")
                 continue
         
-        # Genera spiegazioni AI per tutti gli articoli (una sola volta)
-        print(f"\n🤖 Generazione spiegazioni AI per {len(all_articles)} articoli...")
+        # FASE 2: Genera spiegazioni AI solo per articoli nuovi (dopo aver raccolto tutte le notizie)
+        print(f"\n🤖 FASE 2: Generazione spiegazioni AI per articoli nuovi...")
         explanations_generated = 0
+        explanations_skipped = 0
         
+        # Carica articoli esistenti per confrontare (evita rigenerare spiegazioni vecchie)
+        existing_articles = {}
+        try:
+            existing_file_path = None
+            for path in [
+                'final_news_italian.json',
+                os.path.join('backend', 'final_news_italian.json'),
+                os.path.join('api', 'final_news_italian.json')
+            ]:
+                if os.path.exists(path):
+                    existing_file_path = path
+                    break
+            
+            if existing_file_path:
+                with open(existing_file_path, 'r', encoding='utf-8') as f:
+                    existing_data = json.load(f)
+                    for art in existing_data.get('items', []):
+                        # Usa URL come chiave univoca (più affidabile di ID)
+                        url = art.get('url', '')
+                        if url:
+                            existing_articles[url] = art
+                print(f"   📚 Caricati {len(existing_articles)} articoli esistenti per confronto")
+        except Exception as e:
+            print(f"   ⚠️  Errore caricamento articoli esistenti: {e}")
+        
+        # Genera spiegazioni solo per articoli nuovi
         try:
             from app.ai_explainer import generate_explanation
             
-            for i, article in enumerate(all_articles):
+            articles_needing_explanations = []
+            for article in all_articles:
+                url = article.get('url', '')
+                existing = existing_articles.get(url) if url else None
+                
+                # Controlla se è nuovo o se non ha spiegazioni
+                is_new = existing is None
+                has_explanations = (
+                    (existing and existing.get('explanation_quick')) or
+                    article.get('explanation_quick')
+                )
+                
+                if is_new or not has_explanations:
+                    articles_needing_explanations.append(article)
+                else:
+                    # Copia spiegazioni esistenti dall'articolo vecchio
+                    if existing:
+                        article['explanation_quick'] = existing.get('explanation_quick')
+                        article['explanation_standard'] = existing.get('explanation_standard')
+                        article['explanation_deep'] = existing.get('explanation_deep')
+                    explanations_skipped += 1
+            
+            print(f"   📊 Articoli da processare: {len(articles_needing_explanations)} nuovi")
+            print(f"   ⏭️  Articoli saltati: {explanations_skipped} (spiegazioni già presenti)")
+            
+            # Genera spiegazioni solo per quelli nuovi
+            for i, article in enumerate(articles_needing_explanations):
                 try:
-                    # Genera solo se non esistono già
-                    if not article.get('explanation_quick') and not article.get('explanation_standard'):
-                        print(f"   [{i+1}/{len(all_articles)}] Generando spiegazioni per: {article.get('title', '')[:50]}...")
-                        
-                        # Genera spiegazioni AI (usa cache interna)
-                        article['explanation_quick'] = generate_explanation(article, 'quick')
-                        article['explanation_standard'] = generate_explanation(article, 'standard')
-                        article['explanation_deep'] = generate_explanation(article, 'deep')
-                        
-                        explanations_generated += 1
-                        
-                        # Log ogni 10 articoli per non intasare
-                        if (i + 1) % 10 == 0:
-                            print(f"   ✅ {i+1}/{len(all_articles)} articoli processati...")
-                    else:
-                        # Spiegazioni già esistenti, salta
-                        if (i + 1) % 20 == 0:
-                            print(f"   ⏭️  {i+1}/{len(all_articles)} articoli (spiegazioni già presenti)...")
+                    print(f"   [{i+1}/{len(articles_needing_explanations)}] Generando spiegazioni per: {article.get('title', '')[:50]}...")
+                    
+                    # Genera spiegazioni AI (usa cache interna)
+                    article['explanation_quick'] = generate_explanation(article, 'quick')
+                    article['explanation_standard'] = generate_explanation(article, 'standard')
+                    article['explanation_deep'] = generate_explanation(article, 'deep')
+                    
+                    explanations_generated += 1
+                    
+                    # Log ogni 5 articoli per non intasare
+                    if (i + 1) % 5 == 0:
+                        print(f"   ✅ {i+1}/{len(articles_needing_explanations)} articoli processati...")
                 except Exception as e:
                     print(f"   ⚠️  Errore generazione spiegazioni per articolo {i+1}: {e}")
                     # Continua con gli altri articoli anche se uno fallisce
                     continue
             
             print(f"✅ Spiegazioni AI generate: {explanations_generated} nuovi articoli")
+            print(f"✅ Spiegazioni mantenute: {explanations_skipped} articoli esistenti")
         except ImportError:
             print("⚠️  Modulo AI non disponibile, salto generazione spiegazioni")
         except Exception as e:
