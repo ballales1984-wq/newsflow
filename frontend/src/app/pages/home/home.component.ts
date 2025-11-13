@@ -27,6 +27,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   totalArticles = 0;
   pageSize = 20;
   currentPage = 1;
+  
+  // Error display
+  lastError: string | null = null;
+  showError = false;
 
   constructor(
     private articleService: ArticleService,
@@ -192,15 +196,41 @@ export class HomeComponent implements OnInit, OnDestroy {
           });
           console.error('❌ Full error:', JSON.stringify(error, null, 2));
           
-          // Alert visibile per debug
+          // Salva errore per visualizzazione
+          const errorDetails = {
+            message: error?.message || 'N/A',
+            status: error?.status || 'N/A',
+            statusText: error?.statusText || 'N/A',
+            url: error?.url || apiUrl,
+            error: error?.error || 'N/A',
+            name: error?.name || 'N/A',
+            timestamp: new Date().toISOString()
+          };
+          
           const errorMsg = `Errore caricamento articoli:\n\n` +
-            `Messaggio: ${error?.message || 'N/A'}\n` +
-            `Status: ${error?.status || 'N/A'}\n` +
-            `URL: ${error?.url || apiUrl}\n\n` +
+            `Messaggio: ${errorDetails.message}\n` +
+            `Status: ${errorDetails.status}\n` +
+            `StatusText: ${errorDetails.statusText}\n` +
+            `URL: ${errorDetails.url}\n` +
+            `Error: ${JSON.stringify(errorDetails.error)}\n` +
+            `Name: ${errorDetails.name}\n\n` +
             `Verifica:\n` +
             `1. Backend locale attivo?\n` +
             `2. Ngrok attivo?\n` +
             `3. Console per dettagli`;
+          
+          // Salva errore nel componente per visualizzazione
+          this.lastError = JSON.stringify(errorDetails, null, 2);
+          this.showError = true;
+          
+          // Salva anche nel localStorage per recupero
+          try {
+            localStorage.setItem('newsflow_last_error', JSON.stringify(errorDetails));
+            localStorage.setItem('newsflow_last_error_text', errorMsg);
+          } catch (e) {
+            console.warn('Impossibile salvare errore in localStorage:', e);
+          }
+          
           alert(errorMsg);
           
           return of({
@@ -247,10 +277,32 @@ export class HomeComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('❌ Subscribe error loading articles:', error);
           console.error('❌ Full error object:', JSON.stringify(error, null, 2));
+          
+          const errorDetails = {
+            message: error?.message || 'Errore sconosciuto',
+            status: error?.status || 'N/A',
+            statusText: error?.statusText || 'N/A',
+            url: error?.url || 'N/A',
+            error: error?.error || 'N/A',
+            name: error?.name || 'N/A',
+            timestamp: new Date().toISOString()
+          };
+          
+          // Salva errore
+          this.lastError = JSON.stringify(errorDetails, null, 2);
+          this.showError = true;
+          
+          try {
+            localStorage.setItem('newsflow_last_error', JSON.stringify(errorDetails));
+            localStorage.setItem('newsflow_last_error_text', `Errore subscribe: ${errorDetails.message}`);
+          } catch (e) {
+            console.warn('Impossibile salvare errore:', e);
+          }
+          
           this.articles = [];
           this.totalArticles = 0;
           this.loading = false;
-          alert(`Errore subscribe: ${error?.message || 'Errore sconosciuto'}\n\nControlla la console per dettagli.`);
+          alert(`Errore subscribe: ${errorDetails.message}\n\nErrore salvato! Clicca sul pulsante "Mostra Errore" in basso per copiarlo.`);
         }
       });
   }
@@ -300,6 +352,33 @@ export class HomeComponent implements OnInit, OnDestroy {
     };
     
     tryScroll();
+  }
+
+  copyError(): void {
+    if (!this.lastError) return;
+    
+    const errorText = this.lastError; // TypeScript sa che non è null qui
+    
+    // Prova a copiare nel clipboard
+    navigator.clipboard.writeText(errorText).then(() => {
+      alert('✅ Errore copiato negli appunti!\n\nPuoi incollarlo dove vuoi.');
+      console.log('✅ Errore copiato:', errorText);
+    }).catch(err => {
+      // Fallback: mostra in un textarea selezionabile
+      const textarea = document.createElement('textarea');
+      textarea.value = errorText;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('✅ Errore copiato!');
+      } catch (e) {
+        alert('⚠️ Copia manuale:\n\nSeleziona il testo sopra e premi Ctrl+C');
+      }
+      document.body.removeChild(textarea);
+    });
   }
 }
 

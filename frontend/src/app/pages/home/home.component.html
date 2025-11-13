@@ -32,5 +32,21 @@
       showFirstLastButtons
     ></mat-paginator>
   </section>
+
+  <!-- Box Errore per Debug -->
+  <div *ngIf="showError && lastError" class="error-box" style="position: fixed; bottom: 20px; right: 20px; background: #ff4444; color: white; padding: 20px; border-radius: 8px; max-width: 500px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+    <h3 style="margin-top: 0; color: white;">⚠️ Errore Caricamento Articoli</h3>
+    <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; max-height: 200px; overflow-y: auto;">{{ lastError }}</pre>
+    <div style="margin-top: 10px; display: flex; gap: 10px;">
+      <button mat-raised-button color="accent" (click)="copyError()" style="flex: 1;">
+        <mat-icon>content_copy</mat-icon>
+        Copia Errore
+      </button>
+      <button mat-button (click)="showError = false" style="color: white;">
+        <mat-icon>close</mat-icon>
+        Chiudi
+      </button>
+    </div>
+  </div>
 </div>
 
