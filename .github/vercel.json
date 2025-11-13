@@ -1,6 +1,12 @@
 {
   "version": 2,
   "outputDirectory": "frontend/dist/newsflow",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
