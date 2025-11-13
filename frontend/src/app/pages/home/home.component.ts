@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArticleService } from '../../services/article.service';
 import { CategoryService } from '../../services/category.service';
+import { SpeechService } from '../../services/speech.service';
 import { Article } from '../../models/article.model';
 import { Category } from '../../models/category.model';
 import { PageEvent } from '@angular/material/paginator';
@@ -27,6 +28,7 @@ export class HomeComponent implements OnInit {
   constructor(
     private articleService: ArticleService,
     private categoryService: CategoryService,
+    private speechService: SpeechService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -104,6 +106,14 @@ export class HomeComponent implements OnInit {
           this.articles = response.items || [];
           this.totalArticles = response.total || 0;
           this.loading = false;
+          
+          // Riproduci messaggio vocale quando gli articoli vengono caricati per la prima volta
+          if (this.articles.length > 0 && !this.selectedCategoryId) {
+            // Aspetta un po' per permettere al browser di caricare le voci
+            setTimeout(() => {
+              this.speechService.speakWelcome();
+            }, 500);
+          }
           
           // Scroll agli articoli filtrati dopo che sono stati caricati (se c'è una categoria selezionata)
           if (this.selectedCategoryId !== null) {
