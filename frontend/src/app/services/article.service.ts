@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Article, ArticleList, ArticleSearch } from '../models/article.model';
@@ -9,6 +9,11 @@ import { Article, ArticleList, ArticleSearch } from '../models/article.model';
 })
 export class ArticleService {
   private apiUrl = `${environment.apiUrl}/articles`;
+  
+  // Header per bypassare warning ngrok (se necessario)
+  private headers = new HttpHeaders({
+    'ngrok-skip-browser-warning': 'true'
+  });
 
   constructor(private http: HttpClient) {}
 
@@ -40,15 +45,15 @@ export class ArticleService {
     }
 
     console.log('📡 API Request:', { url: this.apiUrl, params: params.toString() });
-    return this.http.get<ArticleList>(this.apiUrl, { params });
+    return this.http.get<ArticleList>(this.apiUrl, { params, headers: this.headers });
   }
 
   getArticle(id: number): Observable<Article> {
-    return this.http.get<Article>(`${this.apiUrl}/${id}`);
+    return this.http.get<Article>(`${this.apiUrl}/${id}`, { headers: this.headers });
   }
 
   getArticleBySlug(slug: string): Observable<Article> {
-    return this.http.get<Article>(`${this.apiUrl}/slug/${slug}`);
+    return this.http.get<Article>(`${this.apiUrl}/slug/${slug}`, { headers: this.headers });
   }
 
   searchArticles(
@@ -60,19 +65,19 @@ export class ArticleService {
       .set('skip', ((page - 1) * size).toString())
       .set('limit', size.toString());
 
-    return this.http.post<ArticleList>(`${this.apiUrl}/search`, search, { params });
+    return this.http.post<ArticleList>(`${this.apiUrl}/search`, search, { params, headers: this.headers });
   }
 
   getFeaturedArticles(limit: number = 10): Observable<Article[]> {
     const params = new HttpParams().set('limit', limit.toString());
-    return this.http.get<Article[]>(`${this.apiUrl}/featured/list`, { params });
+    return this.http.get<Article[]>(`${this.apiUrl}/featured/list`, { params, headers: this.headers });
   }
 
   getRecentArticles(days: number = 7, limit: number = 20): Observable<Article[]> {
     const params = new HttpParams()
       .set('days', days.toString())
       .set('limit', limit.toString());
-    return this.http.get<Article[]>(`${this.apiUrl}/recent/list`, { params });
+    return this.http.get<Article[]>(`${this.apiUrl}/recent/list`, { params, headers: this.headers });
   }
 }
 
