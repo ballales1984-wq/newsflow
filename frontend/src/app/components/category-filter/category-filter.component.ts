@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Router } from '@angular/router';
 import { Category } from '../../models/category.model';
 
 @Component({
@@ -13,9 +14,16 @@ export class CategoryFilterComponent {
   @Input() totalArticles: number = 0;
   @Output() categoryChange = new EventEmitter<number | null>();
 
+  constructor(private router: Router) {}
+
   selectCategory(categoryId: number | null): void {
     this.selectedCategoryId = categoryId;
     this.categoryChange.emit(categoryId);
+  }
+
+  goToDigest(): void {
+    console.log('🔗 Navigazione alla pagina Digest...');
+    this.router.navigate(['/digest']);
   }
 
   getCategoryCount(categoryId: number | null): number {

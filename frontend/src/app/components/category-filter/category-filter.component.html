@@ -20,6 +20,14 @@
       {{ category.name }}
       <span class="count-badge">{{ getCategoryCount(category.id) }}</span>
     </mat-chip>
+    
+    <mat-chip
+      (click)="goToDigest()"
+      class="digest-chip"
+    >
+      <mat-icon matChipAvatar>menu_book</mat-icon>
+      Digest
+    </mat-chip>
   </mat-chip-set>
 </div>
 

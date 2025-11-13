@@ -1,0 +1,40 @@
+{
+  "date": "2025-01-13",
+  "digest": [
+    {
+      "category": "Cybersecurity",
+      "articles": [
+        {
+          "title": "Google denuncia hacker cinesi",
+          "description": "Smantellata la piattaforma di phishing Lighthouse da 1 miliardo di dollari."
+        },
+        {
+          "title": "Amazon scopre attacchi zero-day",
+          "description": "Vulnerabilità sfruttate in Cisco ISE e Citrix NetScaler."
+        },
+        {
+          "title": "Microsoft rilascia patch critiche",
+          "description": "Corrette 63 falle di sicurezza, incluso un grave zero-day nel kernel di Windows."
+        }
+      ]
+    },
+    {
+      "category": "Intelligenza Artificiale & Tecnologia",
+      "articles": [
+        {
+          "title": "VMware e AI agentica",
+          "description": "Nuove soluzioni per semplificare le migrazioni verso il cloud."
+        },
+        {
+          "title": "Stato dell'AI",
+          "description": "L'energia è il fattore chiave, con gli USA in ritardo."
+        },
+        {
+          "title": "Cybersecurity e quantum",
+          "description": "AI e calcolo quantistico stanno trasformando la sicurezza digitale."
+        }
+      ]
+    }
+  ]
+}
+

@@ -895,6 +895,89 @@ def get_sources():
     ]
 
 
+def _load_digest():
+    """Helper to load daily digest from JSON file"""
+    import json
+    import os
+    from datetime import datetime
+    
+    # Prova diversi path per trovare il file digest.json
+    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root_from_file = os.path.dirname(current_file_dir)
+    
+    possible_paths = [
+        # Path 0: api/digest.json (Vercel)
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'digest.json'),
+        os.path.join(os.getcwd(), 'api', 'digest.json'),
+        '/vercel/path0/api/digest.json',
+        # Path 1: backend/digest.json
+        os.path.join(os.getcwd(), 'backend', 'digest.json'),
+        os.path.join(project_root_from_file, 'digest.json'),
+        # Path 2: digest.json nella root
+        os.path.join(os.getcwd(), 'digest.json'),
+        # Path 3: backend/app/digest.json
+        os.path.join(current_file_dir, 'digest.json'),
+    ]
+    
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    digest_data = json.load(f)
+                    print(f"✅ Digest caricato da: {path}")
+                    return digest_data
+            except Exception as e:
+                print(f"⚠️ Errore nel caricamento digest da {path}: {e}")
+                continue
+    
+    # Se non trova il file, genera un digest vuoto con la data di oggi
+    print("⚠️ File digest.json non trovato, genero digest vuoto")
+    today = datetime.now().strftime("%Y-%m-%d")
+    return {
+        "date": today,
+        "digest": []
+    }
+
+
+@app.get("/api/v1/digest")
+def get_digest():
+    """Get daily digest"""
+    try:
+        digest = _load_digest()
+        return digest
+    except Exception as e:
+        print(f"❌ Errore nel caricamento digest: {e}")
+        import traceback
+        traceback.print_exc()
+        # Ritorna digest vuoto in caso di errore
+        from datetime import datetime
+        return {
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "digest": []
+        }
+
+
+@app.get("/api/v1/digest/{date}")
+def get_digest_by_date(date: str):
+    """Get digest for a specific date"""
+    try:
+        digest = _load_digest()
+        # Se il digest caricato corrisponde alla data richiesta, ritornalo
+        if digest.get("date") == date:
+            return digest
+        # Altrimenti ritorna digest vuoto per quella data
+        return {
+            "date": date,
+            "digest": []
+        }
+    except Exception as e:
+        print(f"❌ Errore nel caricamento digest per data {date}: {e}")
+        return {
+            "date": date,
+            "digest": []
+        }
+
+
 @app.get("/api/v1/auth/whoami")
 def whoami(request: Request):
     """

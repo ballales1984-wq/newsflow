@@ -38,6 +38,7 @@ import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SavedComponent } from './pages/saved/saved.component';
 import { ExplainDialogComponent } from './components/explain-dialog/explain-dialog.component';
+import { DigestComponent } from './pages/digest/digest.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
 
 @NgModule({
@@ -52,7 +53,8 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     HeaderComponent,
     SidebarComponent,
     SavedComponent,
-    ExplainDialogComponent
+    ExplainDialogComponent,
+    DigestComponent
   ],
   imports: [
     BrowserModule,

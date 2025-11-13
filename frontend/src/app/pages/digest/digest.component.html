@@ -1,0 +1,43 @@
+<div class="digest-page">
+  <div class="digest-container">
+    <section class="digest-section" *ngIf="digest && !loading && !error">
+      <h1 class="digest-title">
+        📰 Digest Giornaliero – {{ formatDate(digest.date) }}
+      </h1>
+
+      <div class="digest-content">
+        <div class="digest-category" *ngFor="let categoryData of digest.digest">
+          <h2 class="category-title">
+            <span class="category-emoji">{{ getCategoryEmoji(categoryData.category) }}</span>
+            {{ categoryData.category }}
+          </h2>
+
+          <ul class="digest-articles">
+            <li class="digest-article" *ngFor="let article of categoryData.articles">
+              <strong class="article-title">{{ article.title }}</strong>
+              <p class="article-description">{{ article.description }}</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading state -->
+    <div class="digest-loading" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Caricamento digest...</p>
+    </div>
+
+    <!-- Error state -->
+    <div class="digest-error" *ngIf="error && !loading">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+    </div>
+
+    <!-- Empty state -->
+    <div class="digest-empty" *ngIf="!digest && !loading && !error">
+      <mat-icon>info_outline</mat-icon>
+      <p>Nessun digest disponibile per oggi</p>
+    </div>
+  </div>
+</div>
