@@ -101,6 +101,38 @@ mat-dialog-actions {
   border-top: 1px solid rgba(0, 0, 0, 0.12);
   justify-content: flex-end;
   gap: 12px;
+
+  // Ottimizzazioni performance per bottoni Material
+  ::ng-deep {
+    .mdc-button__label {
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      // Ottimizzazioni performance
+      will-change: transform;
+      transform: translateZ(0); // Force GPU acceleration
+      backface-visibility: hidden;
+    }
+
+    button[mat-button] .mdc-button__label {
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    button[mat-raised-button] .mdc-button__label,
+    a[mat-raised-button] .mdc-button__label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    // Ottimizza transizioni per click più reattivi
+    button[mat-button],
+    button[mat-raised-button],
+    a[mat-raised-button] {
+      transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      // Riduce input delay
+      touch-action: manipulation;
+    }
+  }
 }
 
 ::ng-deep .mat-mdc-tab-group {
@@ -108,16 +140,32 @@ mat-dialog-actions {
     background: rgba(63, 81, 181, 0.05);
     border-radius: 8px;
     margin-bottom: 20px;
+    // Ottimizzazioni performance
+    will-change: transform;
+    transform: translateZ(0);
   }
 
   .mat-mdc-tab-label {
     min-width: 140px;
     font-size: 14px;
     font-weight: 500;
+    // Ottimizzazioni performance per click più veloci
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    touch-action: manipulation;
+    will-change: background-color;
   }
 
   .mat-mdc-tab-label-active {
     background: rgba(63, 81, 181, 0.15);
+  }
+
+  // Ottimizza render delle label dei tab
+  .mdc-tab__text-label {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    // Riduce input delay
+    touch-action: manipulation;
   }
 }
 

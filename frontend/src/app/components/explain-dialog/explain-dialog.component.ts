@@ -337,14 +337,17 @@ l'impatto a medio-lungo termine.`;
   }
 
   onTabChange(event: any): void {
-    const tabIndex = event.index;
-    if (tabIndex === 0 && !this.explanations['quick']) {
-      this.loadExplanation('quick');
-    } else if (tabIndex === 1 && !this.explanations['standard']) {
-      this.loadExplanation('standard');
-    } else if (tabIndex === 2 && !this.explanations['deep']) {
-      this.loadExplanation('deep');
-    }
+    // Ottimizzazione: usa requestAnimationFrame per migliorare performance
+    requestAnimationFrame(() => {
+      const tabIndex = event.index;
+      if (tabIndex === 0 && !this.explanations['quick']) {
+        this.loadExplanation('quick');
+      } else if (tabIndex === 1 && !this.explanations['standard']) {
+        this.loadExplanation('standard');
+      } else if (tabIndex === 2 && !this.explanations['deep']) {
+        this.loadExplanation('deep');
+      }
+    });
   }
 
   isLoading(type: string): boolean {
