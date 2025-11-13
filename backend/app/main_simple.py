@@ -1375,6 +1375,155 @@ def trigger_news_collection():
                 print(f"Errore fonte {source_name}: {e}")
                 continue
         
+        # RACCOLTA DA GOOGLE NEWS
+        print(f"\n📰 RACCOLTA DA GOOGLE NEWS...")
+        try:
+            from app.services.collectors.google_news_collector import GoogleNewsCollector, GOOGLE_NEWS_TOPICS, GOOGLE_NEWS_QUERIES_IT
+            
+            google_news_collector = GoogleNewsCollector()
+            google_articles_count = 0
+            
+            # Raccoglie da topic principali
+            print("   📋 Raccolta da topic principali...")
+            topics_to_collect = ['TECHNOLOGY', 'SCIENCE', 'WORLD', 'BUSINESS', 'HEALTH', 'SPORTS']
+            for topic in topics_to_collect:
+                try:
+                    articles = google_news_collector.collect(
+                        query=None,
+                        language='it',
+                        country='IT',
+                        max_articles=5,
+                        topic=topic
+                    )
+                    
+                    for article_data in articles:
+                        try:
+                            # Determina categoria basandosi sul topic
+                            category_map = {
+                                'TECHNOLOGY': ('Technology', 1),
+                                'SCIENCE': ('Science', 2),
+                                'WORLD': ('Technology', 1),
+                                'BUSINESS': ('Business', 11),
+                                'HEALTH': ('Health', 12),
+                                'SPORTS': ('Sport', 9),
+                            }
+                            category, category_id = category_map.get(topic, ('Technology', 1))
+                            
+                            # Estrae contenuto
+                            summary = article_data.get('summary', '')[:600]
+                            content = article_data.get('content', '')[:5000]
+                            
+                            # Calcola reading_time
+                            content_length = len(content) if content else len(summary)
+                            reading_time = max(1, int(content_length / 200))
+                            
+                            article = {
+                                "id": article_id,
+                                "title": article_data.get('title', '')[:200],
+                                "slug": article_data.get('title', '').lower().replace(' ', '-').replace("'", '').replace(',', '')[:50],
+                                "url": article_data.get('url', ''),
+                                "summary": summary,
+                                "content": content,
+                                "image_url": article_data.get('image_url'),
+                                "author": article_data.get('author', 'Google News'),
+                                "published_at": article_data.get('published_at').isoformat() if article_data.get('published_at') and isinstance(article_data.get('published_at'), datetime) else datetime.now().isoformat(),
+                                "collected_at": datetime.now().isoformat(),
+                                "source_id": 1,
+                                "category_id": category_id,
+                                "is_featured": google_articles_count == 0,
+                                "is_verified": True,
+                                "is_archived": False,
+                                "quality_score": 0.75,
+                                "reading_time_minutes": reading_time,
+                                "keywords": [category.lower(), "news", "it", "google news"],
+                                "language": "it",
+                                "original_language": None
+                            }
+                            
+                            all_articles.append(article)
+                            article_id += 1
+                            google_articles_count += 1
+                        except Exception as e:
+                            print(f"   ⚠️  Errore parsing articolo Google News: {e}")
+                            continue
+                    
+                    print(f"   ✅ Topic {topic}: {len(articles)} articoli raccolti")
+                except Exception as e:
+                    print(f"   ⚠️  Errore topic {topic}: {e}")
+                    continue
+            
+            # Raccoglie da query specifiche italiane
+            print("   🔍 Raccolta da query specifiche...")
+            queries_to_collect = ['intelligenza artificiale', 'cybersecurity', 'innovazione', 'startup']
+            for query in queries_to_collect:
+                try:
+                    articles = google_news_collector.collect(
+                        query=query,
+                        language='it',
+                        country='IT',
+                        max_articles=3
+                    )
+                    
+                    for article_data in articles:
+                        try:
+                            # Determina categoria dalla query
+                            if 'intelligenza artificiale' in query.lower() or 'ai' in query.lower():
+                                category, category_id = ('AI', 5)
+                            elif 'cybersecurity' in query.lower() or 'security' in query.lower():
+                                category, category_id = ('Cybersecurity', 4)
+                            elif 'innovazione' in query.lower() or 'startup' in query.lower():
+                                category, category_id = ('Innovation', 6)
+                            else:
+                                category, category_id = ('Technology', 1)
+                            
+                            summary = article_data.get('summary', '')[:600]
+                            content = article_data.get('content', '')[:5000]
+                            content_length = len(content) if content else len(summary)
+                            reading_time = max(1, int(content_length / 200))
+                            
+                            article = {
+                                "id": article_id,
+                                "title": article_data.get('title', '')[:200],
+                                "slug": article_data.get('title', '').lower().replace(' ', '-').replace("'", '').replace(',', '')[:50],
+                                "url": article_data.get('url', ''),
+                                "summary": summary,
+                                "content": content,
+                                "image_url": article_data.get('image_url'),
+                                "author": article_data.get('author', 'Google News'),
+                                "published_at": article_data.get('published_at').isoformat() if article_data.get('published_at') and isinstance(article_data.get('published_at'), datetime) else datetime.now().isoformat(),
+                                "collected_at": datetime.now().isoformat(),
+                                "source_id": 1,
+                                "category_id": category_id,
+                                "is_featured": False,
+                                "is_verified": True,
+                                "is_archived": False,
+                                "quality_score": 0.7,
+                                "reading_time_minutes": reading_time,
+                                "keywords": [category.lower(), "news", "it", "google news", query.lower()],
+                                "language": "it",
+                                "original_language": None
+                            }
+                            
+                            all_articles.append(article)
+                            article_id += 1
+                            google_articles_count += 1
+                        except Exception as e:
+                            print(f"   ⚠️  Errore parsing articolo Google News (query): {e}")
+                            continue
+                    
+                    print(f"   ✅ Query '{query}': {len(articles)} articoli raccolti")
+                except Exception as e:
+                    print(f"   ⚠️  Errore query '{query}': {e}")
+                    continue
+            
+            print(f"✅ Google News: {google_articles_count} articoli totali raccolti")
+        except ImportError as e:
+            print(f"⚠️  Google News Collector non disponibile: {e}")
+        except Exception as e:
+            print(f"⚠️  Errore raccolta Google News: {e}")
+            import traceback
+            traceback.print_exc()
+        
         # FASE 2: Genera spiegazioni AI solo per articoli nuovi (dopo aver raccolto tutte le notizie)
         print(f"\n🤖 FASE 2: Generazione spiegazioni AI per articoli nuovi...")
         explanations_generated = 0
