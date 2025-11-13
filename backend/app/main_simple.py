@@ -623,14 +623,14 @@ _explanation_cache = {}
 @app.post("/api/v1/articles/explain")
 def explain_article(request: ExplanationRequest):
     """
-    Genera spiegazione AI dell'articolo usando ChatGPT o DeepSeek
-    Ottimizzato per velocità: cache, token ridotti, timeout brevi
+    Restituisce spiegazione AI dell'articolo (già generata durante collect-news)
+    Se non esiste, la genera al volo (fallback)
     
     Args:
         request: ExplanationRequest con article_id o slug e explanation_type
     
     Returns:
-        Spiegazione generata dall'AI
+        Spiegazione già generata o generata al volo
     """
     import time
     start_time = time.time()
@@ -653,7 +653,34 @@ def explain_article(request: ExplanationRequest):
     if not article:
         return {"error": "Article not found"}
     
-    # Controlla cache (evita rigenerazioni)
+    # Mappa explanation_type ai campi nel JSON
+    explanation_field_map = {
+        "quick": "explanation_quick",
+        "standard": "explanation_standard",
+        "deep": "explanation_deep"
+    }
+    
+    explanation_field = explanation_field_map.get(request.explanation_type, "explanation_standard")
+    
+    # Controlla se la spiegazione esiste già nel JSON (già generata durante collect-news)
+    if explanation_field in article and article[explanation_field]:
+        print(f"✅ Spiegazione già presente nel JSON per articolo {article.get('id')} (tipo: {request.explanation_type})")
+        return {
+            "success": True,
+            "article_id": article.get('id'),
+            "article_title": article.get('title'),
+            "explanation_type": request.explanation_type,
+            "explanation": article[explanation_field],
+            "ai_used": "Pre-generated (during collect-news)",
+            "cached": True,
+            "generation_time": 0,
+            "pre_generated": True
+        }
+    
+    # Fallback: genera al volo se non esiste (per articoli vecchi o nuovi)
+    print(f"⚠️  Spiegazione non trovata nel JSON, generazione al volo per articolo {article.get('id')}...")
+    
+    # Controlla cache in memoria (evita rigenerazioni multiple)
     cache_key = f"{article.get('id')}_{request.explanation_type}"
     if cache_key in _explanation_cache:
         print(f"✅ Cache hit per {cache_key}")
@@ -665,14 +692,13 @@ def explain_article(request: ExplanationRequest):
             "explanation": _explanation_cache[cache_key],
             "ai_used": _get_ai_service_used(),
             "cached": True,
-            "generation_time": 0
+            "generation_time": 0,
+            "pre_generated": False
         }
     
     # Importa il servizio AI
     try:
         from app.ai_explainer import generate_explanation
-        
-        print(f"🤖 Generazione spiegazione AI per articolo {article.get('id')} (tipo: {request.explanation_type})...")
         
         # Genera spiegazione con AI (ottimizzato per velocità)
         explanation = generate_explanation(article, request.explanation_type)
@@ -681,7 +707,7 @@ def explain_article(request: ExplanationRequest):
         _explanation_cache[cache_key] = explanation
         
         generation_time = time.time() - start_time
-        print(f"✅ Spiegazione generata in {generation_time:.2f} secondi")
+        print(f"✅ Spiegazione generata al volo in {generation_time:.2f} secondi")
         
         return {
             "success": True,
@@ -691,7 +717,8 @@ def explain_article(request: ExplanationRequest):
             "explanation": explanation,
             "ai_used": _get_ai_service_used(),
             "cached": False,
-            "generation_time": round(generation_time, 2)
+            "generation_time": round(generation_time, 2),
+            "pre_generated": False
         }
     except ImportError:
         # Fallback se il modulo AI non è disponibile
@@ -1195,7 +1222,46 @@ def trigger_news_collection():
                 print(f"Errore fonte {source_name}: {e}")
                 continue
         
-        # Aggiorna final_news_italian.json
+        # Genera spiegazioni AI per tutti gli articoli (una sola volta)
+        print(f"\n🤖 Generazione spiegazioni AI per {len(all_articles)} articoli...")
+        explanations_generated = 0
+        
+        try:
+            from app.ai_explainer import generate_explanation
+            
+            for i, article in enumerate(all_articles):
+                try:
+                    # Genera solo se non esistono già
+                    if not article.get('explanation_quick') and not article.get('explanation_standard'):
+                        print(f"   [{i+1}/{len(all_articles)}] Generando spiegazioni per: {article.get('title', '')[:50]}...")
+                        
+                        # Genera spiegazioni AI (usa cache interna)
+                        article['explanation_quick'] = generate_explanation(article, 'quick')
+                        article['explanation_standard'] = generate_explanation(article, 'standard')
+                        article['explanation_deep'] = generate_explanation(article, 'deep')
+                        
+                        explanations_generated += 1
+                        
+                        # Log ogni 10 articoli per non intasare
+                        if (i + 1) % 10 == 0:
+                            print(f"   ✅ {i+1}/{len(all_articles)} articoli processati...")
+                    else:
+                        # Spiegazioni già esistenti, salta
+                        if (i + 1) % 20 == 0:
+                            print(f"   ⏭️  {i+1}/{len(all_articles)} articoli (spiegazioni già presenti)...")
+                except Exception as e:
+                    print(f"   ⚠️  Errore generazione spiegazioni per articolo {i+1}: {e}")
+                    # Continua con gli altri articoli anche se uno fallisce
+                    continue
+            
+            print(f"✅ Spiegazioni AI generate: {explanations_generated} nuovi articoli")
+        except ImportError:
+            print("⚠️  Modulo AI non disponibile, salto generazione spiegazioni")
+        except Exception as e:
+            print(f"⚠️  Errore generazione spiegazioni: {e}")
+            print("   Continuo comunque con il salvataggio degli articoli...")
+        
+        # Aggiorna final_news_italian.json con spiegazioni incluse
         output_data = {
             "items": all_articles,
             "total": len(all_articles),
@@ -1210,12 +1276,13 @@ def trigger_news_collection():
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         
         # Gli articoli verranno ricaricati automaticamente alla prossima chiamata a _load_articles()
-        print(f"✅ Aggiornate {len(all_articles)} notizie!")
+        print(f"✅ Aggiornate {len(all_articles)} notizie con spiegazioni AI!")
         
         return {
             "success": True,
             "message": f"Collected and updated {len(all_articles)} articles successfully!",
             "total_articles": len(all_articles),
+            "explanations_generated": explanations_generated,
             "updated_at": datetime.now().isoformat(),
             "next_collection": "In 4 hours"
         }

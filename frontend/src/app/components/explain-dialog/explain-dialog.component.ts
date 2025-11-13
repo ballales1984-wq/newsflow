@@ -28,7 +28,7 @@ export class ExplainDialogComponent implements OnInit {
     this.loadExplanation('standard');
   }
 
-  // Carica spiegazione AI dall'API
+  // Carica spiegazione AI (già generata nel JSON o dall'API)
   loadExplanation(type: 'quick' | 'standard' | 'deep'): void {
     const cacheKey = type;
     
@@ -42,9 +42,25 @@ export class ExplainDialogComponent implements OnInit {
       return;
     }
     
+    // Controlla se la spiegazione è già nell'articolo (pre-generata)
+    const explanationFieldMap: { [key: string]: string } = {
+      'quick': 'explanation_quick',
+      'standard': 'explanation_standard',
+      'deep': 'explanation_deep'
+    };
+    
+    const explanationField = explanationFieldMap[type];
+    if (this.article[explanationField as keyof typeof this.article]) {
+      // Spiegazione già presente nel JSON (pre-generata durante collect-news)
+      this.explanations[cacheKey] = this.article[explanationField as keyof typeof this.article] as string;
+      this.aiUsed = 'Pre-generated';
+      return; // Istantaneo, nessun caricamento necessario!
+    }
+    
+    // Se non presente nel JSON, carica dall'API (fallback)
     this.loading[cacheKey] = true;
     
-    // Chiama API per spiegazione AI
+    // Chiama API per spiegazione AI (solo se non presente nel JSON)
     const apiUrl = environment.apiUrl.replace('/v1', '/v1/articles/explain');
     this.http.post<any>(apiUrl, {
       article_id: this.article.id,

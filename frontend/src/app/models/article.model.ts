@@ -28,6 +28,10 @@ export interface Article {
   is_featured: boolean;
   is_verified: boolean;
   is_archived: boolean;
+  // Spiegazioni AI pre-generate (già nel JSON)
+  explanation_quick?: string;
+  explanation_standard?: string;
+  explanation_deep?: string;
 }
 
 export interface ArticleList {
