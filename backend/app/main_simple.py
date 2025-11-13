@@ -104,11 +104,32 @@ def debug_files():
     return debug_info
 
 
-def _load_articles():
-    """Helper to load articles - 94 NEWS ALL IN ITALIAN"""
+# Cache globale per gli articoli (evita ricaricamento continuo)
+_articles_cache = None
+_cache_timestamp = None
+_cache_file_path = None
+
+def _load_articles(force_reload=False):
+    """Helper to load articles - 94 NEWS ALL IN ITALIAN
+    Usa cache in memoria per performance migliori"""
     import json
     import os
     import re
+    global _articles_cache, _cache_timestamp, _cache_file_path
+    
+    # Se abbiamo cache valida e non è forzato il reload, verifica se il file è cambiato
+    if not force_reload and _articles_cache is not None and _cache_file_path:
+        try:
+            current_mtime = os.path.getmtime(_cache_file_path)
+            if current_mtime == _cache_timestamp:
+                # File non modificato, usa cache
+                return _articles_cache
+            else:
+                # File modificato, ricarica
+                print(f"🔄 File modificato, ricarico cache...")
+        except:
+            # File non esiste più o errore, ricarica
+            pass
     
     def clean_html(text):
         """Rimuove tutti i tag HTML dal testo"""
@@ -245,6 +266,11 @@ def _load_articles():
                         
                         article['category_id'] = category_id
                 
+                # Salva in cache
+                _articles_cache = articles
+                _cache_timestamp = os.path.getmtime(file_path)
+                _cache_file_path = file_path
+                print(f"✅ Cache aggiornata: {len(articles)} articoli")
                 return articles
         except Exception as e:
             print(f"❌ Errore caricamento final_news_italian.json: {e}")
@@ -286,6 +312,11 @@ def _load_articles():
                         article['summary'] = clean_html(article['summary'])
                     if 'title' in article:
                         article['title'] = clean_html(article['title'])
+                # Salva in cache
+                _articles_cache = articles
+                _cache_timestamp = os.path.getmtime(file_path)
+                _cache_file_path = file_path
+                print(f"✅ Cache aggiornata (all_sources): {len(articles)} articoli")
                 return articles
         except Exception as e:
             print(f"Errore caricamento all_sources_news.json: {e}")
@@ -1915,7 +1946,13 @@ def trigger_news_collection():
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         
-        # Gli articoli verranno ricaricati automaticamente alla prossima chiamata a _load_articles()
+        # Invalida la cache per forzare il ricaricamento
+        global _articles_cache, _cache_timestamp, _cache_file_path
+        _articles_cache = None
+        _cache_timestamp = None
+        _cache_file_path = None
+        print(f"🔄 Cache invalidata - gli articoli verranno ricaricati alla prossima richiesta")
+        
         print(f"✅ Aggiornate {len(all_articles)} notizie con spiegazioni AI!")
         
         return {
