@@ -813,8 +813,8 @@ def explain_article(request: ExplanationRequest):
                     break
             
             if json_file_path:
-                # Ricarica tutti gli articoli
-                all_articles = _load_articles()
+                # Ricarica tutti gli articoli (forza reload per avere dati aggiornati)
+                all_articles = _load_articles(force_reload=True)
                 # Aggiorna l'articolo specifico
                 for idx, a in enumerate(all_articles):
                     if a.get('id') == article.get('id') or a.get('slug') == article.get('slug'):
@@ -834,7 +834,14 @@ def explain_article(request: ExplanationRequest):
                 with open(json_file_path, 'w', encoding='utf-8') as f:
                     json.dump(output_data, f, indent=2, ensure_ascii=False)
                 
+                # Invalida la cache dopo il salvataggio
+                global _articles_cache, _cache_timestamp, _cache_file_path
+                _articles_cache = None
+                _cache_timestamp = None
+                _cache_file_path = None
+                
                 print(f"✅ Spiegazione salvata permanentemente nel JSON: {json_file_path}")
+                print(f"🔄 Cache invalidata")
         except Exception as save_error:
             print(f"⚠️  Errore salvataggio JSON (ma spiegazione generata): {save_error}")
         
