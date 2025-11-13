@@ -36,13 +36,21 @@
     }
   ],
   "functions": {
+    "api/index.py": {
+      "runtime": "python3.12",
+      "includeFiles": [
+        "api/final_news_italian.json",
+        "api/all_sources_news.json",
+        "backend/**",
+        "requirements.txt"
+      ]
+    },
     "api/[...path].py": {
       "runtime": "python3.12",
       "includeFiles": [
         "api/final_news_italian.json",
         "api/all_sources_news.json",
-        "backend/final_news_italian.json",
-        "backend/all_sources_news.json",
+        "backend/**",
         "requirements.txt"
       ]
     }
