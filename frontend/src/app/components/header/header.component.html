@@ -2,6 +2,18 @@
   <div class="header-content">
     <div class="logo-section">
       <a routerLink="/" class="logo-badge">NF</a>
+      <div class="datetime-display">
+        <span class="date">{{ currentDate }}</span>
+        <span class="time">{{ currentTime }}</span>
+      </div>
+      <div class="weather-display" *ngIf="weatherData">
+        <mat-icon class="weather-icon">{{ weatherData.icon }}</mat-icon>
+        <div class="weather-info">
+          <span class="temperature">{{ weatherData.temperature }}°</span>
+          <span class="condition">{{ weatherData.condition }}</span>
+          <span class="location">{{ weatherData.city }}</span>
+        </div>
+      </div>
     </div>
 
     <div class="title-section">
