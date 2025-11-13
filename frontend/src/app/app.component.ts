@@ -38,6 +38,14 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
             this.drawer.open();
             this.drawerOpened = true;
           }
+          
+          // Chiusura automatica dopo 2 secondi (solo su desktop)
+          setTimeout(() => {
+            if (this.drawer && !this.isMobile && this.drawer.opened) {
+              this.drawer.close();
+              this.drawerOpened = false;
+            }
+          }, 2000); // 2 secondi dopo l'apertura iniziale
         }
       }
     }, 100);
@@ -91,6 +99,10 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   toggleSidebar() {
     if (this.drawer) {
       this.drawer.toggle();
+      // Aggiorna lo stato dopo il toggle
+      setTimeout(() => {
+        this.drawerOpened = this.drawer.opened;
+      }, 100);
     }
   }
 }

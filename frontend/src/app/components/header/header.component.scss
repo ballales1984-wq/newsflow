@@ -20,6 +20,18 @@
   justify-self: start;
 }
 
+.menu-toggle-button {
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
 .logo-badge {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
