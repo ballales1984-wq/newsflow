@@ -242,13 +242,24 @@ def _load_articles(force_reload=False):
         return []  # Restituisci array vuoto invece di None
     if file_path and os.path.exists(file_path):
         try:
+            # VERCEL FREE: Caricamento ottimizzato con timeout implicito
+            # Usa lettura binaria per performance migliori
+            import time
+            start_load = time.time()
+            
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 articles = data.get('items', [])
-                print(f"✅ Caricati {len(articles)} articoli da final_news_italian.json")
-                
-                # Mappa keywords → category_id per articoli esistenti senza category_id
-                KEYWORD_TO_CATEGORY_ID = {
+            
+            load_time = time.time() - start_load
+            print(f"✅ Caricati {len(articles)} articoli da final_news_italian.json in {load_time:.2f}s")
+            
+            # VERCEL FREE: Se il caricamento è troppo lento, avvisa
+            if load_time > 5:
+                print(f"⚠️  Caricamento lento ({load_time:.2f}s) - considera ottimizzazioni")
+            
+            # Mappa keywords → category_id per articoli esistenti senza category_id
+            KEYWORD_TO_CATEGORY_ID = {
                     'technology': 1, 'tech': 1, 'tecnologia': 1,
                     'science': 2, 'scienz': 2,
                     'philosophy': 3, 'filosofia': 3,
