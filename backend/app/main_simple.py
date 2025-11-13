@@ -45,7 +45,21 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Precarica la cache degli articoli all'avvio per evitare timeout"""
+    """Precarica la cache degli articoli all'avvio per evitare timeout
+    DISABILITATO su Vercel Free per evitare timeout (10s limite)
+    Il caricamento avverrà alla prima richiesta (lazy loading)
+    """
+    # VERCEL FREE: Non precaricare su startup (evita timeout)
+    # Il caricamento avverrà alla prima richiesta GET
+    import os
+    is_vercel = os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV")
+    
+    if is_vercel:
+        print("🚀 Startup: Vercel rilevato - skip precaricamento (lazy loading)")
+        print("   La cache verrà caricata alla prima richiesta")
+        return
+    
+    # Solo per backend locale/Render: precarica cache
     print("🚀 Startup: precaricamento cache articoli...")
     try:
         _load_articles(force_reload=False)  # Carica e salva in cache
@@ -556,8 +570,10 @@ def _load_articles(force_reload=False):
 
 
 @app.get("/api/v1/articles")
-def get_articles(category_id: int = None, skip: int = 0, limit: int = 20):
-    """Get articles - REAL NEWS from RSS feeds - WITH CATEGORY FILTER AND PAGINATION"""
+def get_articles(category_id: int = None, skip: int = 0, limit: int = 10):
+    """Get articles - REAL NEWS from RSS feeds - WITH CATEGORY FILTER AND PAGINATION
+    Limit ridotto a 10 per Vercel Free (evita timeout)
+    """
     articles = _load_articles()
     
     # Mappa categorie → keywords da cercare
