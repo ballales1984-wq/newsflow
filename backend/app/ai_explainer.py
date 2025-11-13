@@ -267,57 +267,46 @@ def generate_explanation_with_ollama(article: Dict, explanation_type: str = "qui
         Spiegazione generata o None se errore
     """
     try:
-        # Prepara prompt
+        # Prepara prompt OTTIMIZZATI per velocità (più brevi e diretti)
         if explanation_type == "quick":
-            prompt = f"""Spiega questa notizia in modo breve e chiaro (max 150 parole):
+            # Prompt molto breve per risposta rapida
+            prompt = f"""Spiega brevemente in italiano (max 3 frasi):
+
+Titolo: {article.get('title', '')}
+Riassunto: {article.get('summary', '')[:300]}
+
+Cosa è successo e perché è importante?"""
+        
+        elif explanation_type == "standard":
+            # Prompt medio, strutturato ma conciso
+            prompt = f"""Spiega in italiano:
 
 Titolo: {article.get('title', '')}
 Riassunto: {article.get('summary', '')[:500]}
+Keywords: {', '.join(article.get('keywords', [])[:3])}
 
-Fornisci:
-- Cosa è successo (in 2-3 frasi)
-- Perché è importante
-- Impatto principale
-
-Rispondi in italiano, in modo chiaro e accessibile."""
-        
-        elif explanation_type == "standard":
-            prompt = f"""Spiega questa notizia in modo dettagliato (max 400 parole):
-
-Titolo: {article.get('title', '')}
-Riassunto: {article.get('summary', '')[:800]}
-Keywords: {', '.join(article.get('keywords', [])[:5])}
-
-Fornisci:
-1. CONTESTO: Cosa è successo e perché è importante
-2. CHI È COINVOLTO: Attori principali e stakeholder
-3. IMPATTO: Conseguenze immediate e a medio termine
-4. PERCHÉ LEGGERE: Perché questa notizia è rilevante
-
-Rispondi in italiano, ben strutturato e informativo."""
+Fornisci brevemente: cosa è successo, chi è coinvolto, perché è importante."""
         
         else:  # deep
-            prompt = f"""Fornisci un'analisi approfondita di questa notizia (max 800 parole):
+            # Prompt più completo ma ancora ottimizzato
+            prompt = f"""Analisi approfondita in italiano:
 
 Titolo: {article.get('title', '')}
-Riassunto: {article.get('summary', '')[:1000]}
-Contenuto: {article.get('content', '')[:1500] if article.get('content') else article.get('summary', '')[:1000]}
-Keywords: {', '.join(article.get('keywords', []))}
-Categoria: {article.get('keywords', [''])[0] if article.get('keywords') else 'Generale'}
+Riassunto: {article.get('summary', '')[:600]}
+Keywords: {', '.join(article.get('keywords', [])[:5])}
 
-Fornisci un'analisi completa con:
-1. CONTESTO STORICO: Background e precedenti rilevanti
-2. ANALISI DETTAGLIATA: Cosa significa questa notizia nel contesto più ampio
-3. ATTORI E STAKEHOLDER: Chi è coinvolto e perché
-4. CONSEGUENZE E IMPLICAZIONI: Impatto a breve, medio e lungo termine
-5. PROSPETTIVE FUTURE: Cosa potrebbe succedere dopo
-6. GLOSSARIO: Spiega i termini tecnici chiave
-7. PERCHÉ È IMPORTANTE: Perché questa notizia merita attenzione
-
-Rispondi in italiano, ben strutturato, professionale ma accessibile."""
+Fornisci: contesto, attori coinvolti, conseguenze, perché è importante."""
         
         # Prova modelli Ollama comuni (in ordine di preferenza)
-        models = ["llama3.2", "mistral", "phi3", "llama3", "gemma2"]
+        # Usa modelli più piccoli e veloci per risposte rapide
+        models = ["gemma3:1b", "phi3", "llama3.2", "mistral", "llama3"]
+        
+        # Riduci drasticamente i token per risposte più veloci
+        max_tokens = {
+            "quick": 100,      # Ridotto da 500 a 100
+            "standard": 200,   # Ridotto da 1000 a 200
+            "deep": 400        # Ridotto da 2000 a 400
+        }
         
         for model in models:
             try:
@@ -327,14 +316,17 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
                     "stream": False,
                     "options": {
                         "temperature": 0.7,
-                        "num_predict": 500 if explanation_type == "quick" else (1000 if explanation_type == "standard" else 2000)
+                        "num_predict": max_tokens.get(explanation_type, 200),
+                        "top_p": 0.9,
+                        "top_k": 40,
+                        "repeat_penalty": 1.1
                     }
                 }
                 
                 response = requests.post(
                     f"{OLLAMA_URL}/api/generate",
                     json=payload,
-                    timeout=120  # Ollama può essere più lento
+                    timeout=30  # Ridotto da 120 a 30 secondi
                 )
                 
                 if response.status_code == 200:

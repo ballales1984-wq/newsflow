@@ -617,10 +617,14 @@ class ExplanationRequest(BaseModel):
     explanation_type: str = "quick"  # "quick", "standard", "deep"
 
 
+# Cache semplice per spiegazioni (evita rigenerazioni)
+_explanation_cache = {}
+
 @app.post("/api/v1/articles/explain")
 def explain_article(request: ExplanationRequest):
     """
     Genera spiegazione AI dell'articolo usando ChatGPT o DeepSeek
+    Ottimizzato per velocità: cache, token ridotti, timeout brevi
     
     Args:
         request: ExplanationRequest con article_id o slug e explanation_type
@@ -628,6 +632,9 @@ def explain_article(request: ExplanationRequest):
     Returns:
         Spiegazione generata dall'AI
     """
+    import time
+    start_time = time.time()
+    
     articles = _load_articles()
     
     # Trova l'articolo
@@ -646,12 +653,35 @@ def explain_article(request: ExplanationRequest):
     if not article:
         return {"error": "Article not found"}
     
+    # Controlla cache (evita rigenerazioni)
+    cache_key = f"{article.get('id')}_{request.explanation_type}"
+    if cache_key in _explanation_cache:
+        print(f"✅ Cache hit per {cache_key}")
+        return {
+            "success": True,
+            "article_id": article.get('id'),
+            "article_title": article.get('title'),
+            "explanation_type": request.explanation_type,
+            "explanation": _explanation_cache[cache_key],
+            "ai_used": _get_ai_service_used(),
+            "cached": True,
+            "generation_time": 0
+        }
+    
     # Importa il servizio AI
     try:
         from app.ai_explainer import generate_explanation
         
-        # Genera spiegazione con AI
+        print(f"🤖 Generazione spiegazione AI per articolo {article.get('id')} (tipo: {request.explanation_type})...")
+        
+        # Genera spiegazione con AI (ottimizzato per velocità)
         explanation = generate_explanation(article, request.explanation_type)
+        
+        # Salva in cache
+        _explanation_cache[cache_key] = explanation
+        
+        generation_time = time.time() - start_time
+        print(f"✅ Spiegazione generata in {generation_time:.2f} secondi")
         
         return {
             "success": True,
@@ -659,7 +689,9 @@ def explain_article(request: ExplanationRequest):
             "article_title": article.get('title'),
             "explanation_type": request.explanation_type,
             "explanation": explanation,
-            "ai_used": _get_ai_service_used()
+            "ai_used": _get_ai_service_used(),
+            "cached": False,
+            "generation_time": round(generation_time, 2)
         }
     except ImportError:
         # Fallback se il modulo AI non è disponibile
