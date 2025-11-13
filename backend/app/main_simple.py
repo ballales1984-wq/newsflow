@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 import os
 import json
 
@@ -746,8 +747,58 @@ def explain_article(request: ExplanationRequest):
         # Salva in cache
         _explanation_cache[cache_key] = explanation
         
+        # SALVA PERMANENTEMENTE NEL JSON per non rigenerarla
+        article[explanation_field] = explanation
+        
+        # Salva anche le altre spiegazioni se non esistono (per efficienza futura)
+        if request.explanation_type == 'standard' and not article.get('explanation_quick'):
+            try:
+                article['explanation_quick'] = generate_explanation(article, 'quick')
+            except:
+                pass
+        
+        # Salva il file JSON aggiornato
+        try:
+            import json
+            # Trova il file JSON
+            json_file_path = None
+            for path in [
+                'final_news_italian.json',
+                os.path.join('backend', 'final_news_italian.json'),
+                os.path.join('api', 'final_news_italian.json')
+            ]:
+                if os.path.exists(path):
+                    json_file_path = path
+                    break
+            
+            if json_file_path:
+                # Ricarica tutti gli articoli
+                all_articles = _load_articles()
+                # Aggiorna l'articolo specifico
+                for idx, a in enumerate(all_articles):
+                    if a.get('id') == article.get('id') or a.get('slug') == article.get('slug'):
+                        all_articles[idx] = article
+                        break
+                
+                # Salva il file aggiornato
+                output_data = {
+                    "items": all_articles,
+                    "total": len(all_articles),
+                    "page": 1,
+                    "size": len(all_articles),
+                    "pages": 1,
+                    "updated_at": datetime.now().isoformat()
+                }
+                
+                with open(json_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(output_data, f, indent=2, ensure_ascii=False)
+                
+                print(f"✅ Spiegazione salvata permanentemente nel JSON: {json_file_path}")
+        except Exception as save_error:
+            print(f"⚠️  Errore salvataggio JSON (ma spiegazione generata): {save_error}")
+        
         generation_time = time.time() - start_time
-        print(f"✅ Spiegazione generata al volo in {generation_time:.2f} secondi")
+        print(f"✅ Spiegazione generata e salvata in {generation_time:.2f} secondi")
         
         return {
             "success": True,
@@ -758,7 +809,8 @@ def explain_article(request: ExplanationRequest):
             "ai_used": _get_ai_service_used(),
             "cached": False,
             "generation_time": round(generation_time, 2),
-            "pre_generated": False
+            "pre_generated": False,
+            "saved": True
         }
     except ImportError:
         # Fallback se il modulo AI non è disponibile
@@ -1051,6 +1103,119 @@ def whoami(request: Request):
     }
 
 
+@app.post("/api/admin/generate-explanations")
+def trigger_explanations_generation():
+    """
+    Endpoint per generare spiegazioni AI per articoli esistenti.
+    Da chiamare DOPO collect-news per completare il processo.
+    """
+    import json
+    import os
+    from datetime import datetime
+    
+    try:
+        print("🤖 Generazione spiegazioni AI per articoli esistenti...")
+        
+        # Carica articoli esistenti
+        existing_file_path = None
+        for path in [
+            'final_news_italian.json',
+            os.path.join('backend', 'final_news_italian.json'),
+            os.path.join('api', 'final_news_italian.json')
+        ]:
+            if os.path.exists(path):
+                existing_file_path = path
+                break
+        
+        if not existing_file_path:
+            return {
+                "success": False,
+                "error": "File final_news_italian.json non trovato. Esegui prima /api/admin/collect-news"
+            }
+        
+        with open(existing_file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            articles = data.get('items', [])
+        
+        print(f"📚 Caricati {len(articles)} articoli da processare")
+        
+        # Genera spiegazioni solo per articoli senza spiegazioni
+        try:
+            from app.ai_explainer import generate_explanation
+            
+            articles_needing_explanations = []
+            for article in articles:
+                if not article.get('explanation_quick'):
+                    articles_needing_explanations.append(article)
+            
+            print(f"📊 Articoli senza spiegazioni: {len(articles_needing_explanations)}")
+            print(f"⏭️  Articoli con spiegazioni già presenti: {len(articles) - len(articles_needing_explanations)}")
+            
+            explanations_generated = 0
+            
+            # Genera spiegazioni solo per quelli senza
+            # Limita a max 50 articoli per volta per evitare timeout
+            max_articles_to_process = min(50, len(articles_needing_explanations))
+            articles_to_process = articles_needing_explanations[:max_articles_to_process]
+            
+            print(f"📝 Processerò {max_articles_to_process} articoli (su {len(articles_needing_explanations)} totali)")
+            
+            for i, article in enumerate(articles_to_process):
+                try:
+                    print(f"   [{i+1}/{max_articles_to_process}] {article.get('title', '')[:60]}...")
+                    
+                    # Genera spiegazioni AI
+                    article['explanation_quick'] = generate_explanation(article, 'quick')
+                    article['explanation_standard'] = generate_explanation(article, 'standard')
+                    article['explanation_deep'] = generate_explanation(article, 'deep')
+                    
+                    explanations_generated += 1
+                    print(f"      ✅ Completato")
+                except Exception as e:
+                    print(f"      ⚠️  Errore: {e}")
+                    continue
+            
+            # Salva articoli aggiornati
+            data['items'] = articles
+            data['updated_at'] = datetime.now().isoformat()
+            
+            with open(existing_file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            print(f"✅ Spiegazioni AI generate: {explanations_generated} articoli")
+            print(f"✅ File aggiornato: {existing_file_path}")
+            
+            return {
+                "success": True,
+                "message": f"Generated explanations for {explanations_generated} articles",
+                "explanations_generated": explanations_generated,
+                "total_articles": len(articles),
+                "articles_with_explanations": len(articles_needing_explanations),
+                "updated_at": datetime.now().isoformat()
+            }
+            
+        except ImportError:
+            return {
+                "success": False,
+                "error": "AI explainer module not available",
+                "hint": "Installa le dipendenze AI necessarie"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+            
+    except Exception as e:
+        print(f"❌ Errore generazione spiegazioni: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
 @app.post("/api/admin/collect-news")
 def trigger_news_collection():
     """
@@ -1113,43 +1278,78 @@ def trigger_news_collection():
         
         # Fonti RSS - ESPANSE per tutte le categorie
         RSS_SOURCES = {
-            # Tecnologia
-            'MIT Technology Review': 'https://www.technologyreview.com/feed/',
-            'The Guardian Tech': 'https://www.theguardian.com/technology/rss',
+            # Tecnologia - Italia
             'Wired IT': 'https://www.wired.it/feed/rss',
-            'The Hacker News': 'https://feeds.feedburner.com/TheHackersNews',
             'Punto Informatico': 'https://www.punto-informatico.it/feed/',
             'Agenda Digitale': 'https://www.agendadigitale.eu/feed/',
+            'DDay.it': 'https://www.dday.it/rss',
+            'Tom\'s Hardware Italia': 'https://www.tomshw.it/feed',
+            'StartupItalia': 'https://startupitalia.eu/feed/',
+            'Forbes Italia': 'https://www.forbes.it/feed/',
+            
+            # Tecnologia - Internazionale
+            'MIT Technology Review': 'https://www.technologyreview.com/feed/',
+            'The Guardian Tech': 'https://www.theguardian.com/technology/rss',
+            'The Hacker News': 'https://feeds.feedburner.com/TheHackersNews',
+            'TechCrunch': 'https://techcrunch.com/feed/',
+            'Ars Technica': 'https://feeds.arstechnica.com/arstechnica/index',
+            'The Verge': 'https://www.theverge.com/rss/index.xml',
+            'CNET': 'https://www.cnet.com/rss/news/',
+            'Engadget': 'https://www.engadget.com/rss.xml',
+            'VentureBeat': 'https://venturebeat.com/feed/',
+            'ZDNet': 'https://www.zdnet.com/news/rss.xml',
             
             # Scienza
             'ArXiv CS': 'http://export.arxiv.org/rss/cs',
             'Science Daily': 'https://www.sciencedaily.com/rss/all.xml',
+            'Nature': 'https://www.nature.com/nature.rss',
+            'Scientific American': 'https://rss.sciam.com/ScientificAmerican-News',
             
             # Filosofia
             'MicroMega': 'https://www.micromega.net/feed/',
             
             # Cybersecurity
             'ICT Security Magazine': 'https://www.ictsecuritymagazine.com/feed/',
+            'Krebs on Security': 'https://krebsonsecurity.com/feed/',
+            'Bleeping Computer': 'https://www.bleepingcomputer.com/feed/',
             
-            # Business
+            # Business - Italia
             'AI4Business': 'https://www.ai4business.it/feed/',
+            'Il Sole 24 Ore': 'https://www.ilsole24ore.com/rss/home.xml',
+            'Repubblica Economia': 'https://www.repubblica.it/rss/home/rss2.0.xml',
+            
+            # Business - Internazionale
             'The Guardian Business': 'https://www.theguardian.com/business/rss',
+            'Bloomberg': 'https://www.bloomberg.com/feed/topics/technology',
+            'Financial Times Tech': 'https://www.ft.com/technology?format=rss',
+            
+            # Notizie Generali - Italia
+            'ANSA': 'https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml',
+            'Il Post': 'https://www.ilpost.it/feed/',
+            'Internazionale': 'https://www.internazionale.it/rss',
+            'Linkiesta': 'https://www.linkiesta.it/feed/',
+            'Corriere della Sera': 'https://www.corriere.it/rss/homepage.xml',
             
             # Sport
             'The Guardian Sport': 'https://www.theguardian.com/sport/rss',
             'Gazzetta dello Sport': 'https://www.gazzetta.it/rss/home.xml',
+            'Sky Sport': 'https://sport.sky.it/rss',
             
             # Salute
             'The Guardian Health': 'https://www.theguardian.com/society/health/rss',
+            'WebMD': 'https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC',
             
             # Politica
             'The Guardian Politics': 'https://www.theguardian.com/politics/rss',
+            'BBC News': 'https://feeds.bbci.co.uk/news/rss.xml',
+            'Reuters': 'https://www.reutersagency.com/feed/?best-topics=tech&post_type=best',
             
             # Intrattenimento
             'The Guardian Entertainment': 'https://www.theguardian.com/uk/entertainment/rss',
             
             # Natura/Ambiente
             'The Guardian Environment': 'https://www.theguardian.com/environment/rss',
+            'National Geographic': 'https://www.nationalgeographic.com/feed/',
         }
         
         all_articles = []
@@ -1186,9 +1386,15 @@ def trigger_news_collection():
                         # Content completo: tutto il testo pulito (max 5000 caratteri per performance)
                         content = full_content_clean[:5000] if len(full_content_clean) > 5000 else full_content_clean
                         
-                        # Determina lingua originale
-                        original_language = 'it' if source_name in ['MicroMega', 'AI4Business', 'ICT Security Magazine', 
-                                                           'Punto Informatico', 'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport'] else 'en'
+                        # Determina lingua originale (fonti italiane)
+                        italian_sources = [
+                            'MicroMega', 'AI4Business', 'ICT Security Magazine', 'Punto Informatico', 
+                            'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport', 'DDay.it',
+                            'Tom\'s Hardware Italia', 'StartupItalia', 'Forbes Italia', 'Il Sole 24 Ore',
+                            'Repubblica Economia', 'ANSA', 'Il Post', 'Internazionale', 'Linkiesta',
+                            'Corriere della Sera', 'Sky Sport'
+                        ]
+                        original_language = 'it' if source_name in italian_sources else 'en'
                         language = original_language
                         
                         # Traduci in italiano se la notizia è in inglese
@@ -1250,36 +1456,49 @@ def trigger_news_collection():
                             'Entertainment': 14
                         }
                         
-                        if 'Security' in source_name or 'Hacker' in source_name:
+                        # Logica di categorizzazione migliorata per tutte le nuove fonti
+                        source_lower = source_name.lower()
+                        summary_lower = summary.lower()
+                        
+                        if 'Security' in source_name or 'Hacker' in source_name or 'Krebs' in source_name or 'Bleeping' in source_name:
                             category = 'Cybersecurity'
-                            category_id = CATEGORY_NAME_TO_ID.get('Cybersecurity', 1)
-                        elif 'ArXiv' in source_name or 'Science' in source_name:
+                            category_id = CATEGORY_NAME_TO_ID.get('Cybersecurity', 4)
+                        elif 'ArXiv' in source_name or 'Science' in source_name or 'Nature' in source_name or 'Scientific American' in source_name:
                             category = 'Science'
                             category_id = CATEGORY_NAME_TO_ID.get('Science', 2)
                         elif 'MicroMega' in source_name:
                             category = 'Philosophy'
                             category_id = CATEGORY_NAME_TO_ID.get('Philosophy', 3)
-                        elif 'Sport' in source_name or 'Gazzetta' in source_name:
+                        elif 'Sport' in source_name or 'Gazzetta' in source_name or 'Sky Sport' in source_name:
                             category = 'Sport'
                             category_id = CATEGORY_NAME_TO_ID.get('Sport', 9)
-                        elif 'Business' in source_name or 'AI4Business' in source_name:
+                        elif 'Business' in source_name or 'AI4Business' in source_name or 'Sole 24 Ore' in source_name or 'Bloomberg' in source_name or 'Financial Times' in source_name:
                             category = 'Business'
                             category_id = CATEGORY_NAME_TO_ID.get('Business', 11)
-                        elif 'Health' in source_name:
+                        elif 'Health' in source_name or 'WebMD' in source_name:
                             category = 'Health'
                             category_id = CATEGORY_NAME_TO_ID.get('Health', 12)
-                        elif 'Politics' in source_name:
+                        elif 'Politics' in source_name or 'ANSA' in source_name or 'Corriere' in source_name or 'Repubblica' in source_name or 'BBC' in source_name or 'Reuters' in source_name:
                             category = 'Politics'
                             category_id = CATEGORY_NAME_TO_ID.get('Politics', 13)
                         elif 'Entertainment' in source_name:
                             category = 'Entertainment'
                             category_id = CATEGORY_NAME_TO_ID.get('Entertainment', 14)
-                        elif 'Environment' in source_name:
+                        elif 'Environment' in source_name or 'National Geographic' in source_name:
                             category = 'Nature'
                             category_id = CATEGORY_NAME_TO_ID.get('Nature', 10)
-                        elif 'AI' in source_name or 'artificial intelligence' in summary.lower():
+                        elif 'AI' in source_name or 'artificial intelligence' in summary_lower or 'AI4Business' in source_name:
                             category = 'AI'
                             category_id = CATEGORY_NAME_TO_ID.get('AI', 5)
+                        elif 'Startup' in source_name or 'Innovation' in source_lower:
+                            category = 'Innovation'
+                            category_id = CATEGORY_NAME_TO_ID.get('Innovation', 6)
+                        elif 'Il Post' in source_name or 'Internazionale' in source_name or 'Linkiesta' in source_name:
+                            category = 'Culture'
+                            category_id = CATEGORY_NAME_TO_ID.get('Culture', 7)
+                        elif 'Tech' in source_name or 'Technology' in source_name or 'Wired' in source_name or 'Punto Informatico' in source_name or 'Agenda Digitale' in source_name or 'DDay' in source_name or 'Tom\'s Hardware' in source_name or 'TechCrunch' in source_name or 'Ars Technica' in source_name or 'The Verge' in source_name or 'CNET' in source_name or 'Engadget' in source_name or 'VentureBeat' in source_name or 'ZDNet' in source_name or 'MIT' in source_name:
+                            category = 'Technology'
+                            category_id = CATEGORY_NAME_TO_ID.get('Technology', 1)
                         else:
                             category = 'Technology'
                             category_id = CATEGORY_NAME_TO_ID.get('Technology', 1)
@@ -1383,16 +1602,19 @@ def trigger_news_collection():
             google_news_collector = GoogleNewsCollector()
             google_articles_count = 0
             
-            # Raccoglie da topic principali
+            # Raccoglie da topic principali (ESPANSI)
             print("   📋 Raccolta da topic principali...")
-            topics_to_collect = ['TECHNOLOGY', 'SCIENCE', 'WORLD', 'BUSINESS', 'HEALTH', 'SPORTS']
+            topics_to_collect = [
+                'TECHNOLOGY', 'SCIENCE', 'WORLD', 'BUSINESS', 'HEALTH', 'SPORTS',
+                'ENTERTAINMENT', 'POLITICS', 'NATION', 'ENVIRONMENT'
+            ]
             for topic in topics_to_collect:
                 try:
                     articles = google_news_collector.collect(
                         query=None,
                         language='it',
                         country='IT',
-                        max_articles=5,
+                        max_articles=8,  # Aumentato da 5 a 8
                         topic=topic
                     )
                     
@@ -1406,6 +1628,10 @@ def trigger_news_collection():
                                 'BUSINESS': ('Business', 11),
                                 'HEALTH': ('Health', 12),
                                 'SPORTS': ('Sport', 9),
+                                'ENTERTAINMENT': ('Entertainment', 14),
+                                'POLITICS': ('Politics', 13),
+                                'NATION': ('Politics', 13),
+                                'ENVIRONMENT': ('Nature', 10),
                             }
                             category, category_id = category_map.get(topic, ('Technology', 1))
                             
@@ -1452,27 +1678,52 @@ def trigger_news_collection():
                     print(f"   ⚠️  Errore topic {topic}: {e}")
                     continue
             
-            # Raccoglie da query specifiche italiane
+            # Raccoglie da query specifiche italiane (ESPANSE)
             print("   🔍 Raccolta da query specifiche...")
-            queries_to_collect = ['intelligenza artificiale', 'cybersecurity', 'innovazione', 'startup']
+            queries_to_collect = [
+                'intelligenza artificiale', 'cybersecurity', 'innovazione', 'startup',
+                'tecnologia', 'scienza', 'economia', 'politica', 'sport', 'salute',
+                'ambiente', 'cultura', 'etica', 'filosofia'
+            ]
             for query in queries_to_collect:
                 try:
                     articles = google_news_collector.collect(
                         query=query,
                         language='it',
                         country='IT',
-                        max_articles=3
+                        max_articles=5  # Aumentato da 3 a 5
                     )
                     
                     for article_data in articles:
                         try:
-                            # Determina categoria dalla query
-                            if 'intelligenza artificiale' in query.lower() or 'ai' in query.lower():
+                            # Determina categoria dalla query (MAPPA ESPANSA)
+                            query_lower = query.lower()
+                            if 'intelligenza artificiale' in query_lower or 'ai' in query_lower:
                                 category, category_id = ('AI', 5)
-                            elif 'cybersecurity' in query.lower() or 'security' in query.lower():
+                            elif 'cybersecurity' in query_lower or 'security' in query_lower:
                                 category, category_id = ('Cybersecurity', 4)
-                            elif 'innovazione' in query.lower() or 'startup' in query.lower():
+                            elif 'innovazione' in query_lower or 'startup' in query_lower:
                                 category, category_id = ('Innovation', 6)
+                            elif 'tecnologia' in query_lower or 'tech' in query_lower:
+                                category, category_id = ('Technology', 1)
+                            elif 'scienza' in query_lower or 'science' in query_lower:
+                                category, category_id = ('Science', 2)
+                            elif 'economia' in query_lower or 'business' in query_lower:
+                                category, category_id = ('Business', 11)
+                            elif 'politica' in query_lower or 'politics' in query_lower:
+                                category, category_id = ('Politics', 13)
+                            elif 'sport' in query_lower:
+                                category, category_id = ('Sport', 9)
+                            elif 'salute' in query_lower or 'health' in query_lower:
+                                category, category_id = ('Health', 12)
+                            elif 'ambiente' in query_lower or 'environment' in query_lower:
+                                category, category_id = ('Nature', 10)
+                            elif 'cultura' in query_lower or 'culture' in query_lower:
+                                category, category_id = ('Culture', 7)
+                            elif 'etica' in query_lower or 'ethics' in query_lower:
+                                category, category_id = ('Ethics', 8)
+                            elif 'filosofia' in query_lower or 'philosophy' in query_lower:
+                                category, category_id = ('Philosophy', 3)
                             else:
                                 category, category_id = ('Technology', 1)
                             
@@ -1524,92 +1775,104 @@ def trigger_news_collection():
             import traceback
             traceback.print_exc()
         
-        # FASE 2: Genera spiegazioni AI solo per articoli nuovi (dopo aver raccolto tutte le notizie)
-        print(f"\n🤖 FASE 2: Generazione spiegazioni AI per articoli nuovi...")
-        explanations_generated = 0
-        explanations_skipped = 0
+        # FASE 2: Salta spiegazioni AI - verranno generate in un secondo passaggio
+        # Le spiegazioni AI vengono generate chiamando /api/admin/generate-explanations
+        SKIP_AI_EXPLANATIONS = True  # Sempre True - spiegazioni in passaggio separato
         
-        # Carica articoli esistenti per confrontare (evita rigenerare spiegazioni vecchie)
-        existing_articles = {}
-        try:
-            existing_file_path = None
-            for path in [
-                'final_news_italian.json',
-                os.path.join('backend', 'final_news_italian.json'),
-                os.path.join('api', 'final_news_italian.json')
-            ]:
-                if os.path.exists(path):
-                    existing_file_path = path
-                    break
-            
-            if existing_file_path:
-                with open(existing_file_path, 'r', encoding='utf-8') as f:
-                    existing_data = json.load(f)
-                    for art in existing_data.get('items', []):
-                        # Usa URL come chiave univoca (più affidabile di ID)
-                        url = art.get('url', '')
-                        if url:
-                            existing_articles[url] = art
-                print(f"   📚 Caricati {len(existing_articles)} articoli esistenti per confronto")
-        except Exception as e:
-            print(f"   ⚠️  Errore caricamento articoli esistenti: {e}")
+        if False:  # Disabilitato - spiegazioni in endpoint separato
+            print(f"\n🤖 FASE 2: Generazione spiegazioni AI per articoli nuovi...")
+            explanations_generated = 0
+            explanations_skipped = 0
+        else:
+            print(f"\n⏭️  FASE 2: Salto generazione spiegazioni AI (SKIP_AI_EXPLANATIONS=True)")
+            explanations_generated = 0
+            explanations_skipped = len(all_articles)
         
-        # Genera spiegazioni solo per articoli nuovi
-        try:
-            from app.ai_explainer import generate_explanation
-            
-            articles_needing_explanations = []
-            for article in all_articles:
-                url = article.get('url', '')
-                existing = existing_articles.get(url) if url else None
+        if not SKIP_AI_EXPLANATIONS:
+            # Carica articoli esistenti per confrontare (evita rigenerare spiegazioni vecchie)
+            existing_articles = {}
+            try:
+                existing_file_path = None
+                for path in [
+                    'final_news_italian.json',
+                    os.path.join('backend', 'final_news_italian.json'),
+                    os.path.join('api', 'final_news_italian.json')
+                ]:
+                    if os.path.exists(path):
+                        existing_file_path = path
+                        break
                 
-                # Controlla se è nuovo o se non ha spiegazioni
-                is_new = existing is None
-                has_explanations = (
-                    (existing and existing.get('explanation_quick')) or
-                    article.get('explanation_quick')
-                )
+                if existing_file_path:
+                    with open(existing_file_path, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                        for art in existing_data.get('items', []):
+                            # Usa URL come chiave univoca (più affidabile di ID)
+                            url = art.get('url', '')
+                            if url:
+                                existing_articles[url] = art
+                    print(f"   📚 Caricati {len(existing_articles)} articoli esistenti per confronto")
+            except Exception as e:
+                print(f"   ⚠️  Errore caricamento articoli esistenti: {e}")
+        
+        if not SKIP_AI_EXPLANATIONS:
+            # Genera spiegazioni solo per articoli nuovi
+            try:
+                from app.ai_explainer import generate_explanation
                 
-                if is_new or not has_explanations:
-                    articles_needing_explanations.append(article)
-                else:
-                    # Copia spiegazioni esistenti dall'articolo vecchio
-                    if existing:
-                        article['explanation_quick'] = existing.get('explanation_quick')
-                        article['explanation_standard'] = existing.get('explanation_standard')
-                        article['explanation_deep'] = existing.get('explanation_deep')
-                    explanations_skipped += 1
-            
-            print(f"   📊 Articoli da processare: {len(articles_needing_explanations)} nuovi")
-            print(f"   ⏭️  Articoli saltati: {explanations_skipped} (spiegazioni già presenti)")
-            
-            # Genera spiegazioni solo per quelli nuovi
-            for i, article in enumerate(articles_needing_explanations):
-                try:
-                    print(f"   [{i+1}/{len(articles_needing_explanations)}] Generando spiegazioni per: {article.get('title', '')[:50]}...")
+                articles_needing_explanations = []
+                for article in all_articles:
+                    url = article.get('url', '')
+                    existing = existing_articles.get(url) if url else None
                     
-                    # Genera spiegazioni AI (usa cache interna)
-                    article['explanation_quick'] = generate_explanation(article, 'quick')
-                    article['explanation_standard'] = generate_explanation(article, 'standard')
-                    article['explanation_deep'] = generate_explanation(article, 'deep')
+                    # Controlla se è nuovo o se non ha spiegazioni
+                    is_new = existing is None
+                    has_explanations = (
+                        (existing and existing.get('explanation_quick')) or
+                        article.get('explanation_quick')
+                    )
                     
-                    explanations_generated += 1
-                    
-                    # Log ogni 5 articoli per non intasare
-                    if (i + 1) % 5 == 0:
-                        print(f"   ✅ {i+1}/{len(articles_needing_explanations)} articoli processati...")
-                except Exception as e:
-                    print(f"   ⚠️  Errore generazione spiegazioni per articolo {i+1}: {e}")
-                    # Continua con gli altri articoli anche se uno fallisce
-                    continue
-            
-            print(f"✅ Spiegazioni AI generate: {explanations_generated} nuovi articoli")
-            print(f"✅ Spiegazioni mantenute: {explanations_skipped} articoli esistenti")
-        except ImportError:
-            print("⚠️  Modulo AI non disponibile, salto generazione spiegazioni")
-        except Exception as e:
-            print(f"⚠️  Errore generazione spiegazioni: {e}")
-            print("   Continuo comunque con il salvataggio degli articoli...")
+                    if is_new or not has_explanations:
+                        articles_needing_explanations.append(article)
+                    else:
+                        # Copia spiegazioni esistenti dall'articolo vecchio
+                        if existing:
+                            article['explanation_quick'] = existing.get('explanation_quick')
+                            article['explanation_standard'] = existing.get('explanation_standard')
+                            article['explanation_deep'] = existing.get('explanation_deep')
+                        explanations_skipped += 1
+                
+                print(f"   📊 Articoli da processare: {len(articles_needing_explanations)} nuovi")
+                print(f"   ⏭️  Articoli saltati: {explanations_skipped} (spiegazioni già presenti)")
+                
+                # Genera spiegazioni solo per quelli nuovi
+                for i, article in enumerate(articles_needing_explanations):
+                    try:
+                        print(f"   [{i+1}/{len(articles_needing_explanations)}] Generando spiegazioni per: {article.get('title', '')[:50]}...")
+                        
+                        # Genera spiegazioni AI (usa cache interna)
+                        article['explanation_quick'] = generate_explanation(article, 'quick')
+                        article['explanation_standard'] = generate_explanation(article, 'standard')
+                        article['explanation_deep'] = generate_explanation(article, 'deep')
+                        
+                        explanations_generated += 1
+                        
+                        # Log ogni 5 articoli per non intasare
+                        if (i + 1) % 5 == 0:
+                            print(f"   ✅ {i+1}/{len(articles_needing_explanations)} articoli processati...")
+                    except Exception as e:
+                        print(f"   ⚠️  Errore generazione spiegazioni per articolo {i+1}: {e}")
+                        # Continua con gli altri articoli anche se uno fallisce
+                        continue
+                
+                print(f"✅ Spiegazioni AI generate: {explanations_generated} nuovi articoli")
+                print(f"✅ Spiegazioni mantenute: {explanations_skipped} articoli esistenti")
+            except ImportError:
+                print("⚠️  Modulo AI non disponibile, salto generazione spiegazioni")
+            except Exception as e:
+                print(f"⚠️  Errore generazione spiegazioni: {e}")
+                print("   Continuo comunque con il salvataggio degli articoli...")
+        else:
+            print(f"✅ Raccolti {len(all_articles)} articoli senza spiegazioni AI (per velocità)")
         
         # Aggiorna final_news_italian.json con spiegazioni incluse
         output_data = {
