@@ -5,6 +5,8 @@ import { ArticleDetailComponent } from './pages/article-detail/article-detail.co
 import { SearchComponent } from './pages/search/search.component';
 import { SavedComponent } from './pages/saved/saved.component';
 import { DigestComponent } from './pages/digest/digest.component';
+import { PrivacyComponent } from './pages/privacy/privacy.component';
+import { TermsComponent } from './pages/terms/terms.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -12,6 +14,8 @@ const routes: Routes = [
   { path: 'search', component: SearchComponent },
   { path: 'saved', component: SavedComponent },
   { path: 'digest', component: DigestComponent },
+  { path: 'privacy', component: PrivacyComponent },
+  { path: 'terms', component: TermsComponent },
   { path: '**', redirectTo: '' }
 ];
 

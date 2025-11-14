@@ -1,0 +1,27 @@
+<!-- Google AdSense Banner -->
+<div class="ad-container" [id]="adId" [class.full-width]="fullWidth">
+  <!-- 
+    IMPORTANTE: 
+    - Sostituisci ca-pub-XXXXXXXXXX con il tuo Publisher ID dopo approvazione AdSense
+    - Sostituisci data-ad-slot con il tuo Ad Slot dopo approvazione AdSense
+    - Rimuovi questo commento dopo aver configurato
+  -->
+  <ins class="adsbygoogle"
+       style="display:block; {{adStyle}}"
+       [attr.data-ad-client]="adClient"
+       [attr.data-ad-slot]="adSlot"
+       [attr.data-ad-format]="adFormat"
+       [attr.data-ad-layout]="adLayout"
+       [attr.data-full-width-responsive]="fullWidth ? 'true' : 'false'">
+  </ins>
+  
+  <!-- Placeholder durante sviluppo/test (rimuovi dopo approvazione AdSense) -->
+  <div class="ad-placeholder" *ngIf="adClient === 'ca-pub-XXXXXXXXXX' || adSlot === '1234567890'">
+    <div class="placeholder-content">
+      <span class="material-icons">ads</span>
+      <p>Banner pubblicitario</p>
+      <small>Configura AdSense per vedere gli annunci</small>
+    </div>
+  </div>
+</div>
+

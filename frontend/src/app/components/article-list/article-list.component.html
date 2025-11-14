@@ -9,11 +9,34 @@
   </div>
 
   <div *ngIf="!loading && articles.length > 0" class="articles-grid">
-    <app-article-card
-      *ngFor="let article of articles"
-      [article]="article"
-      class="fade-in-up"
-    ></app-article-card>
+    <!-- Banner pubblicitario dopo il primo articolo -->
+    <div class="ad-wrapper" *ngIf="articles.length > 0">
+      <app-ad-banner
+        adId="ad-top"
+        adClient="ca-pub-2145959534306055"
+        adSlot="1234567890"
+        adFormat="horizontal"
+        [fullWidth]="true">
+      </app-ad-banner>
+    </div>
+    
+    <ng-container *ngFor="let article of articles; let i = index">
+      <app-article-card
+        [article]="article"
+        class="fade-in-up"
+      ></app-article-card>
+      
+      <!-- Banner pubblicitario ogni 5 articoli -->
+      <div class="ad-wrapper" *ngIf="(i + 1) % 5 === 0 && i < articles.length - 1">
+        <app-ad-banner
+          [adId]="'ad-' + i"
+          adClient="ca-pub-2145959534306055"
+          adSlot="1234567890"
+          adFormat="horizontal"
+          [fullWidth]="true">
+        </app-ad-banner>
+      </div>
+    </ng-container>
   </div>
 </div>
 

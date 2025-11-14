@@ -57,6 +57,14 @@
   }
 }
 
+.ad-wrapper {
+  grid-column: 1 / -1; // Occupa tutta la larghezza della griglia
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
