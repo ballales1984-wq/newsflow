@@ -1,6 +1,11 @@
 .home-container {
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 16px; // Padding per evitare che le card tocchino i bordi dello schermo
+  
+  @media (max-width: 768px) {
+    padding: 0 8px; // Padding ridotto su mobile
+  }
 }
 
 /* Screen reader only - per accessibilità */

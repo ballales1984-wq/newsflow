@@ -33,27 +33,42 @@
 
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  // Desktop: 3 colonne
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px; // Gap più grande ora che abbiamo più spazio
   animation: fadeIn 0.5s ease-in;
   perspective: 1200px;
   transform-style: preserve-3d;
   
   // Limita la larghezza massima per mantenere proporzioni più quadrate
   max-width: 100%;
+  padding: 0 12px; // Padding per evitare che tocchino i bordi
   
-  @media (min-width: 1400px) {
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  // Tablet: 2 colonne
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 0 8px;
   }
   
   // Effetto 3D sulle card con profondità variabile
+  // Tutte le card nella stessa riga hanno la stessa altezza
   app-article-card {
     transform-style: preserve-3d;
     transform: rotateY(0deg); // Card dritte all'inizio
+    height: 100%; // Forza tutte le card ad avere la stessa altezza della più alta
+    display: flex;
     
     &:hover {
       z-index: 10;
     }
+  }
+  
+  // Assicura che le card si allineino alla stessa altezza
+  ::ng-deep .article-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 }
 
@@ -74,6 +89,7 @@
   }
 }
 
+// Mobile: 1 colonna
 @media (max-width: 768px) {
   .articles-grid {
     grid-template-columns: 1fr;

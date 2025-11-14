@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   
   // Pagination
   totalArticles = 0;
-  pageSize = 10; // Ridotto per evitare timeout ngrok (20 articoli causano 504)
+  pageSize = 50; // Aumentato per mostrare più articoli per pagina
   currentPage = 1;
   
   // Error display

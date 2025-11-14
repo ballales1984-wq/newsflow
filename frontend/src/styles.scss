@@ -45,11 +45,17 @@ html, body {
 
 body {
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  background-color: #fafafa;
+  // Stesso gradiente della barra in alto
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed; // Mantiene il gradiente fisso durante lo scroll
+  min-height: 100vh;
 }
 
 .dark-theme {
-  background-color: #303030;
+  // Stesso gradiente anche per il tema scuro
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
 }
 
 /* Utility classes */
