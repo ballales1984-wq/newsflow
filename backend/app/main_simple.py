@@ -1222,7 +1222,7 @@ def trigger_explanations_generation():
         return {
             "success": False,
             "error": str(e)
-        }
+    }
 
 
 @app.post("/api/admin/collect-news")
@@ -1904,8 +1904,8 @@ def trigger_news_collection():
             try:
                 # Crea directory se non esiste
                 os.makedirs(os.path.dirname(file_path), exist_ok=True) if os.path.dirname(file_path) else None
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(output_data, f, indent=2, ensure_ascii=False)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(output_data, f, indent=2, ensure_ascii=False)
                 print(f"✅ File salvato: {file_path}")
             except Exception as e:
                 print(f"⚠️  Errore salvataggio {file_path}: {e}")
@@ -1920,6 +1920,13 @@ def trigger_news_collection():
         _cache_timestamp = None
         _cache_file_path = None
         print(f"🔄 Cache invalidata - gli articoli verranno ricaricati alla prossima richiesta")
+
+        # Forza il reload immediato per avere i nuovi dati subito disponibili
+        try:
+            _load_articles(force_reload=True)
+            print(f"✅ Cache ricaricata immediatamente con {len(_articles_cache) if _articles_cache else 0} articoli")
+        except Exception as e:
+            print(f"⚠️  Errore durante reload cache: {e}")
 
         print(f"✅ Aggiornate {len(all_articles)} notizie con spiegazioni AI!")
 
@@ -1936,6 +1943,37 @@ def trigger_news_collection():
         return {
             "success": False,
             "error": str(e)
+        }
+
+
+@app.post("/api/admin/reload-cache")
+def reload_cache():
+    """
+    Endpoint per forzare il reload della cache degli articoli.
+    Utile dopo aver aggiornato manualmente il file JSON.
+    """
+    global _articles_cache, _cache_timestamp, _cache_file_path
+    try:
+        # Invalida cache
+        _articles_cache = None
+        _cache_timestamp = None
+        _cache_file_path = None
+
+        # Forza reload
+        articles = _load_articles(force_reload=True)
+
+        return {
+            "success": True,
+            "message": f"Cache ricaricata con successo!",
+            "articles_count": len(articles) if articles else 0,
+            "reloaded_at": datetime.now().isoformat()
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
         }
 
 
