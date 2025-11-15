@@ -166,11 +166,20 @@ def save_digest(digest_data):
     
     today = datetime.now().strftime("%Y-%m-%d")
     
-    # Path da salvare
+    # Trova la root del progetto (directory che contiene backend, frontend, api)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Se siamo in backend/, la root è il parent
+    if os.path.basename(script_dir) == 'backend':
+        project_root = os.path.dirname(script_dir)
+    else:
+        # Altrimenti assumiamo che siamo già nella root
+        project_root = script_dir
+    
+    # Path da salvare (relativi alla root del progetto)
     paths_to_save = [
-        'backend/digest.json',
-        'api/digest.json',
-        'frontend/src/assets/digest.json'
+        os.path.join(project_root, 'backend', 'digest.json'),
+        os.path.join(project_root, 'api', 'digest.json'),
+        os.path.join(project_root, 'frontend', 'src', 'assets', 'digest.json')
     ]
     
     saved_count = 0
@@ -182,7 +191,9 @@ def save_digest(digest_data):
             with open(path, 'w', encoding='utf-8') as f:
                 json.dump(digest_data, f, indent=2, ensure_ascii=False)
             
-            print(f"✅ Digest salvato in: {path}")
+            # Mostra path relativo per leggibilità
+            rel_path = os.path.relpath(path, project_root)
+            print(f"✅ Digest salvato in: {rel_path}")
             saved_count += 1
         except Exception as e:
             print(f"⚠️  Errore salvataggio {path}: {e}")

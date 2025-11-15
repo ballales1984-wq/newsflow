@@ -5,24 +5,24 @@
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "Siccità in Iran, Teheran potrebbe essere parzialmente evacuata se non dovesse piovere fino a dicembre",
-          "description": "La capitale dell'Iran potrebbe dover essere evacuata se non arriveranno piogge entro dicembre. La crisi climatica ha aggravato la situazione di un paese già segnato da decenni di cattiva gestione dell"
+          "title": "I'm tired of the cheap Android tablet slander - this $200 one checks all the boxes for me",
+          "description": "The Tabwee T60 Pro is a solid bang-for-buck tablet for Android users."
         },
         {
-          "title": "Educare al web per non temerlo, il successo dell'iniziativa Riprendiamoci l’Internet!",
-          "description": "Genitori, insegnanti ed educatori hanno condiviso esperienze e strumenti per un uso più consapevole e costruttivo della rete nelle due giornate promosse da Hearts & Science all'Università Milano-Bicoc"
+          "title": "Don't be sad if your Amazon driver shows up with smart glasses on - they're actually helpful",
+          "description": "Faster and safer deliveries are on the way."
         },
         {
-          "title": "Dreame Pocket Neo, la prova del piccolo asciugacapelli potente e silenzioso",
-          "description": "A una frazione di prezzo del celebre Dyson Supersonic mette a disposizione un set completo e funzioni utili"
+          "title": "Old-school platforming, Metroidvania horror and other new indie games worth checking out",
+          "description": ""
         },
         {
-          "title": "La causa del lupus eritematoso sistemico è stata finalmente scoperta e si tratta di un virus che quasi tutti noi abbiamo latente",
-          "description": "L'Ebv, il virus della mononucleosi, si nasconde principalmente nei linfociti B. Lo studio dei ricercatori della Stanford University"
+          "title": "Sora 2 genera ancora video protetti dal copyright",
+          "description": "Nonostante le protezioni aggiuntive, Sora 2 può ancora generare video con personaggi protetti dal copyright, in quanto è sufficiente il prompt giusto. The post Sora 2 genera ancora video protetti dal "
         },
         {
-          "title": "Ci vuole una strategia per portare l’intelligenza artificiale negli alberghi, ma in pochi lo hanno capito",
-          "description": "Il settore dell’ospitalità sta adottando l’intelligenza artificiale con entusiasmo, ma spesso senza una strategia chiara. Molti hotel adottano strumenti AI in modo tattico, senza comprenderne le diffe"
+          "title": "A year later, here's why I keep coming back to the Surface Laptop (especially at this price)",
+          "description": "Microsoft's Surface Laptop impresses with a sleek form factor and marathon battery. Right now, both the 13-inch and 15-inch are on sale for Black Friday."
         }
       ]
     },
@@ -30,49 +30,12 @@
       "category": "🔬 Scienza",
       "articles": [
         {
-          "title": "Conversational Agents for Building Energy Efficiency -- Advising Housing Cooperatives in Stockholm on Reducing Energy Consumption",
-          "description": "arXiv:2511.08587v1 Announce Type: new Abstract: Housing cooperative is a common type of multifamily building ownership in Sweden. Although this ownership structure grants decision-making autonomy, it "
+          "title": "CRISPR brings back ancient gene that prevents gout and fatty liver",
+          "description": "By reactivating a long-lost gene, researchers were able to lower uric acid levels and stop damaging fat accumulation in human liver models. The breakthrough hints at a future where gout and several me"
         },
         {
-          "title": "Where did you get that? Towards Summarization Attribution for Analysts",
-          "description": "arXiv:2511.08589v1 Announce Type: new Abstract: Analysts require attribution, as nothing can be reported without knowing the source of the information. In this paper, we will focus on automatic method"
-        },
-        {
-          "title": "GMTRouter: Personalized LLM Router over Multi-turn User Interactions",
-          "description": "arXiv:2511.08590v1 Announce Type: new Abstract: Large Language Model (LLM) routing has demonstrated strong capability in balancing response quality with computational cost. As users exhibit diverse pr"
-        },
-        {
-          "title": "The Collective Turing Test: Large Language Models Can Generate Realistic Multi-User Discussions",
-          "description": "arXiv:2511.08592v1 Announce Type: new Abstract: Large Language Models (LLMs) offer new avenues to simulate online communities and social media. Potential applications range from testing the design of "
-        },
-        {
-          "title": "Knowledge Graph Analysis of Legal Understanding and Violations in LLMs",
-          "description": "arXiv:2511.08593v1 Announce Type: new Abstract: The rise of Large Language Models (LLMs) offers transformative potential for interpreting complex legal frameworks, such as Title 18 Section 175 of the "
-        }
-      ]
-    },
-    {
-      "category": "🤔 Filosofia",
-      "articles": [
-        {
-          "title": "Primo via libera alla estensione della pena di morte in Israele",
-          "description": "In Israele la pena di morte esisteva fin dalla sua nascita nel 1948, come esisteva precedentemente nella Palestina sotto mandato inglese. Fu abolita per la maggior parte dei reati nel 1954, rimanendo "
-        },
-        {
-          "title": "Boualem Sansal torna in libertà",
-          "description": "Boualem Sansal torna in libertà. È una bellissima notizia, una notizia che riempie il cuore di gioia. Con la speranza che il cedimento del governo dittatoriale algerino non sia legato a un aggravarsi "
-        },
-        {
-          "title": "Il mito della metropoli e la cecità italiana",
-          "description": "La squallida vicenda della “grattacielopoli milanese” potrebbe derubricarsi marxianamente nell’ampio repertorio delle contraddizioni del capitalismo, dato che anche qui l’accumulo del plusvalore esasp"
-        },
-        {
-          "title": "Dentro Gaza e la sua storia. Due libri di Jean-Pierre Filiu",
-          "description": "Niente mi aveva preparato (edizioni Altrecose, 2025) di Jean-Pierre Filiu è un libro eccezionale e, per certi e peculiari versi, tragicamente ordinario. Eccezionale perché si tratta praticamente dell’"
-        },
-        {
-          "title": "Paolo Berizzi: “CasaPound coperta per anni dalle istituzioni”",
-          "description": "L’uscita di Il libro segreto di CasaPound (Fuoriscena, 2025) di Paolo Berizzi non è passata inosservata e non solo per il successo dell’operazione editoriale. Il movimento neofascista romano ha infatt"
+          "title": "Scientists reverse kidney damage in mice, hope for humans next",
+          "description": "Researchers uncovered how fatty molecules called ceramides trigger acute kidney injury by damaging the mitochondria that power kidney cells. By altering ceramide metabolism or using a new drug candida"
         }
       ]
     },
@@ -80,49 +43,8 @@
       "category": "🔒 Cybersecurity",
       "articles": [
         {
-          "title": "ThreatsDay Bulletin: Cisco 0-Days, AI Bug Bounties, Crypto Heists, State-Linked Leaks and 20 More Stories",
-          "description": "Behind every click, there’s a risk waiting to be tested. A simple ad, email, or link can now hide something dangerous. Hackers are getting smarter, using new tools to sneak past filters and turn trust"
-        },
-        {
-          "title": "CISA Flags Critical WatchGuard Fireware Flaw Exposing 54,000 Fireboxes to No-Login Attacks",
-          "description": "The U.S. Cybersecurity and Infrastructure Security Agency (CISA) on Wednesday added a critical security flaw impacting WatchGuard Fireware to its Known Exploited Vulnerabilities (KEV) catalog, based o"
-        },
-        {
-          "title": "Over 67,000 Fake npm Packages Flood Registry in Worm-Like Spam Attack",
-          "description": "Cybersecurity researchers are calling attention to a large-scale spam campaign that has flooded the npm registry with thousands of fake packages since early 2024 as part of a likely financially motiva"
-        },
-        {
-          "title": "Google Sues China-Based Hackers Behind $1 Billion Lighthouse Phishing Platform",
-          "description": "Google has filed a civil lawsuit in the U.S. District Court for the Southern District of New York (SDNY) against China-based hackers who are behind a massive Phishing-as-a-Service (PhaaS) platform cal"
-        },
-        {
-          "title": "Amazon Uncovers Attacks Exploited Cisco ISE and Citrix NetScaler as Zero-Day Flaws",
-          "description": "Amazon's threat intelligence team on Wednesday disclosed that it observed an advanced threat actor exploiting two then-zero-day security flaws in Cisco Identity Service Engine (ISE) and Citrix NetScal"
-        }
-      ]
-    },
-    {
-      "category": "🤖 Intelligenza Artificiale",
-      "articles": [
-        {
-          "title": "Elon Musk’s Grok AI briefly says Trump won 2020 presidential election",
-          "description": "Chatbot in the past made claims of a ‘white genocide’, pushed antisemitism and referred to itself as ‘MechaHitler’Elon Musk’s Grok chatbot generated false claims this week that Donald Trump won the 20"
-        },
-        {
-          "title": "Anthropic announces $50bn plan for datacenter construction in US",
-          "description": "AI startup behind Claude chatbot working with London-based Fluidstack on building vast new computing facilitiesArtificial intelligence company Anthropic announced a $50bn investment in computing infra"
-        },
-        {
-          "title": "Tech companies and UK child safety agencies to test AI tools’ ability to create abuse images",
-          "description": "New law will allow technology to be examined and ensure tools have safeguards to stop creation of materialTech companies and child protection agencies will be given the power to test whether artificia"
-        },
-        {
-          "title": "Did Your Health Insurance Claim Get Denied? AI Might Be the Culprit -- and the Fix",
-          "description": "A North Carolina startup is leveraging artificial intelligence to generate personalized, clinically validated medical appeal letters that improve patient outcomes."
-        },
-        {
-          "title": "Weibo's new open source AI model VibeThinker-1.5B outperforms DeepSeek-R1 on $7,800 post-training budget",
-          "description": "Another day in late 2025, another impressive result from a Chinese company in open source artificial intelligence.Chinese social networking company Weibo's AI division recently released its open sourc"
+          "title": "Five U.S. Citizens Plead Guilty to Helping North Korean IT Workers Infiltrate 136 Companies",
+          "description": "The U.S. Department of Justice (DoJ) on Friday announced that five individuals have pleaded guilty to assisting North Korea's illicit revenue generation schemes by enabling information technology (IT)"
         }
       ]
     },
@@ -130,24 +52,24 @@
       "category": "💡 Innovazione",
       "articles": [
         {
-          "title": "Onirism, non mettetevi tra Carol e il suo peluche Bunbun",
-          "description": "I bambini brillano per fantasia. In alcuni casi riescono a immaginarsi mondi fantastici in cui viaggiare. Come nel caso di Carol, protagonista del videogioco Onirism sviluppato dalla software house in"
+          "title": "Viwoods AiPaper Reader, lo smartphone per chi vuole disintossicarsi dagli smartphone?",
+          "description": "Torniamo a parlare di Viwoods, azienda hi-tech di Hong Kong che soltanto di recente ci aveva proposto il suo tablet e-Ink AiPaper. Con l’approssimarsi del Natale questa ex startup fa debuttare un devi"
         },
         {
-          "title": "Startup e aziende, imparate a misurare la gentilezza",
-          "description": "Viviamo in un’epoca paradossale. Mai così connessi, mai così aggressivi. Scrolliamo feed saturi di indignazione, risentimento, polarizzazione. Una rete fatta di haters per un tempo nel quale – come ha"
+          "title": "Dreame Aqua10 Ultra Track Complete, il robottino lavapavimenti che può arrivare davvero ovunque?",
+          "description": "Con l’approssimarsi del Natale Dreame, ben nota azienda attiva nel settore dei robot aspirapolvere e lavapavimenti ha deciso di sfoderare un modello che in redazione, scherzosamente, dopo qualche sett"
         },
         {
-          "title": "Steam Machine, Valve riprova a sfondare nel mondo delle console presidiato da Sony e Nintendo",
-          "description": "Se Microsoft sembra meno convinta di restare nell’ambito delle console da salotto, Valve, dopo l’incursione nel settore delle piattaforme handheld con Steam Deck decide di irrompere nel comparto, sfid"
+          "title": "Arriva l’Imu balneare: la tassa sulla casa al mare diventerà più leggera? Tutte le novità",
+          "description": "Chi ha casa al mare potrà pagare meno tasse? La proposta arriva da parte del ministero dell’Economia che ha aperto nuove possibilità ai sindaci di alcuni comuni balneari. In particolare, potranno prev"
         },
         {
-          "title": "Tutto su Bianco Ventures, il venture builder per startup deep tech nei settori lusso, moda e retail",
-          "description": "GELLIFY, Deloitte e Arad hanno annunciato il lancio di Bianco Ventures, il venture builder pensato per accelerare l’innovazione nel settore del lusso e della moda. Saranno selezionate per cominciare s"
+          "title": "La chiamata all’azione di Paola Mascaro, alla guida di Valore D: «L’inclusione di genere diventi impegno collettivo»",
+          "description": "Da 30 anni lavora per grandi multinazionali. Prima in Alcatel-Lucent, come direttrice della Comunicazione e dei Public Affairs per l’Italia e i paesi del Mediterraneo, poi dal 1998 al 2009 in Accentur"
         },
         {
-          "title": "Il caso del progetto scientifico di una startup battezzato con lo stesso nome di una sex worker di OnlyFans. Errore clamoroso o trovata di marketing?",
-          "description": "Ingenuità o astuzia? Difficile dirlo, ma possiamo dare il beneficio del dubbio e credere al Ceo di Inference, Sam Hogan, che nei giorni scorsi ha battezzato una nuova iniziativa in ambito scientifico "
+          "title": "Assegno unico per i figli: la prossima settimana è in arrivo il pagamento di novembre. Ecco tutte le date fino a dicembre",
+          "description": "La prossima settimana è in arrivo il pagamento di novembre ai beneficiari dell’assegno unico per i figli. Si tratta degli ultimi accrediti: a partire dal prossimo anno le famiglie dovranno infatti pre"
         }
       ]
     },
@@ -155,24 +77,24 @@
       "category": "🎨 Cultura",
       "articles": [
         {
-          "title": "La Cassazione smonta l’impianto accusatorio della Procura di Milano sull’urbanistica",
-          "description": "La Corte di Cassazione ha confermato i provvedimenti con cui il Tribunale del Riesame aveva revocato, per assenza di indizi sulla presunta corruzione nell’ambito dell’urbanistica milanese, gli arresti"
+          "title": "Trump ordina un’indagine sui rapporti tra Epstein e i democratici per allontanare i sospetti su di sé",
+          "description": "Nel pieno delle nuove rivelazioni dell’archivio Epstein, che tornano a citare anche il suo nome, Donald Trump ha scelto la via più antica della comunicazione: indicare un nemico e spostare il bersagli"
         },
         {
-          "title": "Le interviste false a Falcone e Borsellino",
-          "description": "Il dibattito sul prossimo referendum sulla separazione delle carriere si sta trasformando nel ritratto del Paese che siamo dove la mistificazione della realtà inonda il merito delle cose. Così capita "
+          "title": "I ristoranti italiani che prenderanno le stelle Michelin, secondo ChatGPT",
+          "description": "C’è un momento dell’anno, nella ristorazione italiana, in cui inizia la fibrillazione. È quello che precede l’annuncio delle nuove stelle Michelin, previsto per mercoledì prossimo, quando il palcoscen"
         },
         {
-          "title": "Le dimissioni dei due ministri ucraini coinvolti nell’inchiesta sull’Energoatom",
-          "description": "In Ucraina si allarga lo scandalo Energoatom, l’azienda statale che gestisce le centrali nucleari attive nel Paese. In un video pubblicato sui social, il presidente Volodymyr Zelensky ha detto che «il"
+          "title": "I rigori a porta vuota che destra e sinistra non vogliono tirare, e non si sa perché",
+          "description": "Ci sono alcune cose della politica italiana di cui non mi capacito. Alcune scelte che non capisco. Alcune dinamiche che vanno al di là della mia evidentemente limitata comprensione. «Solo alcune?», si"
         },
         {
-          "title": "A destra s’insinua l’idea che pure i nazisti siano un po’ antisemiti",
-          "description": "Mentre in Italia alcuni esponenti del centrodestra cominciavano a prendere le distanze dalle parole del generale Roberto Vannacci sulla squisita correttezza procedurale con cui il fascismo avrebbe pre"
+          "title": "Microsoft Teams saprà dove sei",
+          "description": "Dopo la pandemia l’organizzazione del lavoro in ufficio ha subito profondi cambiamenti. Lo smart working si è diffuso in molte aziende e le videocall hanno sostituito gran parte delle riunioni in pres"
         },
         {
-          "title": "L’articolo di Bill Gates sul clima è un assist per la destra riduzionista",
-          "description": "Dalla newsletter settimanale di Greenkiesta (ci si iscrive qui) – La conseguenza climaticamente più pericolosa del ritorno di Donald Trump alla Casa Bianca non è la dismissione delle politiche energet"
+          "title": "La dittatura dei pezzettini ci ha resi adulti che spolliciano come quindicenni annoiati",
+          "description": "Sono giorni che mi passa davanti Gratteri, che io neanche so bene chi sia, credo un pubblico ministero, ma quel che è importante è che è da tre giorni il pezzettino preferito di quella che Lorenzo Jov"
         }
       ]
     },
@@ -180,24 +102,20 @@
       "category": "⚽ Sport",
       "articles": [
         {
-          "title": "The 100 greatest men’s Ashes cricketers of all time: 100-11",
-          "description": "Sport’s famous rivalry began in 1877 and since then 853 men have featured in Australia v England Tests. But who are the best? Our four-day countdown continues with Nos 100-11Read about the 51 judges a"
+          "title": "World Cup qualifying news, Potter’s big Sweden bow and more – matchday live",
+          "description": "⚽ News, discussion and buildup before the day’s action⚽ Read Football Daily | And you can mail matchday liveThere’s also Women’s Super League action on the cards today in the form of the Manchester de"
         },
         {
-          "title": "Ashes injury scare for England with Mark Wood in hospital for scan on hamstring",
-          "description": "Tourists endure chilling start in only warm-up matchFellow quick Carse missed game with stomach issuesEngland endured the most chilling of starts to their Ashes warm-up with a potential injury to Mark"
+          "title": "Witnesses of Neymar’s sad decline hope for one final twist in his career’s brutal narrative arc | Barney Ronay",
+          "description": "World Cup could still be in reach for the last genius of Brazilian football who has faded to a shadow of his former selfWhat’s your favourite Neymar advert? This is a tough question to answer. The bod"
         },
         {
-          "title": "Anthony Joshua set to face Jake Paul in December heavyweight bout",
-          "description": "Joshua and Paul finalizing December boutFight expected in Miami on 19 or 26 DecemberNetflix to announce matchup on MondayAnthony Joshua and Jake Paul are finalizing a deal to meet in a heavyweight fig"
+          "title": "In the name of their fathers: Eubank v Benn began and ended a heady era of British boxing",
+          "description": "Their dads lit a fire that consumed me but Eubank Jr v Conor Benn embodies all that has gone wrong with the Dark TradeThirty-five years ago this month, on 18 November 1990, my life changed course when"
         },
         {
-          "title": "Alexander-Arnold is marginalised in Madrid but may not need a cult of Trent | Jonathan Liew",
-          "description": "On the bench in Madrid and out of the England squad, the full-back has no one to fight his corner – so will have to do it himself“He chose to start from zero. To keep showing up, day by day. It was ab"
-        },
-        {
-          "title": "FA pushes for new tournament qualifying format amid fears process is stale",
-          "description": "Champions League-style model among the optionsDynamic pricing ruled out for Euro 2028 ticketsThe Football Association has thrown its weight behind plans to revamp the European qualifying format for ma"
+          "title": "Josh Hazlewood ruled out of Ashes opener but England’s Mark Wood is fit",
+          "description": "Neser added to first Test squad already missing CumminsBoost for tourists as bowler is cleared of hamstring injuryJosh Hazlewood has been ruled out of the first Ashes Test after a second scan on the h"
         }
       ]
     },
@@ -205,24 +123,16 @@
       "category": "🌍 Natura & Ambiente",
       "articles": [
         {
-          "title": "World still on track for catastrophic 2.6C temperature rise, report finds",
-          "description": "Fossil fuel emissions have hit a record high while many nations have done too little to avert deadly global heatingThe world is still on track for a catastrophic 2.6C increase in temperature as countr"
+          "title": "‘We feel we’re fighting a losing battle’: the race to remove millions of plastic beads from Camber Sands",
+          "description": "A huge cleanup effort has seen volunteers working to remove beads by hand and machine. They can only wait and see the extent of damage to wildlife and dune habitatJust past a scrum of dog walkers, abo"
         },
         {
-          "title": "‘There’s fire all around us, this is it’ – This is climate breakdown",
-          "description": "Working with jaguars in Brazil’s Pantanal was a huge source of joy. But the wildfires are getting worse. This is Abbie’s storyLocation Pantanal, BrazilDisaster Wildfires, a number of yearsAbbie Martin"
+          "title": "Cop30 was meant to be a turning point, so why do some say the climate summit is broken?",
+          "description": "Swamped by lobbyists and hobbled by a lack of urgency, there are fears Cop could become a sprawling spectacle that betrays those who depend on it mostThousands of diplomats, activists, journalists and"
         },
         {
-          "title": "Fossil fuel projects around the world threaten the health of 2bn people",
-          "description": "Exclusive: ‘Deep-rooted injustices’ affect billions of people due to location of wells, pipelines and other infrastructureA quarter of the world’s population lives within three miles (5km) of operatio"
-        },
-        {
-          "title": "Country diary: Feeding frenzies really live up to their name | Mary Montague",
-          "description": "Tyrella Beach, County Down: The surface of the sea is churning with desperate fish and hungry seabirds. This is life and death down the end of a telescopeOut to sea there is a squadron of juvenile gre"
-        },
-        {
-          "title": "A jester in the jungle: my quest to see a baby harpy eagle",
-          "description": "I had always wanted to see one and on a trek in Guyana there he was, his appearance quite bizarreSeeing a special bird can take enormous effort, as I discovered recently on a quest in the jungles of G"
+          "title": "Country diary: Run out of coffee? Reach for the acorns | Michael White",
+          "description": "Cranbrook, Kent: We have no culture of consuming acorns in Britain, but they have a place in my kitchen, especially in a boom year such as thisI tire of hearing the term “abundance” in relation to aut"
         }
       ]
     },
@@ -230,24 +140,24 @@
       "category": "💼 Business & Economia",
       "articles": [
         {
-          "title": "Da Google Cloud un piano per sbloccare 1.200 mld di euro di crescita guidata dall’AI",
-          "description": "Il report, realizzato con Implement Consulting Group, invita i leader europei a colmare il “cloud gap” con investimenti massicci e regole unificate. L’obiettivo: triplicare la capacità dei data center"
+          "title": "Zip wires, darts, wild swimming: why shopping centres are trying new ways to bring in customers",
+          "description": "Developers are turning to health-related activities as traditional stores hit by online retail continue to closeThere was a time when the most active thing to do at a shopping centre was jostle to the"
         },
         {
-          "title": "AI e ricerca scientifica: il rischio “articoli ritirati” si annida nei chatbot",
-          "description": "Studi recenti mostrano che strumenti di intelligenza artificiale, da ChatGPT ad applicazioni specializzate per la ricerca, utilizzano contenuti tratti da articoli scientifici ritirati. Una falla che m"
+          "title": "What pension changes is Rachel Reeves considering in the budget?",
+          "description": "One possible alteration was thought to be tax-free cash drawdowns, but the chancellor may have turned to salary sacrifice schemesRumours about what Rachel Reeves may, or may not, do to pensions in the"
         },
         {
-          "title": "Procurement: ecco l’agente AI per la qualifica dei fornitori della multinazionale De Nora",
-          "description": "La multinazionale dell’elettrochimica comprende 24 società operative in dieci Paesi e cinque centri di ricerca e sviluppo tra Italia, Stati Uniti e Giappone. Collegata a un’ampia e articolata rete di "
+          "title": "About 1m Ford diesel cars sold in UK with defective emissions controls, court told",
+          "description": "Ford denies having created ‘defeat devices’ in legal action on behalf of 1.6 million owners against five carmakersAbout a million Ford diesel cars were sold in the UK with serious defects in component"
         },
         {
-          "title": "Il Consiglio Nazionale Forense prepara la prima piattaforma AI per l’avvocatura italiana",
-          "description": "Un ecosistema di servizi intelligenti per supportare 230mila avvocati. Il CNF ha avviato la consultazione di mercato per un progetto strategico di trasformazione digitale della professione legale L'ar"
+          "title": "AI has delivered a chart hit — but what do we miss?",
+          "description": "Breaking Rust’s conquest of country sales doesn’t alter the fact that recycling material makes these songs generic"
         },
         {
-          "title": "IBM Quantum Nighthawk, processore da 120 qubit e fino a 5000 operazioni entangled",
-          "description": "“Nighthawk” è un processore che inaugura una nuova era del calcolo quantistico. Progettato per circuiti fino al 30% più complessi. Progressi anche nei software (Qiskit) e nell’errore correzione; obiet"
+          "title": "Apple intensifies succession planning for CEO Tim Cook",
+          "description": "iPhone maker’s board is preparing for its longtime leader to step down as early as next year"
         }
       ]
     },
@@ -255,24 +165,12 @@
       "category": "🏥 Salute",
       "articles": [
         {
-          "title": "Marianne Rigge obituary",
-          "description": "As director of the College of Health, Marianne Rigge sought to influence NHS doctors to put the needs of patients at the centre of treatment and care decisions"
+          "title": "After I burned out, physics helped me understand what had happened to me – and to move on | Zahaan Bharmal",
+          "description": "I thought hard work equalled success. I had to realise that’s not always how it works, in science or in lifeIf the words “force equals mass times acceleration” are mildly triggering, I apologise. Newt"
         },
         {
-          "title": "Ed Miliband urges Labour to move on after Starmer apologises to Streeting for hostile briefings from No 10 – UK politics live",
-          "description": "Fallout from extraordinary briefing operation against Wes Streeting continues as calls grow for Starmer to sack his chief of staff Morgan McSweeneyPA Media has more on what the monthly performance fig"
-        },
-        {
-          "title": "Deaths linked to antibiotic-resistant superbugs rose 17% in England in 2024",
-          "description": "Data also shows an average of nearly 400 newly reported cases of antibiotic-resistant infections a week last yearThe number of deaths linked to superbugs that do not respond to frontline antibiotics i"
-        },
-        {
-          "title": "High blood pressure rates in children nearly doubled in 20 years, global review finds",
-          "description": "Poor diet, inactivity and obesity believed to have caused hypertension for millions of under-19s around the worldThe rate of children and teenagers living with high blood pressure globally has nearly "
-        },
-        {
-          "title": "Epstein-Barr virus appears to be trigger of lupus disease, say scientists",
-          "description": "Connection of near-ubiquitous EBV to autoimmune disease affecting about 1 in 1,000 people may spur hunt for vaccineA common childhood virus appears to be the trigger for the autoimmune disease lupus, "
+          "title": "UK warned that 15% cut to health fund will force ‘impossible choices’ on Africa",
+          "description": "Advocates fear that other donors will follow Britain’s reduction to the Global Fund for Aids, TB and malariaThe UK is undermining its legacy in fighting infectious diseases including Aids and malaria "
         }
       ]
     },
@@ -280,24 +178,24 @@
       "category": "🏛️ Politica",
       "articles": [
         {
-          "title": "Von der Leyen, 'l'offensiva di inverno di Putin fallirà'",
-          "description": "'Decisivo per il futuro della guerra, saremo all'altezza'"
+          "title": "Major incident declared as Storm Claudia causes flooding and disruption",
+          "description": "Met Office yellow rain warning was in place early on Saturday with 83 flood warnings issued for England and 12 flood warnings across Wales."
         },
         {
-          "title": "Coloni incendiano moschea in Cisgiordania, minacce all'Idf",
-          "description": "Danni all'edificio e copie del Corano bruciate, aperta indagine"
+          "title": "Kallas: 'Se vogliamo la pace dobbiamo prepararci alla guerra'",
+          "description": "Tajani, 'aiuti a Kiev non per la guerra alla Russia, ma per la difesa dell'Ucraina'"
         },
         {
-          "title": "Parigi, 'la minaccia terrorista in Francia ancora molto elevata'",
-          "description": "Ministro a 10 anni da Bataclan: 'Sventati 6 attacchi in 2025'"
+          "title": "Kallas,'se vogliamo pace dobbiamo prepararci a guerra'",
+          "description": "'La verità è che è già troppo tardi per gli investimenti'"
         },
         {
-          "title": "Media, 'Epstein si offrì ai russi come mediatore presso Trump'",
-          "description": "Politico, email a Jagland: 'possono ottenere informazioni da me'"
+          "title": "What pension changes is Rachel Reeves considering in the budget?",
+          "description": "One possible alteration was thought to be tax-free cash drawdowns, but the chancellor may have turned to salary sacrifice schemesRumours about what Rachel Reeves may, or may not, do to pensions in the"
         },
         {
-          "title": "Cina, 'la premier nipponica ritratti i giudizi su Taiwan'",
-          "description": "'Nostra dura reazione con azioni militari pro-Taipei di Tokyo'"
+          "title": "Wes Streeting accused of ‘chaotic and incoherent approach’ to NHS reform",
+          "description": "Exclusive: thinktank report finds health secretary has failed to improve productivity, with the health service unlikely to meet its targetsWes Streeting has been accused of taking a “chaotic and incoh"
         }
       ]
     }
