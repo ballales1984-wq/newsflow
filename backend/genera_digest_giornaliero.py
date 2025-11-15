@@ -1,7 +1,7 @@
 """Script per generare il digest giornaliero dai nuovi articoli"""
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 
 # Mappa category_id -> nome categoria
@@ -57,19 +57,75 @@ def load_articles():
     return []
 
 def generate_digest():
-    """Genera il digest giornaliero dagli articoli"""
+    """Genera il digest giornaliero dagli articoli - SOLO NOTIZIE DI OGGI"""
     articles = load_articles()
     
     if not articles:
         print("❌ Nessun articolo trovato!")
         return None
     
-    print(f"📚 Caricati {len(articles)} articoli")
+        print(f"Caricati {len(articles)} articoli totali")
+    
+    # Filtra solo articoli di oggi (ultime 24h)
+    today = datetime.now().date()
+    yesterday = today - timedelta(days=1)
+    today_articles = []
+    
+    for article in articles:
+        published_at = article.get('published_at', '')
+        if not published_at:
+            continue
+        
+        try:
+            # Prova a parsare la data in vari formati
+            if isinstance(published_at, str):
+                article_date = None
+                
+                # Prova formato ISO: "2025-11-15T10:04:00"
+                if 'T' in published_at:
+                    date_str = published_at.split('T')[0]
+                    try:
+                        article_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    except:
+                        pass
+                
+                # Prova formato US: "11/15/2025 10:04:00"
+                if not article_date and '/' in published_at:
+                    date_str = published_at.split(' ')[0]  # Prende "11/15/2025"
+                    try:
+                        article_date = datetime.strptime(date_str, '%m/%d/%Y').date()
+                    except:
+                        pass
+                
+                # Prova formato standard: "2025-11-15"
+                if not article_date:
+                    date_str = published_at.split(' ')[0]
+                    try:
+                        article_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    except:
+                        pass
+                
+                if article_date:
+                    # Filtra solo articoli di oggi o ieri (ultime 24h)
+                    if article_date >= yesterday:
+                        today_articles.append(article)
+        except Exception as e:
+            # Se non riesce a parsare, salta l'articolo
+            continue
+    
+    print(f"📅 Articoli di oggi/ultime 24h: {len(today_articles)}")
+    
+    if not today_articles:
+        print("⚠️  Nessun articolo di oggi trovato!")
+        return None
+    
+    # Ordina per data (più recenti prima)
+    today_articles.sort(key=lambda x: x.get('published_at', ''), reverse=True)
     
     # Raggruppa articoli per categoria
     articles_by_category = defaultdict(list)
     
-    for article in articles:
+    for article in today_articles:
         category_id = article.get('category_id', 1)
         category_name = CATEGORY_MAP.get(category_id, "Tecnologia")
         
