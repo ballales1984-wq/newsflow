@@ -113,7 +113,7 @@ def generate_digest():
             # Se non riesce a parsare, salta l'articolo
             continue
     
-    print(f"📅 Articoli di oggi/ultime 24h: {len(today_articles)}")
+    print(f"Articoli di oggi/ultime 24h: {len(today_articles)}")
     
     if not today_articles:
         print("⚠️  Nessun articolo di oggi trovato!")
@@ -192,7 +192,7 @@ def save_digest(digest_data):
     print(f"📊 Categorie: {len(digest_data['digest'])}")
     
     total_articles = sum(len(cat['articles']) for cat in digest_data['digest'])
-    print(f"📰 Articoli totali: {total_articles}")
+        print(f"Articoli totali: {total_articles}")
 
 if __name__ == '__main__':
     print("=" * 70)
