@@ -43,12 +43,36 @@ try:
     from mangum import Mangum
     print("DEBUG: Mangum imported successfully")
     
-    print("DEBUG: Importing app.main_simple...")
-    from app.main_simple import app
-    print("DEBUG: app.main_simple imported successfully")
+    # Prova diversi path per importare app.main_simple
+    print("DEBUG: Attempting to import app.main_simple...")
+    print(f"DEBUG: sys.path={sys.path}")
+    print(f"DEBUG: backend_path exists={os.path.exists(backend_path)}")
+    print(f"DEBUG: backend/app exists={os.path.exists(os.path.join(backend_path, 'app'))}")
+    print(f"DEBUG: backend/app/main_simple.py exists={os.path.exists(os.path.join(backend_path, 'app', 'main_simple.py'))}")
+    
+    try:
+        from app.main_simple import app
+        print("DEBUG: app.main_simple imported successfully via 'app.main_simple'")
+    except ImportError as e1:
+        print(f"DEBUG: First import attempt failed: {e1}")
+        try:
+            # Prova import diretto
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(
+                "main_simple",
+                os.path.join(backend_path, 'app', 'main_simple.py')
+            )
+            main_simple_module = importlib.util.module_from_spec(spec)
+            sys.modules['app.main_simple'] = main_simple_module
+            spec.loader.exec_module(main_simple_module)
+            app = main_simple_module.app
+            print("DEBUG: app.main_simple imported successfully via direct import")
+        except Exception as e2:
+            print(f"DEBUG: Direct import also failed: {e2}")
+            raise e1  # Rilancia il primo errore
 
     # Crea handler Mangum per Vercel
-    handler = Mangum(app, lifespan="off")
+    mangum_handler = Mangum(app, lifespan="off")
     print("DEBUG: Mangum handler created successfully")
 
 except Exception as e:
@@ -66,14 +90,14 @@ except Exception as e:
                 "traceback": traceback.format_exc()
             })
         }
-    handler = error_handler
+    mangum_handler = error_handler
 
-def lambda_handler(event, context):
+def handler(event, context):
     """Handler per Vercel serverless functions"""
     try:
-        return handler(event, context)
+        return mangum_handler(event, context)
     except Exception as e:
-        print(f"ERROR in lambda_handler: {str(e)}")
+        print(f"ERROR in handler: {str(e)}")
         print(f"ERROR traceback: {traceback.format_exc()}")
         import json
         return {

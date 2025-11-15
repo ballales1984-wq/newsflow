@@ -102,12 +102,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   loadCategoryCounts(): void {
+    // Ottimizzato: usa requestAnimationFrame per non bloccare UI
     // Carica tutti gli articoli per contare quelli per categoria
     this.articleService.getArticles(1, 1000, {}).subscribe({
       next: (response) => {
         const allArticles = response.items || [];
         
-        // Mappa keywords → category_id (come nel backend)
+        // Mappa keywords → category_id (come nel backend) - ottimizzata per lookup veloce
         const KEYWORD_TO_CATEGORY_ID: { [key: string]: number } = {
           'technology': 1, 'tech': 1, 'tecnologia': 1,
           'science': 2, 'scienz': 2,
@@ -129,41 +130,77 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.categoryCounts = {};
         this.categoryCounts[0] = allArticles.length; // "Tutte"
         
-        // Conta articoli per categoria usando category_id o keywords come fallback
-        this.categories.forEach(category => {
-          const count = allArticles.filter(article => {
-            // Prima prova con category_id
-            if (article.category_id === category.id) {
-              return true;
-            }
+        // Ottimizzazione: usa requestAnimationFrame per spezzare il lavoro e non bloccare UI
+        const processInChunks = (articles: any[], categories: any[], chunkSize: number = 50) => {
+          let articleIndex = 0;
+          
+          const processChunk = () => {
+            const endIndex = Math.min(articleIndex + chunkSize, articles.length);
             
-            // Fallback: cerca nei keywords
-            const keywords = article.keywords || [];
-            for (const kw of keywords) {
-              const kwLower = String(kw).toLowerCase();
-              const mappedId = KEYWORD_TO_CATEGORY_ID[kwLower];
-              if (mappedId === category.id) {
-                return true;
-              }
-              // Cerca anche parziali
-              for (const [key, catId] of Object.entries(KEYWORD_TO_CATEGORY_ID)) {
-                if (key.includes(kwLower) || kwLower.includes(key)) {
-                  if (catId === category.id) {
-                    return true;
+            // Processa chunk di articoli
+            for (let i = articleIndex; i < endIndex; i++) {
+              const article = articles[i];
+              const articleCategoryId = article.category_id;
+              
+              // Incrementa conteggio per category_id diretto
+              if (articleCategoryId) {
+                if (!this.categoryCounts[articleCategoryId]) {
+                  this.categoryCounts[articleCategoryId] = 0;
+                }
+                this.categoryCounts[articleCategoryId]++;
+              } else {
+                // Fallback: cerca nei keywords (solo se category_id mancante)
+                const keywords = article.keywords || [];
+                const matchedCategories = new Set<number>();
+                
+                for (const kw of keywords) {
+                  const kwLower = String(kw).toLowerCase();
+                  const mappedId = KEYWORD_TO_CATEGORY_ID[kwLower];
+                  if (mappedId) {
+                    matchedCategories.add(mappedId);
                   }
                 }
+                
+                // Incrementa conteggi per categorie trovate
+                matchedCategories.forEach(catId => {
+                  if (!this.categoryCounts[catId]) {
+                    this.categoryCounts[catId] = 0;
+                  }
+                  this.categoryCounts[catId]++;
+                });
               }
             }
-            return false;
-          }).length;
+            
+            articleIndex = endIndex;
+            
+            // Se ci sono ancora articoli da processare, continua nel prossimo frame
+            if (articleIndex < articles.length) {
+              requestAnimationFrame(processChunk);
+            } else {
+              // Inizializza a 0 le categorie senza articoli
+              categories.forEach(category => {
+                if (!this.categoryCounts[category.id]) {
+                  this.categoryCounts[category.id] = 0;
+                }
+              });
+              
+              console.log('✅ Conteggi categorie:', this.categoryCounts);
+            }
+          };
           
-          this.categoryCounts[category.id] = count;
-        });
+          // Inizia il processing
+          requestAnimationFrame(processChunk);
+        };
         
-        console.log('✅ Conteggi categorie:', this.categoryCounts);
+        // Avvia processing ottimizzato
+        processInChunks(allArticles, this.categories);
       },
       error: (error) => {
         console.error('Error loading category counts:', error);
+        // Inizializza conteggi a 0 in caso di errore
+        this.categories.forEach(category => {
+          this.categoryCounts[category.id] = 0;
+        });
       }
     });
   }
