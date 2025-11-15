@@ -1571,6 +1571,44 @@ def trigger_news_collection():
                             if not image_url.startswith(('http://', 'https://')):
                                 image_url = None
 
+                        # Estrae data pubblicazione reale dal feed RSS
+                        published_date = None
+                        try:
+                            # Prova vari campi per la data
+                            if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                                from time import mktime
+                                published_date = datetime.fromtimestamp(mktime(entry.published_parsed))
+                            elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                                from time import mktime
+                                published_date = datetime.fromtimestamp(mktime(entry.updated_parsed))
+                            elif hasattr(entry, 'published'):
+                                try:
+                                    # Prova a parsare la data dal formato stringa
+                                    from dateutil import parser
+                                    published_date = parser.parse(entry.published)
+                                except:
+                                    pass
+                            elif hasattr(entry, 'updated'):
+                                try:
+                                    from dateutil import parser
+                                    published_date = parser.parse(entry.updated)
+                                except:
+                                    pass
+                        except Exception as e:
+                            print(f"⚠️  Errore parsing data per {entry_title[:50]}: {e}")
+
+                        # Se non trova data, usa quella di oggi
+                        if not published_date:
+                            published_date = datetime.now()
+
+                        # Filtra solo notizie di oggi
+                        today = datetime.now().date()
+                        article_date = published_date.date()
+
+                        # Salta articoli vecchi (non di oggi)
+                        if article_date < today:
+                            continue  # Salta questo articolo, è vecchio
+
                         article = {
                             "id": article_id,
                             "title": entry_title,
@@ -1580,7 +1618,7 @@ def trigger_news_collection():
                             "content": content,  # Contenuto completo (fino a 5000 caratteri)
                             "image_url": image_url,  # Immagine estratta dal feed
                             "author": entry.get('author', source_name) + (" (trad. auto)" if original_language == 'en' and language == 'it' else ""),
-                            "published_at": datetime.now().isoformat(),
+                            "published_at": published_date.isoformat(),  # Data reale dal feed RSS
                             "collected_at": datetime.now().isoformat(),
                             "source_id": 1,
                             "category_id": category_id,  # ID categoria aggiunto
@@ -1904,8 +1942,8 @@ def trigger_news_collection():
             try:
                 # Crea directory se non esiste
                 os.makedirs(os.path.dirname(file_path), exist_ok=True) if os.path.dirname(file_path) else None
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(output_data, f, indent=2, ensure_ascii=False)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(output_data, f, indent=2, ensure_ascii=False)
                 print(f"✅ File salvato: {file_path}")
             except Exception as e:
                 print(f"⚠️  Errore salvataggio {file_path}: {e}")
