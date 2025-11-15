@@ -187,12 +187,12 @@ def save_digest(digest_data):
         except Exception as e:
             print(f"⚠️  Errore salvataggio {path}: {e}")
     
-    print(f"\n✨ Digest salvato in {saved_count} posizioni!")
-    print(f"📅 Data: {today}")
-    print(f"📊 Categorie: {len(digest_data['digest'])}")
+    print(f"\nDigest salvato in {saved_count} posizioni!")
+    print(f"Data: {today}")
+    print(f"Categorie: {len(digest_data['digest'])}")
     
     total_articles = sum(len(cat['articles']) for cat in digest_data['digest'])
-        print(f"Articoli totali: {total_articles}")
+    print(f"Articoli totali: {total_articles}")
 
 if __name__ == '__main__':
     print("=" * 70)
