@@ -1966,6 +1966,44 @@ def trigger_news_collection():
         except Exception as e:
             print(f"⚠️  Errore durante reload cache: {e}")
 
+        # GENERA DIGEST AUTOMATICAMENTE con le notizie nuove
+        print(f"\n📰 Generazione digest giornaliero con notizie nuove...")
+        try:
+            import subprocess
+            import sys
+
+            # Path dello script digest
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            backend_dir = os.path.dirname(script_dir)
+            digest_script = os.path.join(backend_dir, 'genera_digest_giornaliero.py')
+
+            if os.path.exists(digest_script):
+                # Esegui lo script Python per generare il digest
+                result = subprocess.run(
+                    [sys.executable, digest_script],
+                    cwd=backend_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+
+                if result.returncode == 0:
+                    print(f"✅ Digest generato automaticamente con notizie nuove")
+                    # Mostra output se utile
+                    if result.stdout:
+                        for line in result.stdout.strip().split('\n'):
+                            if '✅' in line or '📊' in line or '✨' in line:
+                                print(f"   {line}")
+                else:
+                    print(f"⚠️  Errore generazione digest: {result.stderr}")
+            else:
+                print(f"⚠️  Script digest non trovato: {digest_script}")
+        except Exception as e:
+            print(f"⚠️  Errore generazione digest automatica: {e}")
+            # Non bloccare il processo se il digest fallisce
+            import traceback
+            traceback.print_exc()
+
         print(f"✅ Aggiornate {len(all_articles)} notizie con spiegazioni AI!")
 
         return {
