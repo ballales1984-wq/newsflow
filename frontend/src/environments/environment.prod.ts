@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
-  // Backend su Vercel (serverless functions)
-  // Il backend è ora deployato su Vercel insieme al frontend
-  apiUrl: 'https://newsflow-orcin.vercel.app/api/v1'
+  // Backend su PC locale tramite ngrok
+  // Cambia questo URL con il tuo ngrok URL attuale
+  apiUrl: 'https://tonita-deposable-manneristically.ngrok-free.dev/api/v1'
 };
 
