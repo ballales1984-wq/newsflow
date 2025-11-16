@@ -8,7 +8,7 @@ import time
 
 # ===== CONFIGURAZIONE =====
 USERNAME = 'braccobaldo'
-TOKEN = 'YOUR_API_TOKEN'  # Ottieni da: https://www.pythonanywhere.com/account/#api_token
+TOKEN = 'f17e14d4b1a12e0bf325cc0c1d8f9871fe50e599'  # Token API PythonAnywhere
 HOST = 'www.pythonanywhere.com'  # o 'eu.pythonanywhere.com' se account EU
 DOMAIN_NAME = 'braccobaldo.pythonanywhere.com'
 PYTHON_VERSION = 'python310'
