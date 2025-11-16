@@ -1,6 +1,8 @@
 """Raccolta notizie con PRIORITÀ alle fonti ITALIANE"""
 import feedparser
 import json
+import re
+import requests
 from datetime import datetime
 
 print("🇮🇹 Raccogliendo notizie - PRIORITÀ ITALIANE")
@@ -34,7 +36,18 @@ for source_name, rss_url in ITALIAN_SOURCES.items():
     print(f"\n📡 {source_name}")
     
     try:
-        feed = feedparser.parse(rss_url)
+        # Usa requests con timeout per evitare blocchi
+        try:
+            response = requests.get(rss_url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
+            response.raise_for_status()
+            feed = feedparser.parse(response.content)
+        except requests.exceptions.Timeout:
+            print(f"   ⚠️  Timeout (10s) - salto questa fonte")
+            continue
+        except requests.exceptions.RequestException as e:
+            print(f"   ⚠️  Errore richiesta: {e} - salto questa fonte")
+            continue
+        
         count = 0
         
         for entry in feed.entries[:10]:  # 10 notizie italiane per fonte
@@ -62,11 +75,41 @@ for source_name, rss_url in ITALIAN_SOURCES.items():
                     "language": "it"
                 }
                 
-                # Cerca immagine
+                # Cerca immagine - metodi multipli
+                image_url = None
+                
+                # Metodo 1: media_content
                 if hasattr(entry, 'media_content') and entry.media_content:
-                    article['image_url'] = entry.media_content[0].get('url')
-                elif hasattr(entry, 'enclosures') and entry.enclosures:
-                    article['image_url'] = entry.enclosures[0].get('href')
+                    image_url = entry.media_content[0].get('url')
+                
+                # Metodo 2: enclosures
+                if not image_url and hasattr(entry, 'enclosures') and entry.enclosures:
+                    image_url = entry.enclosures[0].get('href')
+                
+                # Metodo 3: estrai da HTML summary/description
+                if not image_url:
+                    full_content = entry.get('summary', entry.get('description', ''))
+                    # Cerca tag <img> con src
+                    img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', full_content, re.IGNORECASE)
+                    if img_match:
+                        image_url = img_match.group(1)
+                    # Cerca anche in content se disponibile
+                    if not image_url and hasattr(entry, 'content'):
+                        for content_item in entry.content:
+                            content_text = content_item.get('value', '')
+                            img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', content_text, re.IGNORECASE)
+                            if img_match:
+                                image_url = img_match.group(1)
+                                break
+                
+                # Metodo 4: links con type image
+                if not image_url and hasattr(entry, 'links'):
+                    for link in entry.links:
+                        if link.get('type', '').startswith('image/'):
+                            image_url = link.get('href')
+                            break
+                
+                article['image_url'] = image_url if image_url else None
                 
                 all_articles.append(article)
                 print(f"   ✅ {article['title'][:65]}...")
@@ -89,7 +132,18 @@ for source_name, rss_url in INTERNATIONAL_SOURCES.items():
     print(f"\n📡 {source_name}")
     
     try:
-        feed = feedparser.parse(rss_url)
+        # Usa requests con timeout per evitare blocchi
+        try:
+            response = requests.get(rss_url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
+            response.raise_for_status()
+            feed = feedparser.parse(response.content)
+        except requests.exceptions.Timeout:
+            print(f"   ⚠️  Timeout (10s) - salto questa fonte")
+            continue
+        except requests.exceptions.RequestException as e:
+            print(f"   ⚠️  Errore richiesta: {e} - salto questa fonte")
+            continue
+        
         count = 0
         
         for entry in feed.entries[:3]:  # Solo 3 migliori
@@ -116,8 +170,28 @@ for source_name, rss_url in INTERNATIONAL_SOURCES.items():
                     "language": "en"
                 }
                 
+                # Cerca immagine - metodi multipli
+                image_url = None
+                
+                # Metodo 1: media_content
                 if hasattr(entry, 'media_content') and entry.media_content:
-                    article['image_url'] = entry.media_content[0].get('url')
+                    image_url = entry.media_content[0].get('url')
+                
+                # Metodo 2: estrai da HTML summary/description
+                if not image_url:
+                    full_content = entry.get('summary', entry.get('description', ''))
+                    img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', full_content, re.IGNORECASE)
+                    if img_match:
+                        image_url = img_match.group(1)
+                
+                # Metodo 3: links con type image
+                if not image_url and hasattr(entry, 'links'):
+                    for link in entry.links:
+                        if link.get('type', '').startswith('image/'):
+                            image_url = link.get('href')
+                            break
+                
+                article['image_url'] = image_url if image_url else None
                 
                 all_articles.append(article)
                 print(f"   ✅ {article['title'][:65]}...")

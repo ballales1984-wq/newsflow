@@ -1,201 +1,28 @@
 {
-  "date": "2025-11-15",
+  "date": "2025-11-16",
   "digest": [
     {
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "I'm tired of the cheap Android tablet slander - this $200 one checks all the boxes for me",
-          "description": "The Tabwee T60 Pro is a solid bang-for-buck tablet for Android users."
+          "title": "La liberazione di Boualem Sansal e le altre notizie di MicroMega",
+          "description": "Uno sguardo ai contenuti pubblicati sul sito questa settimana."
         },
         {
-          "title": "Don't be sad if your Amazon driver shows up with smart glasses on - they're actually helpful",
-          "description": "Faster and safer deliveries are on the way."
+          "title": "Tom Malleson e la democrazia come progetto integrale",
+          "description": "Ricchezza, impresa e tempo: un'utopia realista per l'Europa che verrà."
         },
         {
-          "title": "Old-school platforming, Metroidvania horror and other new indie games worth checking out",
-          "description": ""
+          "title": "Privacy: OpenAI si oppone all'ordine di consegnare 20 mln di conversazioni di ChatGPT",
+          "description": "L'azienda contesta l'ordine federale che le impone di consegnare i log di conversazioni ChatGPT al The New York Times nell'ambito di una causa per violazione del copyright."
         },
         {
-          "title": "Sora 2 genera ancora video protetti dal copyright",
-          "description": "Nonostante le protezioni aggiuntive, Sora 2 può ancora generare video con personaggi protetti dal copyright, in quanto è sufficiente il prompt giusto. The post Sora 2 genera ancora video protetti dal "
+          "title": "AI Readiness Index 2025: in Italia le aziende già pronte per l'AI sono solo il 10%",
+          "description": "Il nuovo studio di Cisco mostra come le aziende più mature nell'adozione dell'AI ottengano valore più rapidamente, grazie a infrastrutture scalabili, governance solida e investimenti strutturati"
         },
         {
-          "title": "A year later, here's why I keep coming back to the Surface Laptop (especially at this price)",
-          "description": "Microsoft's Surface Laptop impresses with a sleek form factor and marathon battery. Right now, both the 13-inch and 15-inch are on sale for Black Friday."
-        }
-      ]
-    },
-    {
-      "category": "🔬 Scienza",
-      "articles": [
-        {
-          "title": "CRISPR brings back ancient gene that prevents gout and fatty liver",
-          "description": "By reactivating a long-lost gene, researchers were able to lower uric acid levels and stop damaging fat accumulation in human liver models. The breakthrough hints at a future where gout and several me"
-        },
-        {
-          "title": "Scientists reverse kidney damage in mice, hope for humans next",
-          "description": "Researchers uncovered how fatty molecules called ceramides trigger acute kidney injury by damaging the mitochondria that power kidney cells. By altering ceramide metabolism or using a new drug candida"
-        }
-      ]
-    },
-    {
-      "category": "🔒 Cybersecurity",
-      "articles": [
-        {
-          "title": "Five U.S. Citizens Plead Guilty to Helping North Korean IT Workers Infiltrate 136 Companies",
-          "description": "The U.S. Department of Justice (DoJ) on Friday announced that five individuals have pleaded guilty to assisting North Korea's illicit revenue generation schemes by enabling information technology (IT)"
-        }
-      ]
-    },
-    {
-      "category": "💡 Innovazione",
-      "articles": [
-        {
-          "title": "Viwoods AiPaper Reader, lo smartphone per chi vuole disintossicarsi dagli smartphone?",
-          "description": "Torniamo a parlare di Viwoods, azienda hi-tech di Hong Kong che soltanto di recente ci aveva proposto il suo tablet e-Ink AiPaper. Con l’approssimarsi del Natale questa ex startup fa debuttare un devi"
-        },
-        {
-          "title": "Dreame Aqua10 Ultra Track Complete, il robottino lavapavimenti che può arrivare davvero ovunque?",
-          "description": "Con l’approssimarsi del Natale Dreame, ben nota azienda attiva nel settore dei robot aspirapolvere e lavapavimenti ha deciso di sfoderare un modello che in redazione, scherzosamente, dopo qualche sett"
-        },
-        {
-          "title": "Arriva l’Imu balneare: la tassa sulla casa al mare diventerà più leggera? Tutte le novità",
-          "description": "Chi ha casa al mare potrà pagare meno tasse? La proposta arriva da parte del ministero dell’Economia che ha aperto nuove possibilità ai sindaci di alcuni comuni balneari. In particolare, potranno prev"
-        },
-        {
-          "title": "La chiamata all’azione di Paola Mascaro, alla guida di Valore D: «L’inclusione di genere diventi impegno collettivo»",
-          "description": "Da 30 anni lavora per grandi multinazionali. Prima in Alcatel-Lucent, come direttrice della Comunicazione e dei Public Affairs per l’Italia e i paesi del Mediterraneo, poi dal 1998 al 2009 in Accentur"
-        },
-        {
-          "title": "Assegno unico per i figli: la prossima settimana è in arrivo il pagamento di novembre. Ecco tutte le date fino a dicembre",
-          "description": "La prossima settimana è in arrivo il pagamento di novembre ai beneficiari dell’assegno unico per i figli. Si tratta degli ultimi accrediti: a partire dal prossimo anno le famiglie dovranno infatti pre"
-        }
-      ]
-    },
-    {
-      "category": "🎨 Cultura",
-      "articles": [
-        {
-          "title": "Trump ordina un’indagine sui rapporti tra Epstein e i democratici per allontanare i sospetti su di sé",
-          "description": "Nel pieno delle nuove rivelazioni dell’archivio Epstein, che tornano a citare anche il suo nome, Donald Trump ha scelto la via più antica della comunicazione: indicare un nemico e spostare il bersagli"
-        },
-        {
-          "title": "I ristoranti italiani che prenderanno le stelle Michelin, secondo ChatGPT",
-          "description": "C’è un momento dell’anno, nella ristorazione italiana, in cui inizia la fibrillazione. È quello che precede l’annuncio delle nuove stelle Michelin, previsto per mercoledì prossimo, quando il palcoscen"
-        },
-        {
-          "title": "I rigori a porta vuota che destra e sinistra non vogliono tirare, e non si sa perché",
-          "description": "Ci sono alcune cose della politica italiana di cui non mi capacito. Alcune scelte che non capisco. Alcune dinamiche che vanno al di là della mia evidentemente limitata comprensione. «Solo alcune?», si"
-        },
-        {
-          "title": "Microsoft Teams saprà dove sei",
-          "description": "Dopo la pandemia l’organizzazione del lavoro in ufficio ha subito profondi cambiamenti. Lo smart working si è diffuso in molte aziende e le videocall hanno sostituito gran parte delle riunioni in pres"
-        },
-        {
-          "title": "La dittatura dei pezzettini ci ha resi adulti che spolliciano come quindicenni annoiati",
-          "description": "Sono giorni che mi passa davanti Gratteri, che io neanche so bene chi sia, credo un pubblico ministero, ma quel che è importante è che è da tre giorni il pezzettino preferito di quella che Lorenzo Jov"
-        }
-      ]
-    },
-    {
-      "category": "⚽ Sport",
-      "articles": [
-        {
-          "title": "World Cup qualifying news, Potter’s big Sweden bow and more – matchday live",
-          "description": "⚽ News, discussion and buildup before the day’s action⚽ Read Football Daily | And you can mail matchday liveThere’s also Women’s Super League action on the cards today in the form of the Manchester de"
-        },
-        {
-          "title": "Witnesses of Neymar’s sad decline hope for one final twist in his career’s brutal narrative arc | Barney Ronay",
-          "description": "World Cup could still be in reach for the last genius of Brazilian football who has faded to a shadow of his former selfWhat’s your favourite Neymar advert? This is a tough question to answer. The bod"
-        },
-        {
-          "title": "In the name of their fathers: Eubank v Benn began and ended a heady era of British boxing",
-          "description": "Their dads lit a fire that consumed me but Eubank Jr v Conor Benn embodies all that has gone wrong with the Dark TradeThirty-five years ago this month, on 18 November 1990, my life changed course when"
-        },
-        {
-          "title": "Josh Hazlewood ruled out of Ashes opener but England’s Mark Wood is fit",
-          "description": "Neser added to first Test squad already missing CumminsBoost for tourists as bowler is cleared of hamstring injuryJosh Hazlewood has been ruled out of the first Ashes Test after a second scan on the h"
-        }
-      ]
-    },
-    {
-      "category": "🌍 Natura & Ambiente",
-      "articles": [
-        {
-          "title": "‘We feel we’re fighting a losing battle’: the race to remove millions of plastic beads from Camber Sands",
-          "description": "A huge cleanup effort has seen volunteers working to remove beads by hand and machine. They can only wait and see the extent of damage to wildlife and dune habitatJust past a scrum of dog walkers, abo"
-        },
-        {
-          "title": "Cop30 was meant to be a turning point, so why do some say the climate summit is broken?",
-          "description": "Swamped by lobbyists and hobbled by a lack of urgency, there are fears Cop could become a sprawling spectacle that betrays those who depend on it mostThousands of diplomats, activists, journalists and"
-        },
-        {
-          "title": "Country diary: Run out of coffee? Reach for the acorns | Michael White",
-          "description": "Cranbrook, Kent: We have no culture of consuming acorns in Britain, but they have a place in my kitchen, especially in a boom year such as thisI tire of hearing the term “abundance” in relation to aut"
-        }
-      ]
-    },
-    {
-      "category": "💼 Business & Economia",
-      "articles": [
-        {
-          "title": "Zip wires, darts, wild swimming: why shopping centres are trying new ways to bring in customers",
-          "description": "Developers are turning to health-related activities as traditional stores hit by online retail continue to closeThere was a time when the most active thing to do at a shopping centre was jostle to the"
-        },
-        {
-          "title": "What pension changes is Rachel Reeves considering in the budget?",
-          "description": "One possible alteration was thought to be tax-free cash drawdowns, but the chancellor may have turned to salary sacrifice schemesRumours about what Rachel Reeves may, or may not, do to pensions in the"
-        },
-        {
-          "title": "About 1m Ford diesel cars sold in UK with defective emissions controls, court told",
-          "description": "Ford denies having created ‘defeat devices’ in legal action on behalf of 1.6 million owners against five carmakersAbout a million Ford diesel cars were sold in the UK with serious defects in component"
-        },
-        {
-          "title": "AI has delivered a chart hit — but what do we miss?",
-          "description": "Breaking Rust’s conquest of country sales doesn’t alter the fact that recycling material makes these songs generic"
-        },
-        {
-          "title": "Apple intensifies succession planning for CEO Tim Cook",
-          "description": "iPhone maker’s board is preparing for its longtime leader to step down as early as next year"
-        }
-      ]
-    },
-    {
-      "category": "🏥 Salute",
-      "articles": [
-        {
-          "title": "After I burned out, physics helped me understand what had happened to me – and to move on | Zahaan Bharmal",
-          "description": "I thought hard work equalled success. I had to realise that’s not always how it works, in science or in lifeIf the words “force equals mass times acceleration” are mildly triggering, I apologise. Newt"
-        },
-        {
-          "title": "UK warned that 15% cut to health fund will force ‘impossible choices’ on Africa",
-          "description": "Advocates fear that other donors will follow Britain’s reduction to the Global Fund for Aids, TB and malariaThe UK is undermining its legacy in fighting infectious diseases including Aids and malaria "
-        }
-      ]
-    },
-    {
-      "category": "🏛️ Politica",
-      "articles": [
-        {
-          "title": "Major incident declared as Storm Claudia causes flooding and disruption",
-          "description": "Met Office yellow rain warning was in place early on Saturday with 83 flood warnings issued for England and 12 flood warnings across Wales."
-        },
-        {
-          "title": "Kallas: 'Se vogliamo la pace dobbiamo prepararci alla guerra'",
-          "description": "Tajani, 'aiuti a Kiev non per la guerra alla Russia, ma per la difesa dell'Ucraina'"
-        },
-        {
-          "title": "Kallas,'se vogliamo pace dobbiamo prepararci a guerra'",
-          "description": "'La verità è che è già troppo tardi per gli investimenti'"
-        },
-        {
-          "title": "What pension changes is Rachel Reeves considering in the budget?",
-          "description": "One possible alteration was thought to be tax-free cash drawdowns, but the chancellor may have turned to salary sacrifice schemesRumours about what Rachel Reeves may, or may not, do to pensions in the"
-        },
-        {
-          "title": "Wes Streeting accused of ‘chaotic and incoherent approach’ to NHS reform",
-          "description": "Exclusive: thinktank report finds health secretary has failed to improve productivity, with the health service unlikely to meet its targetsWes Streeting has been accused of taking a “chaotic and incoh"
+          "title": "GPT-5.1: ChatGPT diventa più intelligente, empatico e personalizzabile",
+          "description": "OpenAI presenta l'aggiornamento più avanzato della sua serie di modelli linguistici. Le novità includono una maggiore intelligenza conversazionale, risposte più calde e naturali e strumenti più intuitivi per personalizzare il tono del chatbot."
         }
       ]
     }
