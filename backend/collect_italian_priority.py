@@ -89,10 +89,20 @@ for source_name, rss_url in ITALIAN_SOURCES.items():
                 # Metodo 3: estrai da HTML summary/description
                 if not image_url:
                     full_content = entry.get('summary', entry.get('description', ''))
-                    # Cerca tag <img> con src
+                    # Cerca tag <img> con src (pattern più robusto)
                     img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', full_content, re.IGNORECASE)
                     if img_match:
                         image_url = img_match.group(1)
+                    # Pattern alternativo senza virgolette
+                    if not image_url:
+                        img_match = re.search(r'<img[^>]+src=([^\s>]+)', full_content, re.IGNORECASE)
+                        if img_match:
+                            image_url = img_match.group(1).strip('"\'')
+                    # Cerca anche nel campo article['summary'] già salvato
+                    if not image_url and article.get('summary'):
+                        img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', article['summary'], re.IGNORECASE)
+                        if img_match:
+                            image_url = img_match.group(1)
                     # Cerca anche in content se disponibile
                     if not image_url and hasattr(entry, 'content'):
                         for content_item in entry.content:
