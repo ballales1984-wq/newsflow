@@ -1,18 +1,24 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copy requirements
-COPY requirements-minimal.txt .
+# Installa dipendenze di sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements-minimal.txt
+# Copia requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copia tutto il backend
 COPY . .
 
-# Expose port
-EXPOSE 8000
+# Esponi porta (Fly.io usa 8080 di default, ma può essere configurato)
+EXPOSE 8080
 
-# Start command
-CMD ["uvicorn", "app.main_simple:app", "--host", "0.0.0.0", "--port", "8000"]
+# Variabile d'ambiente per porta
+ENV PORT=8080
+
+# Avvia FastAPI
+CMD python -m uvicorn app.main_simple:app --host 0.0.0.0 --port ${PORT:-8080}
