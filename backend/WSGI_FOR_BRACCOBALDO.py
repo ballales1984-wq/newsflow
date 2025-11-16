@@ -1,16 +1,12 @@
 """
-Configurazione WSGI per PythonAnywhere
+Configurazione WSGI per braccobaldo.pythonanywhere.com
 Copia questo contenuto nel file WSGI configuration di PythonAnywhere
 """
 import sys
 import os
 
-# IMPORTANTE: Sostituisci 'TUO_USERNAME' con il tuo username PythonAnywhere!
-# Trova il tuo username nella console: echo $USER
-username = 'braccobaldo'  # Username PythonAnywhere
-
-# Aggiungi path backend
-path = f'/home/{username}/newsflow/backend'
+# Path backend
+path = '/home/braccobaldo/newsflow/backend'
 if path not in sys.path:
     sys.path.insert(0, path)
 
