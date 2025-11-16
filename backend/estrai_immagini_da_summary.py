@@ -64,22 +64,31 @@ def fix_images_in_json(input_file, output_file=None):
 
 if __name__ == '__main__':
     # File da processare
-    input_file = Path(__file__).parent / 'italian_priority_news.json'
-    frontend_file = Path(__file__).parent.parent / 'frontend' / 'src' / 'assets' / 'final_news_italian.json'
+    backend_dir = Path(__file__).parent
+    input_file = backend_dir / 'italian_priority_news.json'
+    backend_final_file = backend_dir / 'final_news_italian.json'
+    frontend_file = backend_dir.parent / 'frontend' / 'src' / 'assets' / 'final_news_italian.json'
     
     print("🖼️  Estrazione immagini da summary HTML")
     print("=" * 70)
     
-    # Processa il file del backend
+    # Processa il file del backend (italian_priority_news.json)
     if input_file.exists():
-        print("\n1️⃣  Processando file backend...")
+        print("\n1️⃣  Processando italian_priority_news.json...")
         fix_images_in_json(str(input_file))
     else:
         print(f"⚠️  File backend non trovato: {input_file}")
     
+    # Processa il file final_news_italian.json del backend (quello usato dall'API)
+    if backend_final_file.exists():
+        print("\n2️⃣  Processando backend/final_news_italian.json...")
+        fix_images_in_json(str(backend_final_file))
+    else:
+        print(f"⚠️  File backend final non trovato: {backend_final_file}")
+    
     # Processa il file del frontend
     if frontend_file.exists():
-        print("\n2️⃣  Processando file frontend...")
+        print("\n3️⃣  Processando file frontend...")
         fix_images_in_json(str(frontend_file))
     else:
         print(f"⚠️  File frontend non trovato: {frontend_file}")
