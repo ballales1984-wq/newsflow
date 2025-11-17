@@ -646,6 +646,10 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
 
             articles = filtered
 
+        # Ordina: prima articoli con immagini, poi senza
+        # Usa una chiave di ordinamento: 0 se ha immagine, 1 se non ha
+        articles.sort(key=lambda x: (0 if x.get('image_url') else 1, -x.get('quality_score', 0)))
+        
         # Applica paginazione
         total = len(articles)
         paginated_articles = articles[skip:skip + limit]
@@ -844,8 +848,8 @@ def get_featured_articles(limit: int = 10):
     # Filtra solo gli articoli in evidenza
     featured = [a for a in articles if a.get('is_featured', False)]
 
-    # Ordina per quality score (decrescente)
-    featured.sort(key=lambda x: x.get('quality_score', 0), reverse=True)
+    # Ordina: prima articoli con immagini, poi per quality score (decrescente)
+    featured.sort(key=lambda x: (0 if x.get('image_url') else 1, -x.get('quality_score', 0)))
 
     # Limita il numero
     return featured[:limit]
