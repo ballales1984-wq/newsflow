@@ -860,8 +860,8 @@ def get_recent_articles(days: int = 7, limit: int = 20):
     """Get recent articles"""
     articles = _load_articles()
 
-    # Ordina per data pubblicazione (più recenti prima)
-    articles.sort(key=lambda x: x.get('published_at', ''), reverse=True)
+    # Ordina: prima articoli con immagini, poi per data pubblicazione (più recenti prima)
+    articles.sort(key=lambda x: (0 if x.get('image_url') else 1, x.get('published_at', '')), reverse=True)
 
     # Limita il numero
     return articles[:limit]
