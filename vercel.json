@@ -52,26 +52,4 @@
       ]
     }
   ],
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.12",
-      "includeFiles": [
-        "api/final_news_italian.json",
-        "api/all_sources_news.json",
-        "api/digest.json",
-        "backend/**",
-        "requirements.txt"
-      ]
-    },
-    "api/[...path].py": {
-      "runtime": "python3.12",
-      "includeFiles": [
-        "api/final_news_italian.json",
-        "api/all_sources_news.json",
-        "api/digest.json",
-        "backend/**",
-        "requirements.txt"
-      ]
-    }
-  }
 }
