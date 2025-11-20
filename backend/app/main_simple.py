@@ -182,6 +182,7 @@ _cache_file_path = None
 
 def _load_articles(force_reload=False):
     """Helper to load articles - 94 NEWS ALL IN ITALIAN
+    IMPORTANTE: Carica PRIMA le notizie vecchie (se esistono), poi le sostituisce con le nuove
     Usa cache in memoria per performance migliori"""
     import json
     import os
@@ -193,14 +194,19 @@ def _load_articles(force_reload=False):
         try:
             current_mtime = os.path.getmtime(_cache_file_path)
             if current_mtime == _cache_timestamp:
-                # File non modificato, usa cache
+                # File non modificato, usa cache (NOTIZIE VECCHIE)
+                print(f"✅ Usando cache (notizie vecchie): {len(_articles_cache)} articoli")
                 return _articles_cache
             else:
-                # File modificato, ricarica
-                print(f"🔄 File modificato, ricarico cache...")
+                # File modificato, ricarica (SOSTITUISCE con nuove)
+                print(f"🔄 File modificato, ricarico cache (sostituisco vecchie con nuove)...")
         except:
             # File non esiste più o errore, ricarica
             pass
+    
+    # Se non c'è cache, prova a caricare le notizie vecchie PRIMA
+    if _articles_cache is None:
+        print("📰 Caricamento iniziale: cerco notizie vecchie da caricare...")
 
     def clean_html(text):
         """Rimuove tutti i tag HTML dal testo"""
@@ -284,6 +290,13 @@ def _load_articles(force_reload=False):
         print(f"   Current working directory: {os.getcwd()}")
         print(f"   File location: {__file__}")
         print(f"   List files in backend/: {os.listdir(os.path.join(os.getcwd(), 'backend')) if os.path.exists(os.path.join(os.getcwd(), 'backend')) else 'backend/ does not exist'}")
+        
+        # IMPORTANTE: Se non trova il file nuovo, prova a caricare le notizie vecchie dalla cache
+        if _articles_cache is not None:
+            print(f"✅ File nuovo non trovato, uso notizie vecchie dalla cache: {len(_articles_cache)} articoli")
+            return _articles_cache
+        
+        print("❌ Nessun file trovato e nessuna cache disponibile - restituisco array vuoto")
         return []  # Restituisci array vuoto invece di None
     if file_path and os.path.exists(file_path):
         try:
