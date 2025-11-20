@@ -206,8 +206,8 @@ if (Test-Path $digestScript) {
 
 Write-Host ""
 
-# STEP 4: Build frontend (include file JSON statici)
-Write-Host "🔨 STEP 4: Build frontend con file statici..." -ForegroundColor Yellow
+# STEP 4: Build frontend (include file JSON statici E immagini)
+Write-Host "🔨 STEP 4: Build frontend con file statici e immagini..." -ForegroundColor Yellow
 Set-Location (Join-Path $rootDir "frontend")
 try {
     if (-not (Test-Path "node_modules")) {
@@ -215,20 +215,33 @@ try {
         npm install 2>&1 | Out-Null
     }
     
-    Write-Host "   🔨 Esecuzione build production..." -ForegroundColor Gray
+    Write-Host "   🔨 Esecuzione build production (include immagini)..." -ForegroundColor Gray
+    $env:PYTHONIOENCODING = "UTF-8"
     npm run build -- --configuration production 2>&1 | ForEach-Object {
         if ($_ -match "error|Error|ERROR") {
             Write-Host "   ❌ $_" -ForegroundColor Red
-        } elseif ($_ -match "✅|complete|Complete") {
+        } elseif ($_ -match "✅|complete|Complete|Copying assets") {
             Write-Host "   ✅ $_" -ForegroundColor Green
         } else {
             Write-Host "   $_" -ForegroundColor Gray
         }
     }
     
-    # Verifica build
+    # Verifica build e immagini
     if (Test-Path "dist\newsflow\index.html") {
         Write-Host "   ✅ Build completato: dist/newsflow/index.html" -ForegroundColor Green
+        
+        # Verifica immagini nel build
+        if (Test-Path "dist\newsflow\assets\images") {
+            $imgCount = (Get-ChildItem "dist\newsflow\assets\images" -File | Measure-Object).Count
+            Write-Host "   ✅ Immagini incluse nel build: $imgCount file" -ForegroundColor Green
+        } else {
+            Write-Host "   ⚠️  Cartella images non trovata nel build - copiando manualmente..." -ForegroundColor Yellow
+            if (Test-Path "src\assets\images") {
+                Copy-Item "src\assets\images" "dist\newsflow\assets\images" -Recurse -Force
+                Write-Host "   ✅ Immagini copiate nel build" -ForegroundColor Green
+            }
+        }
     } else {
         Write-Host "   ❌ Build fallito: index.html non trovato" -ForegroundColor Red
         exit 1
