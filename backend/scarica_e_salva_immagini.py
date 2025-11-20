@@ -93,9 +93,9 @@ def process_articles_json(input_file, output_file=None, images_dir=None):
             skipped_count += 1
             continue
         
-        # Se già ha percorso locale, salta
+        # Se già ha percorso locale, salta (ma conta come scaricata)
         if image_url.startswith('/assets/') or image_url.startswith('assets/'):
-            skipped_count += 1
+            downloaded_count += 1
             continue
         
         print(f"[{i}/{len(articles)}] {article.get('title', '')[:60]}...")
