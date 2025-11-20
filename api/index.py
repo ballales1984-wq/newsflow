@@ -94,17 +94,42 @@ except Exception as e:
 def handler(event, context):
     """Handler per Vercel serverless functions"""
     try:
+        # Mangum restituisce direttamente il formato corretto per Vercel
         result = mangum_handler(event, context)
-        # Assicurati che la risposta sia nel formato corretto
-        if isinstance(result, dict) and "statusCode" in result:
-            return result
+        
+        # Assicurati che la risposta sia nel formato corretto per Vercel
+        if isinstance(result, dict):
+            # Se ha già statusCode, è già nel formato corretto
+            if "statusCode" in result:
+                return result
+            # Se è un dict ma senza statusCode, potrebbe essere il body
+            elif "body" in result or "headers" in result:
+                # Aggiungi statusCode se mancante
+                if "statusCode" not in result:
+                    result["statusCode"] = 200
+                return result
+            else:
+                # Dict semplice, convertilo in body JSON
+                import json
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps(result)
+                }
+        elif isinstance(result, str):
+            # Stringa, potrebbe essere già JSON serializzato
+            return {
+                "statusCode": 200,
+                "headers": {"Content-Type": "application/json"},
+                "body": result
+            }
         else:
-            # Se Mangum restituisce un formato diverso, convertilo
+            # Altro tipo, serializza come JSON
             import json
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps(result) if not isinstance(result, str) else result
+                "body": json.dumps(result)
             }
     except Exception as e:
         print(f"ERROR in handler: {str(e)}")

@@ -43,46 +43,37 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Precarica la cache degli articoli all'avvio per evitare timeout
-    DISABILITATO su Vercel Free per evitare timeout (10s limite)
-    Il caricamento avverrà alla prima richiesta (lazy loading)
-    """
-    # VERCEL FREE: Non precaricare su startup (evita timeout)
-    # Il caricamento avverrà alla prima richiesta GET
-    import os
-    is_vercel = os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV")
+# DISABILITATO startup event su Vercel - causa problemi con Mangum
+# Il caricamento avverrà alla prima richiesta (lazy loading)
+import os
+is_vercel = os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV")
 
-    if is_vercel:
-        print("🚀 Startup: Vercel rilevato - skip precaricamento (lazy loading)")
-        print("   La cache verrà caricata alla prima richiesta")
-        return
-
-    # DISABILITATO precaricamento anche su backend locale per evitare errori
-    # Il caricamento avverrà alla prima richiesta (lazy loading)
-    # Questo evita errori simili a quelli di Vercel durante l'avvio
-    print("🚀 Startup: lazy loading attivo (cache caricata alla prima richiesta)")
-    print("   Questo evita errori durante l'avvio e migliora la stabilità")
-
-    # Opzionale: prova a verificare che i file esistano (senza caricarli)
-    try:
-        import os
-        possible_paths = [
-            os.path.join(os.getcwd(), 'final_news_italian.json'),
-            os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
-            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
-        ]
-        file_found = False
-        for path in possible_paths:
-            if os.path.exists(path):
-                file_found = True
-                print(f"   ✅ File JSON trovato: {path}")
-                break
-        if not file_found:
-            print("   ⚠️  File JSON non trovato - verrà cercato alla prima richiesta")
-    except Exception as e:
-        print(f"   ⚠️  Errore verifica file: {e}")
+if not is_vercel:
+    @app.on_event("startup")
+    async def startup_event():
+        """Precarica la cache degli articoli all'avvio (solo locale, non Vercel)"""
+        print("🚀 Startup: lazy loading attivo (cache caricata alla prima richiesta)")
+        print("   Questo evita errori durante l'avvio e migliora la stabilità")
+        
+        # Opzionale: prova a verificare che i file esistano (senza caricarli)
+        try:
+            possible_paths = [
+                os.path.join(os.getcwd(), 'final_news_italian.json'),
+                os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
+                os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
+            ]
+            file_found = False
+            for path in possible_paths:
+                if os.path.exists(path):
+                    file_found = True
+                    print(f"   ✅ File JSON trovato: {path}")
+                    break
+            if not file_found:
+                print("   ⚠️  File JSON non trovato - verrà cercato alla prima richiesta")
+        except Exception as e:
+            print(f"   ⚠️  Errore verifica file: {e}")
+else:
+    print("🚀 Vercel rilevato - startup event disabilitato (lazy loading)")
 
 
 @app.get("/")
