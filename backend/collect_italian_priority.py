@@ -245,16 +245,6 @@ print(f"   🇮🇹 Italiano: {italian} notizie ({italian/(italian+english)*100:
 print(f"   🇬🇧 Inglese: {english} notizie ({english/(italian+english)*100:.0f}%)")
 print(f"\n✅ Priorità alle fonti italiane!")
 
-# Salva
-with open('italian_priority_news.json', 'w', encoding='utf-8') as f:
-    json.dump({
-        "items": all_articles,
-        "total": len(all_articles),
-        "page": 1,
-        "size": 100,
-        "pages": 1
-    }, f, indent=2, ensure_ascii=False)
-
 # Salva le NUOVE notizie (sostituiscono le vecchie)
 print(f"\n💾 Salvataggio nuove notizie...")
 with open('italian_priority_news.json', 'w', encoding='utf-8') as f:
