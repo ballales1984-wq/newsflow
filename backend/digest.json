@@ -5,16 +5,16 @@
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "Hackers Actively Exploiting 7-Zip Symbolic Link–Based RCE Vulnerability (CVE-2025-11001)",
-          "description": "A recently disclosed security flaw impacting 7-Zip has come under active exploitation in the wild, according to an advisory issued by the U.K. NHS England Digital on Tuesday.\nThe vulnerability in ques"
-        },
-        {
-          "title": "TamperedChef Malware Spreads via Fake Software Installers in Ongoing Global Campaign",
-          "description": "Threat actors are leveraging bogus installers masquerading as popular software to trick users into installing malware as part of a global malvertising campaign dubbed TamperedChef.\nThe end goal of the"
-        },
-        {
           "title": "Iran-Linked Hackers Mapped Ship AIS Data Days Before Real-World Missile Strike Attempt",
           "description": "Threat actors with ties to Iran engaged in cyber warfare as part of efforts to facilitate and enhance physical, real-world attacks, a trend that Amazon has called cyber-enabled kinetic targeting.\nThe "
+        },
+        {
+          "title": "New Sturnus Android Trojan Quietly Captures Encrypted Chats and Hijacks Devices",
+          "description": "Cybersecurity researchers have disclosed details of a new Android banking trojan called Sturnus that enables credential theft and full device takeover to conduct financial fraud.\n\"A key differentiator"
+        },
+        {
+          "title": "CTM360 Exposes a Global WhatsApp Hijacking Campaign: HackOnChat",
+          "description": "CTM360 has identified a rapidly expanding WhatsApp account-hacking campaign targeting users worldwide via a network of deceptive authentication portals and impersonation pages. The campaign, internall"
         },
         {
           "title": "The Download: de-censoring DeepSeek, and Gemini 3",
