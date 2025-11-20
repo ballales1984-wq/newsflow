@@ -112,23 +112,61 @@ def debug_files():
         "current_working_directory": os.getcwd(),
         "file_location": __file__,
         "possible_paths": [],
-        "files_found": []
+        "files_found": [],
+        "directories": []
     }
+
+    # Lista directory per debug
+    try:
+        cwd = os.getcwd()
+        debug_info["directories"].append({
+            "path": cwd,
+            "exists": os.path.exists(cwd),
+            "files": os.listdir(cwd)[:20] if os.path.exists(cwd) else []
+        })
+        
+        # Lista api/
+        api_dir = os.path.join(cwd, 'api')
+        if os.path.exists(api_dir):
+            debug_info["directories"].append({
+                "path": api_dir,
+                "exists": True,
+                "files": os.listdir(api_dir)[:20]
+            })
+        
+        # Lista backend/
+        backend_dir = os.path.join(cwd, 'backend')
+        if os.path.exists(backend_dir):
+            debug_info["directories"].append({
+                "path": backend_dir,
+                "exists": True,
+                "files": os.listdir(backend_dir)[:20]
+            })
+    except Exception as e:
+        debug_info["error_listing_dirs"] = str(e)
 
     # Prova diversi path
     possible_paths = [
+        os.path.join(os.getcwd(), 'api', 'final_news_italian.json'),
         os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
         os.path.join(os.getcwd(), 'final_news_italian.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
         os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'final_news_italian.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'final_news_italian.json'),
     ]
 
     for path in possible_paths:
         exists = os.path.exists(path)
+        size = None
+        if exists:
+            try:
+                size = os.path.getsize(path)
+            except:
+                pass
         debug_info["possible_paths"].append({
             "path": path,
             "exists": exists,
-            "size": os.path.getsize(path) if exists else None
+            "size": size
         })
         if exists:
             debug_info["files_found"].append(path)
