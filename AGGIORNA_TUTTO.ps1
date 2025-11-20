@@ -15,6 +15,39 @@ Write-Host ""
 
 Set-Location $rootDir
 
+# STEP 0: Cancella file JSON vecchi
+Write-Host "🗑️  STEP 0: Cancellazione file JSON vecchi..." -ForegroundColor Yellow
+$filesToDelete = @(
+    "backend\italian_priority_news.json",
+    "backend\final_news_italian.json",
+    "backend\all_sources_news.json",
+    "api\final_news_italian.json",
+    "final_news_italian.json",
+    "frontend\src\assets\final_news_italian.json"
+)
+
+$deletedCount = 0
+foreach ($file in $filesToDelete) {
+    $filePath = Join-Path $rootDir $file
+    if (Test-Path $filePath) {
+        try {
+            Remove-Item $filePath -Force
+            Write-Host "   ✅ Cancellato: $file" -ForegroundColor Green
+            $deletedCount++
+        } catch {
+            Write-Host "   ⚠️  Errore cancellazione $file : $_" -ForegroundColor Yellow
+        }
+    }
+}
+
+if ($deletedCount -gt 0) {
+    Write-Host "   📊 $deletedCount file vecchi cancellati" -ForegroundColor Cyan
+} else {
+    Write-Host "   ℹ️  Nessun file vecchio da cancellare" -ForegroundColor Gray
+}
+
+Write-Host ""
+
 # STEP 1: Raccolta notizie
 Write-Host "📰 STEP 1: Raccolta notizie..." -ForegroundColor Yellow
 $collectScript = Join-Path $rootDir "backend\collect_italian_priority.py"

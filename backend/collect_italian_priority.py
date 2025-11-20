@@ -3,10 +3,34 @@ import feedparser
 import json
 import re
 import requests
+import os
 from datetime import datetime
 
 print("🇮🇹 Raccogliendo notizie - PRIORITÀ ITALIANE")
 print("=" * 70)
+
+# STEP 0: Cancella file JSON vecchi prima di iniziare
+print("\n🗑️  STEP 0: Cancellazione file JSON vecchi...")
+files_to_delete = [
+    'italian_priority_news.json',
+    'final_news_italian.json',
+    'all_sources_news.json'
+]
+
+deleted_count = 0
+for file_name in files_to_delete:
+    if os.path.exists(file_name):
+        try:
+            os.remove(file_name)
+            print(f"   ✅ Cancellato: {file_name}")
+            deleted_count += 1
+        except Exception as e:
+            print(f"   ⚠️  Errore cancellazione {file_name}: {e}")
+
+if deleted_count > 0:
+    print(f"   📊 {deleted_count} file vecchi cancellati")
+else:
+    print(f"   ℹ️  Nessun file vecchio da cancellare")
 
 # PRIMA: Fonti italiane (più notizie)
 ITALIAN_SOURCES = {
