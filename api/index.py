@@ -38,19 +38,34 @@ try:
     if os.path.exists(json_path_backend):
         print(f"DEBUG: final_news in backend/ size={os.path.getsize(json_path_backend)}")
 
-    # Import con gestione errori
-    print("DEBUG: Importing mangum...")
-    from mangum import Mangum
-    print("DEBUG: Mangum imported successfully")
+    # Import con gestione errori step-by-step
+    print("DEBUG: Step 1 - Importing mangum...")
+    try:
+        from mangum import Mangum
+        print("DEBUG: ✅ Mangum imported successfully")
+    except Exception as e:
+        print(f"DEBUG: ❌ Error importing mangum: {e}")
+        raise
     
-    print("DEBUG: Importing app.main_simple...")
-    from app.main_simple import app
-    print("DEBUG: app.main_simple imported successfully")
+    print("DEBUG: Step 2 - Importing app.main_simple...")
+    try:
+        from app.main_simple import app
+        print("DEBUG: ✅ app.main_simple imported successfully")
+        print(f"DEBUG: App type: {type(app)}")
+    except Exception as e:
+        print(f"DEBUG: ❌ Error importing app.main_simple: {e}")
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")
+        raise
 
-    # Crea handler Mangum per Vercel
-    mangum_handler = Mangum(app, lifespan="off")
-    print("DEBUG: Mangum handler created successfully")
-    initialization_error = None
+    print("DEBUG: Step 3 - Creating Mangum handler...")
+    try:
+        mangum_handler = Mangum(app, lifespan="off")
+        print("DEBUG: ✅ Mangum handler created successfully")
+        initialization_error = None
+    except Exception as e:
+        print(f"DEBUG: ❌ Error creating Mangum handler: {e}")
+        raise
 
 except Exception as e:
     initialization_error = e
