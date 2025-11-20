@@ -1,0 +1,2724 @@
+"""Versione semplificata di main.py per deploy veloce senza dipendenze complesse"""
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
+import os
+import json
+
+# Import opzionale di FingerprintAuth per evitare crash su Vercel
+try:
+    from app.core.auth_fingerprint import FingerprintAuth
+except ImportError:
+    FingerprintAuth = None
+    print("WARNING: FingerprintAuth non disponibile")
+
+# Create FastAPI app
+app = FastAPI(
+    title="NewsFlow",
+    version="1.0.0",
+    description="Intelligent News Curation Platform"
+)
+
+# Configure CORS
+# Permetti richieste da localhost, Vercel e ngrok
+default_origins = [
+    "http://localhost:4200",
+    "http://localhost:3000",
+    "https://newsflow-orcin.vercel.app",  # Dominio Vercel
+    "https://*.vercel.app",  # Tutti i domini Vercel
+    "https://*.ngrok-free.app",  # Domini ngrok
+    "https://*.ngrok.io",
+]
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
+
+# Per ngrok e Vercel, usa allow_origin_regex invece di allow_origins per supportare wildcard
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permetti tutti per ngrok e Vercel
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Precarica la cache degli articoli all'avvio per evitare timeout
+    DISABILITATO su Vercel Free per evitare timeout (10s limite)
+    Il caricamento avverrà alla prima richiesta (lazy loading)
+    """
+    # VERCEL FREE: Non precaricare su startup (evita timeout)
+    # Il caricamento avverrà alla prima richiesta GET
+    import os
+    is_vercel = os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV")
+
+    if is_vercel:
+        print("🚀 Startup: Vercel rilevato - skip precaricamento (lazy loading)")
+        print("   La cache verrà caricata alla prima richiesta")
+        return
+
+    # DISABILITATO precaricamento anche su backend locale per evitare errori
+    # Il caricamento avverrà alla prima richiesta (lazy loading)
+    # Questo evita errori simili a quelli di Vercel durante l'avvio
+    print("🚀 Startup: lazy loading attivo (cache caricata alla prima richiesta)")
+    print("   Questo evita errori durante l'avvio e migliora la stabilità")
+
+    # Opzionale: prova a verificare che i file esistano (senza caricarli)
+    try:
+        import os
+        possible_paths = [
+            os.path.join(os.getcwd(), 'final_news_italian.json'),
+            os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
+        ]
+        file_found = False
+        for path in possible_paths:
+            if os.path.exists(path):
+                file_found = True
+                print(f"   ✅ File JSON trovato: {path}")
+                break
+        if not file_found:
+            print("   ⚠️  File JSON non trovato - verrà cercato alla prima richiesta")
+    except Exception as e:
+        print(f"   ⚠️  Errore verifica file: {e}")
+
+
+@app.get("/")
+def root():
+    """Root endpoint"""
+    return {
+        "name": "NewsFlow",
+        "version": "1.0.0",
+        "status": "running",
+        "message": "Backend is alive! 🚀"
+    }
+
+
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
+
+
+@app.get("/api/debug/files")
+def debug_files():
+    """Debug endpoint per verificare se i file JSON sono accessibili"""
+    import os
+    import json
+
+    debug_info = {
+        "current_working_directory": os.getcwd(),
+        "file_location": __file__,
+        "possible_paths": [],
+        "files_found": []
+    }
+
+    # Prova diversi path
+    possible_paths = [
+        os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
+        os.path.join(os.getcwd(), 'final_news_italian.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'final_news_italian.json'),
+    ]
+
+    for path in possible_paths:
+        exists = os.path.exists(path)
+        debug_info["possible_paths"].append({
+            "path": path,
+            "exists": exists,
+            "size": os.path.getsize(path) if exists else None
+        })
+        if exists:
+            debug_info["files_found"].append(path)
+
+    # Prova a caricare gli articoli
+    try:
+        articles = _load_articles()
+        debug_info["articles_loaded"] = len(articles) if articles else 0
+        debug_info["articles_sample"] = articles[:3] if articles else []
+    except Exception as e:
+        debug_info["error_loading_articles"] = str(e)
+        import traceback
+        debug_info["traceback"] = traceback.format_exc()
+
+    return debug_info
+
+
+# Cache globale per gli articoli (evita ricaricamento continuo)
+_articles_cache = None
+_cache_timestamp = None
+_cache_file_path = None
+
+def _load_articles(force_reload=False):
+    """Helper to load articles - 94 NEWS ALL IN ITALIAN
+    Usa cache in memoria per performance migliori"""
+    import json
+    import os
+    import re
+    global _articles_cache, _cache_timestamp, _cache_file_path
+
+    # Se abbiamo cache valida e non è forzato il reload, verifica se il file è cambiato
+    if not force_reload and _articles_cache is not None and _cache_file_path:
+        try:
+            current_mtime = os.path.getmtime(_cache_file_path)
+            if current_mtime == _cache_timestamp:
+                # File non modificato, usa cache
+                return _articles_cache
+            else:
+                # File modificato, ricarica
+                print(f"🔄 File modificato, ricarico cache...")
+        except:
+            # File non esiste più o errore, ricarica
+            pass
+
+    def clean_html(text):
+        """Rimuove tutti i tag HTML dal testo"""
+        if not text:
+            return ""
+        import html
+        # Rimuove tutti i tag HTML
+        text = re.sub(r'<[^>]+>', '', text)
+        # Decodifica entità HTML (inclusi quelli numerici come &#8217;)
+        try:
+            text = html.unescape(text)
+        except:
+            # Fallback manuale se html.unescape non disponibile
+            text = text.replace('&nbsp;', ' ')
+            text = text.replace('&amp;', '&')
+            text = text.replace('&lt;', '<')
+            text = text.replace('&gt;', '>')
+            text = text.replace('&quot;', '"')
+            text = text.replace('&#39;', "'")
+            text = text.replace('&apos;', "'")
+            # Decodifica entità numeriche comuni
+            text = text.replace('&#8217;', "'")  # apostrofo
+            text = text.replace('&#8216;', "'")  # apostrofo sinistro
+            text = text.replace('&#8220;', '"')  # virgolette sinistre
+            text = text.replace('&#8221;', '"')  # virgolette destre
+            text = text.replace('&#8230;', '...')  # tre puntini
+            text = text.replace('&mdash;', '—')  # dash
+            text = text.replace('&ndash;', '–')  # en dash
+        # Rimuove spazi multipli
+        text = re.sub(r'\s+', ' ', text)
+        return text.strip()
+
+    # Determina il path base (directory corrente o backend/)
+    # Su Vercel, i file sono nella root del progetto
+    # Prova MOLTI più path per trovare i file JSON
+    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root_from_file = os.path.dirname(current_file_dir)  # backend/app -> backend
+    project_root_from_file2 = os.path.dirname(project_root_from_file)  # backend -> root
+
+    possible_paths = [
+        # Path 0: api/final_news_italian.json (PRIORITÀ - sempre incluso su Vercel)
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'final_news_italian.json'),
+        os.path.join(os.getcwd(), 'api', 'final_news_italian.json'),
+        '/vercel/path0/api/final_news_italian.json',
+        # Path 1: backend/final_news_italian.json dalla root (Vercel standard)
+        os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
+        # Path 2: backend/final_news_italian.json relativo al file corrente
+        os.path.join(project_root_from_file, 'final_news_italian.json'),
+        # Path 3: final_news_italian.json nella root
+        os.path.join(os.getcwd(), 'final_news_italian.json'),
+        # Path 4: backend/final_news_italian.json dalla directory del file (2 livelli su)
+        os.path.join(project_root_from_file2, 'backend', 'final_news_italian.json'),
+        # Path 5: final_news_italian.json nella root (2 livelli su)
+        os.path.join(project_root_from_file2, 'final_news_italian.json'),
+        # Path 6: Prova anche con /vercel/path0 (Vercel build path)
+        '/vercel/path0/backend/final_news_italian.json',
+        '/vercel/path0/final_news_italian.json',
+        # Path 7: Prova anche nella directory corrente se siamo già in backend/
+        os.path.join(current_file_dir, 'final_news_italian.json'),
+        os.path.join(current_file_dir, '..', 'final_news_italian.json'),
+    ]
+
+    file_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            file_path = path
+            print(f"✅ Trovato final_news_italian.json: {path}")
+            break
+
+    if not file_path:
+        print(f"❌ Nessun file final_news_italian.json trovato. Path provati:")
+        for path in possible_paths:
+            exists = os.path.exists(path)
+            print(f"   - {path} (exists: {exists})")
+            if exists:
+                try:
+                    size = os.path.getsize(path)
+                    print(f"     Size: {size} bytes")
+                except:
+                    pass
+        print(f"   Current working directory: {os.getcwd()}")
+        print(f"   File location: {__file__}")
+        print(f"   List files in backend/: {os.listdir(os.path.join(os.getcwd(), 'backend')) if os.path.exists(os.path.join(os.getcwd(), 'backend')) else 'backend/ does not exist'}")
+        return []  # Restituisci array vuoto invece di None
+    if file_path and os.path.exists(file_path):
+        try:
+            # VERCEL FREE: Caricamento ottimizzato con timeout implicito
+            # Usa lettura binaria per performance migliori
+            import time
+            start_load = time.time()
+
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                articles = data.get('items', [])
+
+            load_time = time.time() - start_load
+            print(f"✅ Caricati {len(articles)} articoli da final_news_italian.json in {load_time:.2f}s")
+
+            # VERCEL FREE: Se il caricamento è troppo lento, avvisa
+            if load_time > 5:
+                print(f"⚠️  Caricamento lento ({load_time:.2f}s) - considera ottimizzazioni")
+
+            # Mappa keywords → category_id per articoli esistenti senza category_id
+            KEYWORD_TO_CATEGORY_ID = {
+                'technology': 1, 'tech': 1, 'tecnologia': 1,
+                'science': 2, 'scienz': 2,
+                'philosophy': 3, 'filosofia': 3,
+                'cybersecurity': 4, 'security': 4, 'sicurezza': 4,
+                'ai': 5, 'artificial intelligence': 5, 'intelligenza artificiale': 5,
+                'innovation': 6, 'innovazione': 6,
+                'culture': 7, 'cultura': 7,
+                'ethics': 8, 'etica': 8,
+                'sport': 9, 'calcio': 9, 'football': 9,
+                'nature': 10, 'ambiente': 10, 'environment': 10,
+                'business': 11, 'economia': 11, 'finance': 11,
+                'health': 12, 'salute': 12, 'medical': 12,
+                'politics': 13, 'politica': 13,
+                'entertainment': 14, 'intrattenimento': 14
+            }
+
+            # Pulisce HTML e aggiunge category_id se mancante
+            for article in articles:
+                if 'summary' in article:
+                    article['summary'] = clean_html(article['summary'])
+                if 'title' in article:
+                    article['title'] = clean_html(article['title'])
+
+                # Aggiungi category_id se mancante
+                if 'category_id' not in article or article.get('category_id') is None:
+                    # Cerca nei keywords
+                    keywords = article.get('keywords', [])
+                    category_id = None
+                    for kw in keywords:
+                        kw_lower = str(kw).lower()
+                        for key, cat_id in KEYWORD_TO_CATEGORY_ID.items():
+                            if key in kw_lower:
+                                category_id = cat_id
+                                break
+                        if category_id:
+                            break
+
+                    # Se non trovato nei keywords, default a Technology
+                    if not category_id:
+                        category_id = 1
+
+                    article['category_id'] = category_id
+
+            # Salva in cache
+            _articles_cache = articles
+            _cache_timestamp = os.path.getmtime(file_path)
+            _cache_file_path = file_path
+            print(f"✅ Cache aggiornata: {len(articles)} articoli")
+            return articles
+        except Exception as e:
+            print(f"❌ Errore caricamento final_news_italian.json: {e}")
+            import traceback
+            traceback.print_exc()
+
+    # Fallback su tutte le fonti (stessi path migliorati)
+    possible_paths_all = [
+        # Path 0: api/all_sources_news.json (PRIORITÀ - sempre incluso su Vercel)
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'all_sources_news.json'),
+        os.path.join(os.getcwd(), 'api', 'all_sources_news.json'),
+        '/vercel/path0/api/all_sources_news.json',
+        os.path.join(os.getcwd(), 'backend', 'all_sources_news.json'),
+        os.path.join(project_root_from_file, 'all_sources_news.json'),
+        os.path.join(os.getcwd(), 'all_sources_news.json'),
+        os.path.join(project_root_from_file2, 'backend', 'all_sources_news.json'),
+        os.path.join(project_root_from_file2, 'all_sources_news.json'),
+        '/vercel/path0/backend/all_sources_news.json',
+        '/vercel/path0/all_sources_news.json',
+        os.path.join(current_file_dir, 'all_sources_news.json'),
+        os.path.join(current_file_dir, '..', 'all_sources_news.json'),
+    ]
+
+    file_path = None
+    for path in possible_paths_all:
+        if os.path.exists(path):
+            file_path = path
+            print(f"✅ Trovato all_sources_news.json: {path}")
+            break
+
+    if file_path and os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                articles = data.get('items', [])
+                # Pulisce HTML da tutte le notizie esistenti
+                for article in articles:
+                    if 'summary' in article:
+                        article['summary'] = clean_html(article['summary'])
+                    if 'title' in article:
+                        article['title'] = clean_html(article['title'])
+                # Salva in cache
+                _articles_cache = articles
+                _cache_timestamp = os.path.getmtime(file_path)
+                _cache_file_path = file_path
+                print(f"✅ Cache aggiornata (all_sources): {len(articles)} articoli")
+                return articles
+        except Exception as e:
+            print(f"Errore caricamento all_sources_news.json: {e}")
+            pass
+
+    # Fallback: notizie embedded (le 12 migliori)
+    return [
+        {
+            "id": 1,
+            "title": "Can OpenAI keep pace with industry's soaring costs?",
+            "slug": "can-openai-keep-pace-with-industrys-soaring-costs",
+            "url": "https://www.theguardian.com/technology/2025/nov/10/sam-altman-can-openai-profits-keep-pace",
+            "summary": "As investor jitters grow, the loss-making ChatGPT firm's vast spending commitments test the limits of Silicon Valley optimism. It is the $1.4tn (£1.1tn) question. How can a loss-making startup such as OpenAI afford such a staggering spending commitment?",
+            "author": "Dan Milmo",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": True,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.75,
+            "reading_time_minutes": 3,
+            "keywords": ["OpenAI", "costs", "AI", "business"],
+            "language": "en"
+        },
+        {
+            "id": 2,
+            "title": "What we lose when we surrender care to algorithms | Eric Reinhart",
+            "slug": "what-we-lose-when-we-surrender-care-to-algorithms",
+            "url": "https://www.theguardian.com/us-news/ng-interactive/2025/nov/09/healthcare-artificial-intelligence-ai",
+            "summary": "A dangerous faith in AI is sweeping American healthcare – with consequences for the basis of society itself. The computer interrupted while Pamela was still speaking. I had accompanied her to a recent doctor's appointment.",
+            "author": "Eric Reinhart",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.8,
+            "reading_time_minutes": 4,
+            "keywords": ["healthcare", "AI", "algorithms", "society"],
+            "language": "en"
+        },
+        {
+            "id": 3,
+            "title": "Social media misinformation driving men to seek unneeded NHS testosterone therapy",
+            "slug": "social-media-misinformation-testosterone-therapy",
+            "url": "https://www.theguardian.com/society/2025/nov/08/social-media-misinformation-driving-men-to-nhs-clinics",
+            "summary": "Endocrinologists warn taking testosterone unnecessarily can suppress natural hormone production. Social media misinformation is driving men to NHS clinics in search of testosterone therapy they don't need.",
+            "author": "Sarah Marsh",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.85,
+            "reading_time_minutes": 5,
+            "keywords": ["health", "misinformation", "testosterone", "NHS"],
+            "language": "en"
+        },
+        {
+            "id": 4,
+            "title": "10mila Labubu contraffatti sequestrati a Palermo dalla Guardia di finanza",
+            "slug": "labubu-contraffatti-sequestrati-palermo",
+            "url": "https://www.wired.it/article/10mila-labubu-contraffatti-sequestrati-a-palermo-dalla-guardia-di-finanza/",
+            "summary": "Da Labubu a lafufu, i peluche falsi erano venduti in sette negozi, uno dei quali in un centro commerciale. I commercianti denunciati rischiano accuse per vendita di prodotti con marchi contraffatti.",
+            "author": "Riccardo Piccolo",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": True,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.75,
+            "reading_time_minutes": 3,
+            "keywords": ["Italia", "contraffazione", "Palermo"],
+            "language": "it"
+        },
+        {
+            "id": 5,
+            "title": "Audi Q3 e-hybrid, 119 chilometri in solo elettrico con ricarica rapida",
+            "slug": "audi-q3-e-hybrid-autonomia-elettrica",
+            "url": "https://www.wired.it/article/nuova-audi-q3-e-hybrid-test-su-strada/",
+            "summary": "Con un'autonomia elettrica record fino a 119 km, una ricarica rapida in corrente continua da 50 kW e una potenza complessiva di 272 Cv, definisce nuovi standard nel segmento dei Suv compatti premium.",
+            "author": "Gabriele Nava",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.8,
+            "reading_time_minutes": 4,
+            "keywords": ["auto", "elettrico", "Audi", "tecnologia"],
+            "language": "it"
+        },
+        {
+            "id": 6,
+            "title": "Apple rimuove app LGBTQ+ in Cina su richiesta del governo",
+            "slug": "apple-rimuove-app-lgbtq-cina",
+            "url": "https://www.wired.it/article/blued-finka-app-dating-lgbt-apple-rimozione-app-store-cina/",
+            "summary": "Blued e Finka erano tra le piattaforme LGBTQ+ più popolari nel paese, dove la comunità è sempre di più nel mirino del regime di Pechino.",
+            "author": "Zeyi Yang, Louise Matsakis",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.85,
+            "reading_time_minutes": 5,
+            "keywords": ["Apple", "Cina", "LGBTQ", "censura"],
+            "language": "it"
+        },
+        {
+            "id": 7,
+            "title": "Hackers Exploiting Triofox Flaw to Install Remote Access Tools",
+            "slug": "hackers-exploiting-triofox-flaw",
+            "url": "https://thehackernews.com/2025/11/hackers-exploiting-triofox-flaw-to.html",
+            "summary": "Google's Mandiant Threat Defense discovered n-day exploitation of a now-patched security flaw in Gladinet's Triofox file-sharing platform. The critical vulnerability (CVE-2025-12480, CVSS 9.1) allows attackers to bypass authentication.",
+            "author": "The Hacker News",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": True,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.75,
+            "reading_time_minutes": 3,
+            "keywords": ["cybersecurity", "exploit", "Triofox", "hacking"],
+            "language": "en"
+        },
+        {
+            "id": 8,
+            "title": "Konni Hackers Turn Google's Find Hub into Remote Data-Wiping Weapon",
+            "slug": "konni-hackers-google-find-hub",
+            "url": "https://thehackernews.com/2025/11/konni-hackers-turn-googles-find-hub.html",
+            "summary": "The North Korea-affiliated threat actor Konni has been attributed to new attacks targeting Android and Windows devices for data theft and remote control. Attackers impersonated psychological counselors and North Korean human rights activists.",
+            "author": "The Hacker News",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.8,
+            "reading_time_minutes": 4,
+            "keywords": ["North Korea", "hacking", "Google", "cybersecurity"],
+            "language": "en"
+        },
+        {
+            "id": 9,
+            "title": "Weekly Recap: Hyper-V Malware, Malicious AI Bots, RDP Exploits",
+            "slug": "weekly-recap-hyper-v-malware-ai-bots",
+            "url": "https://thehackernews.com/2025/11/weekly-recap-hyper-v-malware-malicious.html",
+            "summary": "Cyber threats didn't slow down last week—and attackers are getting smarter. We're seeing malware hidden in virtual machines, side-channel leaks exposing AI chats, and spyware quietly targeting Android devices in the wild.",
+            "author": "The Hacker News",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.85,
+            "reading_time_minutes": 5,
+            "keywords": ["malware", "AI", "security", "recap"],
+            "language": "en"
+        },
+        {
+            "id": 10,
+            "title": "Fire TV Stick: blocco delle app pirata anche in Italia",
+            "slug": "fire-tv-stick-blocco-app-pirata-italia",
+            "url": "https://www.punto-informatico.it/fire-tv-stick-blocco-app-pirata-italia/",
+            "summary": "Amazon inizia a mostrare gli avvisi agli utenti delle app pirata su Fire TV Stick anche in Italia, poi darà il via ai blocchi definitivi.",
+            "author": "Cristiano Ghidotti",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": True,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.75,
+            "reading_time_minutes": 3,
+            "keywords": ["Amazon", "Fire TV", "pirateria", "Italia"],
+            "language": "it"
+        },
+        {
+            "id": 11,
+            "title": "ExpressVPN in offerta: streaming, viaggi e privacy totale",
+            "slug": "expressvpn-offerta-streaming-privacy",
+            "url": "https://www.punto-informatico.it/streaming-viaggi-e-privacy-totale-expressvpn-in-offerta/",
+            "summary": "Naviga in modo sicuro e veloce con ExpressVPN: ora il piano biennale è scontato del 67% e include 4 mesi extra gratis per una protezione completa.",
+            "author": "Eleonora Busi",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.7,
+            "reading_time_minutes": 4,
+            "keywords": ["VPN", "privacy", "sicurezza", "offerta"],
+            "language": "it"
+        },
+        {
+            "id": 12,
+            "title": "Hostinger Black Friday: sito online a meno di 2€ al mese",
+            "slug": "hostinger-black-friday-hosting-economico",
+            "url": "https://www.punto-informatico.it/hostinger-sconti-black-friday/",
+            "summary": "Hosting super scontato per il Black Friday: sconti fino all'85% sui piani Hostinger, con dominio incluso e 3 mesi gratis. Ideale per siti web, blog e e-commerce.",
+            "author": "Eleonora Busi",
+            "published_at": "2025-11-11T00:00:00",
+            "collected_at": "2025-11-11T00:00:00",
+            "source_id": 1,
+            "is_featured": False,
+            "is_verified": True,
+            "is_archived": False,
+            "quality_score": 0.7,
+            "reading_time_minutes": 5,
+            "keywords": ["hosting", "Hostinger", "Black Friday", "sconti"],
+            "language": "it"
+        }
+    ]
+
+
+@app.get("/api/v1/articles")
+def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
+    """Get articles - REAL NEWS from RSS feeds - WITH CATEGORY FILTER AND PAGINATION
+    Limit aumentato a 50 per permettere più articoli per pagina
+    """
+    # Limita il limite massimo a 200 per evitare problemi di performance
+    limit = min(limit, 200)
+
+    articles = _load_articles()
+
+    # Mappa categorie → keywords da cercare
+    CATEGORY_KEYWORDS = {
+        1: ["technology", "tech", "tecnologia", "computer", "software", "hardware", "digital"],  # Technology
+        2: ["science", "scienz", "research", "ricerca", "studio", "arxiv"],  # Science
+        3: ["philosophy", "filosofia", "pensiero", "critica"],  # Philosophy
+        4: ["cybersecurity", "security", "sicurezza", "hacking", "exploit", "malware", "cyber"],  # Cybersecurity
+        5: ["ai", "artificial intelligence", "intelligenza artificiale", "machine learning", "gpt", "openai", "llm"],  # AI
+        6: ["innovation", "innovazione", "futuro", "new"],  # Innovation
+        7: ["culture", "cultura", "arte", "society", "società"],  # Culture
+        8: ["ethics", "etica", "morale", "diritti"],  # Ethics
+        9: ["sport", "calcio", "football", "soccer", "tennis", "basketball", "sports"],  # Sport
+        10: ["nature", "ambiente", "environment", "climate", "clima", "green", "ecologia"],  # Nature
+        11: ["business", "economia", "finance", "finanza", "market", "mercato", "company", "azienda"],  # Business
+        12: ["health", "salute", "medical", "medico", "hospital", "ospedale", "medicine"],  # Health
+        13: ["politics", "politica", "government", "governo", "election", "elezioni", "parliament"],  # Politics
+        14: ["entertainment", "intrattenimento", "movie", "film", "cinema", "music", "musica", "tv", "show"]  # Entertainment
+    }
+
+    if articles:
+        # Filtra per categoria se richiesto
+        if category_id and category_id in CATEGORY_KEYWORDS:
+            cat_keywords = CATEGORY_KEYWORDS[category_id]
+            filtered = []
+
+            for article in articles:
+                # Cerca match nei keywords dell'articolo
+                article_keywords = [k.lower() for k in article.get('keywords', [])]
+                article_title = article.get('title', '').lower()
+                article_summary = article.get('summary', '').lower()
+
+                # Match se almeno una keyword della categoria è presente
+                for cat_kw in cat_keywords:
+                    if any(cat_kw in akw for akw in article_keywords) or \
+                       cat_kw in article_title or \
+                       cat_kw in article_summary:
+                        filtered.append(article)
+                        break
+
+            articles = filtered
+
+        # Ordina: prima articoli con immagini, poi senza
+        # Usa una chiave di ordinamento: 0 se ha immagine, 1 se non ha
+        articles.sort(key=lambda x: (0 if x.get('image_url') else 1, -x.get('quality_score', 0)))
+        
+        # Applica paginazione
+        total = len(articles)
+        paginated_articles = articles[skip:skip + limit]
+
+        return {
+            "items": paginated_articles,
+            "total": total,
+            "page": (skip // limit) + 1,
+            "size": len(paginated_articles),
+            "pages": (total + limit - 1) // limit if limit > 0 else 1
+        }
+
+    # Fallback to demo if file not found
+    return {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "size": 0,
+        "pages": 1
+        }
+
+
+@app.get("/api/v1/categories")
+def get_categories():
+    """Get categories - demo data"""
+    return [
+        {"id": 1, "name": "Technology", "slug": "technology", "icon": "computer", "color": "#2196F3"},
+        {"id": 2, "name": "Science", "slug": "science", "icon": "science", "color": "#4CAF50"},
+        {"id": 3, "name": "Philosophy", "slug": "philosophy", "icon": "psychology", "color": "#9C27B0"},
+        {"id": 4, "name": "Cybersecurity", "slug": "cybersecurity", "icon": "security", "color": "#F44336"},
+        {"id": 5, "name": "AI", "slug": "ai", "icon": "smart_toy", "color": "#FF9800"},
+        {"id": 6, "name": "Innovation", "slug": "innovation", "icon": "lightbulb", "color": "#FFEB3B"},
+        {"id": 7, "name": "Culture", "slug": "culture", "icon": "palette", "color": "#E91E63"},
+        {"id": 8, "name": "Ethics", "slug": "ethics", "icon": "balance", "color": "#607D8B"},
+        {"id": 9, "name": "Sport", "slug": "sport", "icon": "sports_soccer", "color": "#FF5722"},
+        {"id": 10, "name": "Nature", "slug": "nature", "icon": "park", "color": "#4CAF50"},
+        {"id": 11, "name": "Business", "slug": "business", "icon": "business_center", "color": "#1976D2"},
+        {"id": 12, "name": "Health", "slug": "health", "icon": "health_and_safety", "color": "#E91E63"},
+        {"id": 13, "name": "Politics", "slug": "politics", "icon": "gavel", "color": "#9C27B0"},
+        {"id": 14, "name": "Entertainment", "slug": "entertainment", "icon": "movie", "color": "#FF9800"}
+    ]
+
+
+@app.get("/api/v1/articles/{article_id}")
+def get_article(article_id: int):
+    """Get single article by ID"""
+    articles = _load_articles()
+
+    for article in articles:
+        if article.get('id') == article_id:
+            return article
+
+    return {"error": "Article not found"}
+
+
+@app.get("/api/v1/articles/slug/{slug}")
+def get_article_by_slug(slug: str):
+    """Get single article by slug"""
+    articles = _load_articles()
+
+    for article in articles:
+        if article.get('slug') == slug:
+            return article
+
+    return {"error": "Article not found"}
+
+
+def _get_ai_service_used() -> str:
+    """Determina quale servizio AI è disponibile"""
+    import os
+    import requests
+
+    # Controlla Ollama (locale) - PRIMA SCELTA
+    try:
+        response = requests.get(f"{os.getenv('OLLAMA_URL', 'http://localhost:11434')}/api/tags", timeout=2)
+        if response.status_code == 200:
+            models = response.json().get('models', [])
+            model_names = [m.get('name', '') for m in models]
+            return f"Ollama (Gratuito) - Modelli: {', '.join(model_names[:3])}"
+    except:
+        pass
+
+    # Controlla AI Locale Integrata
+    try:
+        from app.local_ai_explainer import TRANSFORMERS_AVAILABLE, TORCH_AVAILABLE
+        if TRANSFORMERS_AVAILABLE and TORCH_AVAILABLE:
+            return "AI Locale Integrata (T5/GPT-2, Offline)"
+    except:
+        pass
+
+    # Controlla Hugging Face
+    if os.getenv("HUGGINGFACE_API_KEY"):
+        return "Hugging Face (Gratuito)"
+
+    # Controlla DeepSeek
+    if os.getenv("DEEPSEEK_API_KEY"):
+        return "DeepSeek (Gratuito)"
+
+    # Controlla ChatGPT
+    if os.getenv("OPENAI_API_KEY"):
+        return "ChatGPT"
+
+    return "Static (Nessuna AI configurata)"
+
+
+class ExplanationRequest(BaseModel):
+    article_id: Optional[int] = None
+    slug: Optional[str] = None
+    explanation_type: str = "quick"  # "quick", "standard", "deep"
+
+
+# Cache semplice per spiegazioni (evita rigenerazioni)
+_explanation_cache = {}
+
+@app.post("/api/v1/articles/explain")
+def explain_article(request: ExplanationRequest):
+    """
+    Restituisce spiegazione AI dell'articolo (già generata durante collect-news)
+    Se non esiste, la genera al volo (fallback)
+
+    Args:
+        request: ExplanationRequest con article_id o slug e explanation_type
+
+    Returns:
+        Spiegazione già generata o generata al volo
+    """
+    import time
+    start_time = time.time()
+
+    articles = _load_articles()
+
+    # Trova l'articolo
+    article = None
+    if request.article_id:
+        for a in articles:
+            if a.get('id') == request.article_id:
+                article = a
+                break
+    elif request.slug:
+        for a in articles:
+            if a.get('slug') == request.slug:
+                article = a
+                break
+
+    if not article:
+        return {"error": "Article not found"}
+
+    # Mappa explanation_type ai campi nel JSON
+    explanation_field_map = {
+        "quick": "explanation_quick",
+        "standard": "explanation_standard",
+        "deep": "explanation_deep"
+    }
+
+    explanation_field = explanation_field_map.get(request.explanation_type, "explanation_standard")
+
+    # Controlla se la spiegazione esiste già nel JSON (già generata durante collect-news)
+    if explanation_field in article and article[explanation_field]:
+        print(f"✅ Spiegazione già presente nel JSON per articolo {article.get('id')} (tipo: {request.explanation_type})")
+        return {
+            "success": True,
+            "article_id": article.get('id'),
+            "article_title": article.get('title'),
+            "explanation_type": request.explanation_type,
+            "explanation": article[explanation_field],
+            "ai_used": "Pre-generated (during collect-news)",
+            "cached": True,
+            "generation_time": 0,
+            "pre_generated": True
+        }
+
+    # VERCEL FREE VERSION: Non genera al volo, solo lettura da JSON
+    # Le spiegazioni devono essere generate sul backend PC/Render
+    print(f"⚠️  Spiegazione non trovata nel JSON per articolo {article.get('id')}")
+    print(f"💡 Genera le spiegazioni sul backend PC/Render usando POST /api/admin/generate-explanations")
+
+    return {
+        "success": False,
+        "error": "Explanation not available",
+        "message": f"Spiegazione '{request.explanation_type}' non disponibile per questo articolo. Genera le spiegazioni sul backend PC/Render usando POST /api/admin/generate-explanations",
+        "article_id": article.get('id'),
+        "article_title": article.get('title'),
+        "explanation_type": request.explanation_type,
+        "note": "Questo è il backend Vercel (read-only). Per generare spiegazioni, usa il backend PC/Render."
+    }
+
+    # NOTA: La generazione AI è stata rimossa per Vercel Free Plan.
+    # Le spiegazioni devono essere generate sul backend PC/Render e salvate nel JSON.
+
+
+@app.get("/api/v1/articles/featured/list")
+def get_featured_articles(limit: int = 10):
+    """Get featured articles"""
+    articles = _load_articles()
+
+    # Filtra solo gli articoli in evidenza
+    featured = [a for a in articles if a.get('is_featured', False)]
+
+    # Ordina: prima articoli con immagini, poi per quality score (decrescente)
+    featured.sort(key=lambda x: (0 if x.get('image_url') else 1, -x.get('quality_score', 0)))
+
+    # Limita il numero
+    return featured[:limit]
+
+
+@app.get("/api/v1/articles/recent/list")
+def get_recent_articles(days: int = 7, limit: int = 20):
+    """Get recent articles"""
+    articles = _load_articles()
+
+    # Ordina: prima articoli con immagini, poi per data pubblicazione (più recenti prima)
+    articles.sort(key=lambda x: (0 if x.get('image_url') else 1, x.get('published_at', '')), reverse=True)
+
+    # Limita il numero
+    return articles[:limit]
+
+
+@app.post("/api/v1/articles/search")
+def search_articles(query: str = "", category_id: int = None, language: str = ""):
+    """Search articles by query - FULL TEXT SEARCH"""
+    articles = _load_articles()
+
+    if not articles:
+        return {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "size": 0,
+            "pages": 1
+        }
+
+    results = []
+    query_lower = query.lower() if query else ""
+
+    for article in articles:
+        # Se c'è una query, cerca nel titolo, sommario e keywords
+        if query_lower:
+            title = article.get('title', '').lower()
+            summary = article.get('summary', '').lower()
+            keywords = ' '.join(article.get('keywords', [])).lower()
+
+            # Match se la query è nel titolo, sommario o keywords
+            if query_lower not in title and \
+               query_lower not in summary and \
+               query_lower not in keywords:
+                continue
+
+        # Filtra per categoria se richiesto
+        if category_id:
+            # Usa la stessa logica del filtro categorie
+            CATEGORY_KEYWORDS = {
+                1: ["technology", "tech", "tecnologia", "ai", "computer", "software", "hardware", "digital"],
+                2: ["science", "scienz", "research", "ricerca", "studio"],
+                3: ["philosophy", "filosofia", "pensiero", "critica"],
+                4: ["cybersecurity", "security", "sicurezza", "hacking", "exploit", "malware", "cyber"],
+                5: ["ai", "artificial intelligence", "intelligenza artificiale", "machine learning", "gpt", "openai", "llm"],
+                6: ["innovation", "innovazione", "futuro", "new"],
+                7: ["culture", "cultura", "arte", "society", "società"],
+                8: ["ethics", "etica", "morale", "diritti"]
+            }
+
+            if category_id in CATEGORY_KEYWORDS:
+                cat_keywords = CATEGORY_KEYWORDS[category_id]
+                article_keywords = [k.lower() for k in article.get('keywords', [])]
+                article_title = article.get('title', '').lower()
+                article_summary = article.get('summary', '').lower()
+
+                match = False
+                for cat_kw in cat_keywords:
+                    if any(cat_kw in akw for akw in article_keywords) or \
+                       cat_kw in article_title or \
+                       cat_kw in article_summary:
+                        match = True
+                        break
+
+                if not match:
+                    continue
+
+        # Filtra per lingua se richiesto
+        if language and article.get('language', '') != language:
+            continue
+
+        results.append(article)
+
+    return {
+        "items": results,
+        "total": len(results),
+        "page": 1,
+        "size": len(results),
+        "pages": 1
+    }
+
+
+@app.get("/api/v1/sources")
+def get_sources():
+    """Get sources - demo data"""
+    return [
+        {
+            "id": 1,
+            "name": "SINTESI News",
+            "slug": "sintesi",
+            "url": "https://newsflow-orcin.vercel.app",
+            "source_type": "rss",
+            "language": "it",
+            "is_active": True,
+            "is_verified": True
+        }
+    ]
+
+
+def _load_digest():
+    """Helper to load daily digest from JSON file"""
+    import json
+    import os
+    from datetime import datetime
+
+    # Prova diversi path per trovare il file digest.json
+    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root_from_file = os.path.dirname(current_file_dir)
+
+    possible_paths = [
+        # Path 0: api/digest.json (Vercel)
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'digest.json'),
+        os.path.join(os.getcwd(), 'api', 'digest.json'),
+        '/vercel/path0/api/digest.json',
+        # Path 1: backend/digest.json
+        os.path.join(os.getcwd(), 'backend', 'digest.json'),
+        os.path.join(project_root_from_file, 'digest.json'),
+        # Path 2: digest.json nella root
+        os.path.join(os.getcwd(), 'digest.json'),
+        # Path 3: backend/app/digest.json
+        os.path.join(current_file_dir, 'digest.json'),
+    ]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    digest_data = json.load(f)
+                    print(f"✅ Digest caricato da: {path}")
+                    return digest_data
+            except Exception as e:
+                print(f"⚠️ Errore nel caricamento digest da {path}: {e}")
+                continue
+
+    # Se non trova il file, genera un digest vuoto con la data di oggi
+    print("⚠️ File digest.json non trovato, genero digest vuoto")
+    today = datetime.now().strftime("%Y-%m-%d")
+    return {
+        "date": today,
+        "digest": []
+    }
+
+
+@app.get("/api/v1/digest")
+def get_digest():
+    """Get daily digest"""
+    try:
+        digest = _load_digest()
+        return digest
+    except Exception as e:
+        print(f"❌ Errore nel caricamento digest: {e}")
+        import traceback
+        traceback.print_exc()
+        # Ritorna digest vuoto in caso di errore
+        from datetime import datetime
+        return {
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "digest": []
+        }
+
+
+@app.get("/api/v1/digest/{date}")
+def get_digest_by_date(date: str):
+    """Get digest for a specific date"""
+    try:
+        digest = _load_digest()
+        # Se il digest caricato corrisponde alla data richiesta, ritornalo
+        if digest.get("date") == date:
+            return digest
+        # Altrimenti ritorna digest vuoto per quella data
+        return {
+            "date": date,
+            "digest": []
+        }
+    except Exception as e:
+        print(f"❌ Errore nel caricamento digest per data {date}: {e}")
+        return {
+            "date": date,
+            "digest": []
+        }
+
+
+@app.get("/api/v1/auth/whoami")
+def whoami(request: Request):
+    """
+    Autenticazione automatica con fingerprint
+    Zero friction - 100% conversion!
+
+    Returns user data (esistente o nuovo)
+    """
+    # Genera fingerprint da request
+    if FingerprintAuth is None:
+        # Fallback se FingerprintAuth non disponibile
+        return {
+            "success": False,
+            "error": "Authentication service not available"
+        }
+
+    request_data = {
+        'ip': request.client.host if request.client else 'unknown',
+        'user_agent': request.headers.get('user-agent', 'unknown'),
+        'accept_language': request.headers.get('accept-language', 'unknown'),
+        'accept_encoding': request.headers.get('accept-encoding', 'unknown')
+    }
+
+    fingerprint = FingerprintAuth.generate_fingerprint(request_data)
+
+    # Carica o crea file users (localStorage-like server-side)
+    users_file = 'users_db.json'
+
+    try:
+        with open(users_file, 'r', encoding='utf-8') as f:
+            users = json.load(f)
+    except:
+        users = {}
+
+    # Cerca utente per fingerprint
+    if fingerprint in users:
+        # Utente esistente!
+        user = users[fingerprint]
+        user['is_new'] = False
+
+        # Aggiorna last_seen
+        from datetime import datetime
+        user['last_seen'] = datetime.utcnow().isoformat()
+
+        # Salva
+        with open(users_file, 'w', encoding='utf-8') as f:
+            json.dump(users, f, indent=2, ensure_ascii=False)
+
+        return {
+            "success": True,
+            "authenticated": True,
+            "user": user
+        }
+
+    # Nuovo utente - crea!
+    user_data = FingerprintAuth.create_user_data(fingerprint)
+    user_data['id'] = len(users) + 1
+    user_data['is_new'] = True
+
+    # Salva
+    users[fingerprint] = user_data
+
+    with open(users_file, 'w', encoding='utf-8') as f:
+        json.dump(users, f, indent=2, ensure_ascii=False)
+
+    return {
+        "success": True,
+        "authenticated": True,
+        "user": user_data,
+        "message": f"Benvenuto {user_data['name']}! 🎉"
+    }
+
+
+@app.post("/api/admin/generate-explanations")
+def trigger_explanations_generation():
+    """
+    Endpoint per generare spiegazioni AI per articoli esistenti.
+    Da chiamare DOPO collect-news per completare il processo.
+    """
+    import json
+    import os
+    from datetime import datetime
+
+    try:
+        print("🤖 Generazione spiegazioni AI per articoli esistenti...")
+
+        # Carica articoli esistenti
+        existing_file_path = None
+        for path in [
+            'final_news_italian.json',
+            os.path.join('backend', 'final_news_italian.json'),
+            os.path.join('api', 'final_news_italian.json')
+        ]:
+            if os.path.exists(path):
+                existing_file_path = path
+                break
+
+        if not existing_file_path:
+            return {
+                "success": False,
+                "error": "File final_news_italian.json non trovato. Esegui prima /api/admin/collect-news"
+            }
+
+        with open(existing_file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            articles = data.get('items', [])
+
+        print(f"📚 Caricati {len(articles)} articoli da processare")
+
+        # Genera spiegazioni solo per articoli senza spiegazioni
+        try:
+            from app.ai_explainer import generate_explanation
+
+            articles_needing_explanations = []
+            for article in articles:
+                if not article.get('explanation_quick'):
+                    articles_needing_explanations.append(article)
+
+            print(f"📊 Articoli senza spiegazioni: {len(articles_needing_explanations)}")
+            print(f"⏭️  Articoli con spiegazioni già presenti: {len(articles) - len(articles_needing_explanations)}")
+
+            explanations_generated = 0
+
+            # Genera spiegazioni solo per quelli senza
+            # Limita a max 50 articoli per volta per evitare timeout
+            max_articles_to_process = min(50, len(articles_needing_explanations))
+            articles_to_process = articles_needing_explanations[:max_articles_to_process]
+
+            print(f"📝 Processerò {max_articles_to_process} articoli (su {len(articles_needing_explanations)} totali)")
+
+            for i, article in enumerate(articles_to_process):
+                try:
+                    print(f"   [{i+1}/{max_articles_to_process}] {article.get('title', '')[:60]}...")
+
+                    # Genera spiegazioni AI
+                    article['explanation_quick'] = generate_explanation(article, 'quick')
+                    article['explanation_standard'] = generate_explanation(article, 'standard')
+                    article['explanation_deep'] = generate_explanation(article, 'deep')
+
+                    explanations_generated += 1
+                    print(f"      ✅ Completato")
+                except Exception as e:
+                    print(f"      ⚠️  Errore: {e}")
+                    continue
+
+            # Salva articoli aggiornati
+            data['items'] = articles
+            data['updated_at'] = datetime.now().isoformat()
+
+            with open(existing_file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            print(f"✅ Spiegazioni AI generate: {explanations_generated} articoli")
+            print(f"✅ File aggiornato: {existing_file_path}")
+
+            return {
+                "success": True,
+                "message": f"Generated explanations for {explanations_generated} articles",
+                "explanations_generated": explanations_generated,
+                "total_articles": len(articles),
+                "articles_with_explanations": len(articles_needing_explanations),
+                "updated_at": datetime.now().isoformat()
+            }
+
+        except ImportError:
+            return {
+                "success": False,
+                "error": "AI explainer module not available",
+                "hint": "Installa le dipendenze AI necessarie"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    except Exception as e:
+        print(f"❌ Errore generazione spiegazioni: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+    }
+
+
+@app.post("/api/admin/collect-news")
+def trigger_news_collection():
+    """
+    Endpoint per raccogliere nuovi articoli AUTOMATICAMENTE.
+    Può essere chiamato da un CRON job gratuito ogni 4 ore.
+
+    Usa cron-job.org (gratuito) per chiamare questo endpoint:
+    URL: https://newsflow-backend-v2.onrender.com/api/admin/collect-news
+    Frequenza: Ogni 4 ore
+    """
+    import feedparser
+    import json
+    import os
+    import re
+    from datetime import datetime
+
+    def clean_html(text):
+        """Rimuove tutti i tag HTML dal testo"""
+        if not text:
+            return ""
+        import html
+        # Rimuove tutti i tag HTML
+        text = re.sub(r'<[^>]+>', '', text)
+        # Decodifica entità HTML (inclusi quelli numerici come &#8217;)
+        try:
+            text = html.unescape(text)
+        except:
+            # Fallback manuale se html.unescape non disponibile
+            text = text.replace('&nbsp;', ' ')
+            text = text.replace('&amp;', '&')
+            text = text.replace('&lt;', '<')
+            text = text.replace('&gt;', '>')
+            text = text.replace('&quot;', '"')
+            text = text.replace('&#39;', "'")
+            text = text.replace('&apos;', "'")
+            # Decodifica entità numeriche comuni
+            text = text.replace('&#8217;', "'")  # apostrofo
+            text = text.replace('&#8216;', "'")  # apostrofo sinistro
+            text = text.replace('&#8220;', '"')  # virgolette sinistre
+            text = text.replace('&#8221;', '"')  # virgolette destre
+            text = text.replace('&#8230;', '...')  # tre puntini
+            text = text.replace('&mdash;', '—')  # dash
+            text = text.replace('&ndash;', '–')  # en dash
+        # Rimuove spazi multipli
+        text = re.sub(r'\s+', ' ', text)
+        return text.strip()
+
+    try:
+        print("🔄 Aggiornamento automatico notizie iniziato...")
+
+        # Importa traduttore (opzionale, se disponibile)
+        try:
+            from deep_translator import GoogleTranslator
+            translator = GoogleTranslator(source='en', target='it')
+            translation_available = True
+        except ImportError:
+            print("⚠️  deep_translator non disponibile - traduzione disabilitata")
+            translation_available = False
+            translator = None
+
+        # Fonti RSS - ESPANSE per tutte le categorie
+        RSS_SOURCES = {
+            # Tecnologia - Italia
+            'Wired IT': 'https://www.wired.it/feed/rss',
+            'Punto Informatico': 'https://www.punto-informatico.it/feed/',
+            'Agenda Digitale': 'https://www.agendadigitale.eu/feed/',
+            'DDay.it': 'https://www.dday.it/rss',
+            'Tom\'s Hardware Italia': 'https://www.tomshw.it/feed',
+            'StartupItalia': 'https://startupitalia.eu/feed/',
+            'Forbes Italia': 'https://www.forbes.it/feed/',
+
+            # Tecnologia - Internazionale
+            'MIT Technology Review': 'https://www.technologyreview.com/feed/',
+            'The Guardian Tech': 'https://www.theguardian.com/technology/rss',
+            'The Hacker News': 'https://feeds.feedburner.com/TheHackersNews',
+            'TechCrunch': 'https://techcrunch.com/feed/',
+            'Ars Technica': 'https://feeds.arstechnica.com/arstechnica/index',
+            'The Verge': 'https://www.theverge.com/rss/index.xml',
+            'CNET': 'https://www.cnet.com/rss/news/',
+            'Engadget': 'https://www.engadget.com/rss.xml',
+            'VentureBeat': 'https://venturebeat.com/feed/',
+            'ZDNet': 'https://www.zdnet.com/news/rss.xml',
+
+            # Scienza
+            'ArXiv CS': 'http://export.arxiv.org/rss/cs',
+            'Science Daily': 'https://www.sciencedaily.com/rss/all.xml',
+            'Nature': 'https://www.nature.com/nature.rss',
+            'Scientific American': 'https://rss.sciam.com/ScientificAmerican-News',
+
+            # Filosofia
+            'MicroMega': 'https://www.micromega.net/feed/',
+
+            # Cybersecurity
+            'ICT Security Magazine': 'https://www.ictsecuritymagazine.com/feed/',
+            'Krebs on Security': 'https://krebsonsecurity.com/feed/',
+            'Bleeping Computer': 'https://www.bleepingcomputer.com/feed/',
+
+            # Business - Italia
+            'AI4Business': 'https://www.ai4business.it/feed/',
+            'Il Sole 24 Ore': 'https://www.ilsole24ore.com/rss/home.xml',
+            'Repubblica Economia': 'https://www.repubblica.it/rss/home/rss2.0.xml',
+
+            # Business - Internazionale
+            'The Guardian Business': 'https://www.theguardian.com/business/rss',
+            'Bloomberg': 'https://www.bloomberg.com/feed/topics/technology',
+            'Financial Times Tech': 'https://www.ft.com/technology?format=rss',
+
+            # Notizie Generali - Italia
+            'ANSA': 'https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml',
+            'Il Post': 'https://www.ilpost.it/feed/',
+            'Internazionale': 'https://www.internazionale.it/rss',
+            'Linkiesta': 'https://www.linkiesta.it/feed/',
+            'Corriere della Sera': 'https://www.corriere.it/rss/homepage.xml',
+
+            # Sport
+            'The Guardian Sport': 'https://www.theguardian.com/sport/rss',
+            'Gazzetta dello Sport': 'https://www.gazzetta.it/rss/home.xml',
+            'Sky Sport': 'https://sport.sky.it/rss',
+
+            # Salute
+            'The Guardian Health': 'https://www.theguardian.com/society/health/rss',
+            'WebMD': 'https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC',
+
+            # Politica
+            'The Guardian Politics': 'https://www.theguardian.com/politics/rss',
+            'BBC News': 'https://feeds.bbci.co.uk/news/rss.xml',
+            'Reuters': 'https://www.reutersagency.com/feed/?best-topics=tech&post_type=best',
+
+            # Intrattenimento
+            'The Guardian Entertainment': 'https://www.theguardian.com/uk/entertainment/rss',
+
+            # Natura/Ambiente
+            'The Guardian Environment': 'https://www.theguardian.com/environment/rss',
+            'National Geographic': 'https://www.nationalgeographic.com/feed/',
+        }
+
+        all_articles = []
+        article_id = 1
+
+        # Raccoglie notizie da tutte le fonti
+        for source_name, rss_url in RSS_SOURCES.items():
+            try:
+                feed = feedparser.parse(rss_url)
+                count = 0
+                for entry in feed.entries[:5]:
+                    try:
+                        # Estrae contenuto completo: prova content, poi description, poi summary
+                        full_content = ""
+                        full_content_html = ""  # Mantiene HTML per estrarre immagini
+                        if hasattr(entry, 'content') and entry.content:
+                            # Alcuni feed hanno content[0].value con HTML completo
+                            if isinstance(entry.content, list) and len(entry.content) > 0:
+                                full_content_html = entry.content[0].value
+                                full_content = full_content_html
+                        elif hasattr(entry, 'description'):
+                            full_content_html = entry.description
+                            full_content = entry.description
+                        elif hasattr(entry, 'summary'):
+                            full_content_html = entry.summary
+                            full_content = entry.summary
+
+                        # Pulisce HTML dal contenuto completo
+                        full_content_clean = clean_html(full_content)
+
+                        # Summary: usa i primi 600 caratteri (aumentato da 400)
+                        summary = full_content_clean[:600] if len(full_content_clean) > 600 else full_content_clean
+
+                        # Content completo: tutto il testo pulito (max 5000 caratteri per performance)
+                        content = full_content_clean[:5000] if len(full_content_clean) > 5000 else full_content_clean
+
+                        # Determina lingua originale (fonti italiane)
+                        italian_sources = [
+                            'MicroMega', 'AI4Business', 'ICT Security Magazine', 'Punto Informatico',
+                            'Agenda Digitale', 'Wired IT', 'Gazzetta dello Sport', 'DDay.it',
+                            'Tom\'s Hardware Italia', 'StartupItalia', 'Forbes Italia', 'Il Sole 24 Ore',
+                            'Repubblica Economia', 'ANSA', 'Il Post', 'Internazionale', 'Linkiesta',
+                            'Corriere della Sera', 'Sky Sport'
+                        ]
+                        original_language = 'it' if source_name in italian_sources else 'en'
+                        language = original_language
+
+                        # Traduci in italiano se la notizia è in inglese
+                        if language == 'en' and translation_available and translator:
+                            try:
+                                import time
+                                # Traduci titolo
+                                title_en = entry.get('title', '').strip()[:200]
+                                if title_en:
+                                    title_it = translator.translate(title_en)
+                                    time.sleep(0.2)  # Evita rate limiting
+                                else:
+                                    title_it = title_en
+
+                                # Traduci summary (primi 500 caratteri per evitare limiti API)
+                                if summary:
+                                    summary_it = translator.translate(summary[:500])
+                                    time.sleep(0.3)
+                                else:
+                                    summary_it = summary
+
+                                # Traduci anche content completo se disponibile (primi 2000 caratteri)
+                                if content and len(content) > len(summary):
+                                    try:
+                                        content_it = translator.translate(content[:2000])
+                                        time.sleep(0.5)  # Più tempo per contenuti lunghi
+                                        content = content_it if content_it else content
+                                    except:
+                                        pass  # Se fallisce, usa content originale
+
+                                # Usa versioni tradotte
+                                entry_title = title_it if title_it else entry.get('title', '').strip()[:200]
+                                summary = summary_it if summary_it else summary
+                                language = 'it'  # Ora è in italiano
+
+                            except Exception as e:
+                                print(f"⚠️  Errore traduzione: {e}")
+                                # Usa originale se traduzione fallisce
+                                entry_title = entry.get('title', '').strip()[:200]
+                        else:
+                            entry_title = entry.get('title', '').strip()[:200]
+
+                        # Determina categoria basandosi sulla fonte
+                        # Mappa nome categoria → ID categoria
+                        CATEGORY_NAME_TO_ID = {
+                            'Technology': 1,
+                            'Science': 2,
+                            'Philosophy': 3,
+                            'Cybersecurity': 4,
+                            'AI': 5,
+                            'Innovation': 6,
+                            'Culture': 7,
+                            'Ethics': 8,
+                            'Sport': 9,
+                            'Nature': 10,
+                            'Business': 11,
+                            'Health': 12,
+                            'Politics': 13,
+                            'Entertainment': 14
+                        }
+
+                        # Logica di categorizzazione migliorata per tutte le nuove fonti
+                        source_lower = source_name.lower()
+                        summary_lower = summary.lower()
+
+                        if 'Security' in source_name or 'Hacker' in source_name or 'Krebs' in source_name or 'Bleeping' in source_name:
+                            category = 'Cybersecurity'
+                            category_id = CATEGORY_NAME_TO_ID.get('Cybersecurity', 4)
+                        elif 'ArXiv' in source_name or 'Science' in source_name or 'Nature' in source_name or 'Scientific American' in source_name:
+                            category = 'Science'
+                            category_id = CATEGORY_NAME_TO_ID.get('Science', 2)
+                        elif 'MicroMega' in source_name:
+                            category = 'Philosophy'
+                            category_id = CATEGORY_NAME_TO_ID.get('Philosophy', 3)
+                        elif 'Sport' in source_name or 'Gazzetta' in source_name or 'Sky Sport' in source_name:
+                            category = 'Sport'
+                            category_id = CATEGORY_NAME_TO_ID.get('Sport', 9)
+                        elif 'Business' in source_name or 'AI4Business' in source_name or 'Sole 24 Ore' in source_name or 'Bloomberg' in source_name or 'Financial Times' in source_name:
+                            category = 'Business'
+                            category_id = CATEGORY_NAME_TO_ID.get('Business', 11)
+                        elif 'Health' in source_name or 'WebMD' in source_name:
+                            category = 'Health'
+                            category_id = CATEGORY_NAME_TO_ID.get('Health', 12)
+                        elif 'Politics' in source_name or 'ANSA' in source_name or 'Corriere' in source_name or 'Repubblica' in source_name or 'BBC' in source_name or 'Reuters' in source_name:
+                            category = 'Politics'
+                            category_id = CATEGORY_NAME_TO_ID.get('Politics', 13)
+                        elif 'Entertainment' in source_name:
+                            category = 'Entertainment'
+                            category_id = CATEGORY_NAME_TO_ID.get('Entertainment', 14)
+                        elif 'Environment' in source_name or 'National Geographic' in source_name:
+                            category = 'Nature'
+                            category_id = CATEGORY_NAME_TO_ID.get('Nature', 10)
+                        elif 'AI' in source_name or 'artificial intelligence' in summary_lower or 'AI4Business' in source_name:
+                            category = 'AI'
+                            category_id = CATEGORY_NAME_TO_ID.get('AI', 5)
+                        elif 'Startup' in source_name or 'Innovation' in source_lower:
+                            category = 'Innovation'
+                            category_id = CATEGORY_NAME_TO_ID.get('Innovation', 6)
+                        elif 'Il Post' in source_name or 'Internazionale' in source_name or 'Linkiesta' in source_name:
+                            category = 'Culture'
+                            category_id = CATEGORY_NAME_TO_ID.get('Culture', 7)
+                        elif 'Tech' in source_name or 'Technology' in source_name or 'Wired' in source_name or 'Punto Informatico' in source_name or 'Agenda Digitale' in source_name or 'DDay' in source_name or 'Tom\'s Hardware' in source_name or 'TechCrunch' in source_name or 'Ars Technica' in source_name or 'The Verge' in source_name or 'CNET' in source_name or 'Engadget' in source_name or 'VentureBeat' in source_name or 'ZDNet' in source_name or 'MIT' in source_name:
+                            category = 'Technology'
+                            category_id = CATEGORY_NAME_TO_ID.get('Technology', 1)
+                        else:
+                            category = 'Technology'
+                            category_id = CATEGORY_NAME_TO_ID.get('Technology', 1)
+
+                        # Calcola reading_time basato sulla lunghezza del contenuto
+                        content_length = len(content) if content else len(summary)
+                        reading_time = max(1, int(content_length / 200))  # ~200 caratteri per minuto
+
+                        # Estrae immagine da vari campi del feed RSS
+                        image_url = None
+
+                        # 1. Prova media_content (Media RSS standard)
+                        if hasattr(entry, 'media_content') and entry.media_content:
+                            if isinstance(entry.media_content, list) and len(entry.media_content) > 0:
+                                media_item = entry.media_content[0]
+                                if isinstance(media_item, dict) and 'url' in media_item:
+                                    image_url = media_item['url']
+                                elif isinstance(media_item, str):
+                                    image_url = media_item
+
+                        # 2. Prova media_thumbnail
+                        if not image_url and hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
+                            if isinstance(entry.media_thumbnail, list) and len(entry.media_thumbnail) > 0:
+                                thumb_item = entry.media_thumbnail[0]
+                                if isinstance(thumb_item, dict) and 'url' in thumb_item:
+                                    image_url = thumb_item['url']
+                                elif isinstance(thumb_item, str):
+                                    image_url = thumb_item
+
+                        # 3. Prova enclosures (allegati)
+                        if not image_url and hasattr(entry, 'enclosures') and entry.enclosures:
+                            for enc in entry.enclosures:
+                                if isinstance(enc, dict):
+                                    enc_type = enc.get('type', '').lower()
+                                    if 'image' in enc_type:
+                                        image_url = enc.get('href') or enc.get('url')
+                                        break
+
+                        # 4. Estrae immagine da HTML nel contenuto
+                        if not image_url and full_content_html:
+                            import re
+                            img_pattern = r'<img[^>]+src=["\']([^"\']+)["\']'
+                            img_matches = re.findall(img_pattern, full_content_html, re.IGNORECASE)
+                            if img_matches:
+                                # Prende la prima immagine trovata
+                                image_url = img_matches[0]
+                                # Se è un URL relativo, prova a renderlo assoluto
+                                if image_url.startswith('//'):
+                                    image_url = 'https:' + image_url
+                                elif image_url.startswith('/'):
+                                    # Prova a costruire URL assoluto dalla fonte
+                                    from urllib.parse import urljoin
+                                    if entry.get('link'):
+                                        image_url = urljoin(entry.get('link'), image_url)
+
+                        # 5. Valida e pulisce URL immagine
+                        if image_url:
+                            # Rimuove parametri di tracking comuni
+                            image_url = image_url.split('?')[0].split('&')[0]
+                            # Verifica che sia un URL valido
+                            if not image_url.startswith(('http://', 'https://')):
+                                image_url = None
+
+                        # Estrae data pubblicazione reale dal feed RSS
+                        published_date = None
+                        try:
+                            # Prova vari campi per la data
+                            if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                                from time import mktime
+                                published_date = datetime.fromtimestamp(mktime(entry.published_parsed))
+                            elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                                from time import mktime
+                                published_date = datetime.fromtimestamp(mktime(entry.updated_parsed))
+                            elif hasattr(entry, 'published'):
+                                try:
+                                    # Prova a parsare la data dal formato stringa
+                                    from dateutil import parser
+                                    published_date = parser.parse(entry.published)
+                                except:
+                                    pass
+                            elif hasattr(entry, 'updated'):
+                                try:
+                                    from dateutil import parser
+                                    published_date = parser.parse(entry.updated)
+                                except:
+                                    pass
+                        except Exception as e:
+                            print(f"⚠️  Errore parsing data per {entry_title[:50]}: {e}")
+
+                        # Se non trova data, usa quella di oggi
+                        if not published_date:
+                            published_date = datetime.now()
+
+                        # Filtra solo notizie di oggi
+                        today = datetime.now().date()
+                        article_date = published_date.date()
+
+                        # Salta articoli vecchi (non di oggi)
+                        if article_date < today:
+                            continue  # Salta questo articolo, è vecchio
+
+                        article = {
+                            "id": article_id,
+                            "title": entry_title,
+                            "slug": entry_title.lower().replace(' ', '-').replace("'", '').replace(',', '')[:50],
+                            "url": entry.get('link', ''),
+                            "summary": summary,  # Summary più lungo (600 caratteri)
+                            "content": content,  # Contenuto completo (fino a 5000 caratteri)
+                            "image_url": image_url,  # Immagine estratta dal feed
+                            "author": entry.get('author', source_name) + (" (trad. auto)" if original_language == 'en' and language == 'it' else ""),
+                            "published_at": published_date.isoformat(),  # Data reale dal feed RSS
+                            "collected_at": datetime.now().isoformat(),
+                            "source_id": 1,
+                            "category_id": category_id,  # ID categoria aggiunto
+                            "is_featured": count == 0,
+                            "is_verified": True,
+                            "is_archived": False,
+                            "quality_score": 0.7 + (0.05 * (5 - count)),
+                            "reading_time_minutes": reading_time,
+                            "keywords": [category.lower(), "news", language, source_name.lower()],
+                            "language": language,
+                            "original_language": original_language if original_language != language else None
+                        }
+
+                        all_articles.append(article)
+                        article_id += 1
+                        count += 1
+                    except:
+                        continue
+            except Exception as e:
+                print(f"Errore fonte {source_name}: {e}")
+                continue
+
+        # RACCOLTA DA GOOGLE NEWS
+        print(f"\n📰 RACCOLTA DA GOOGLE NEWS...")
+        try:
+            from app.services.collectors.google_news_collector import GoogleNewsCollector, GOOGLE_NEWS_TOPICS, GOOGLE_NEWS_QUERIES_IT
+
+            google_news_collector = GoogleNewsCollector()
+            google_articles_count = 0
+
+            # Raccoglie da topic principali (ESPANSI)
+            print("   📋 Raccolta da topic principali...")
+            topics_to_collect = [
+                'TECHNOLOGY', 'SCIENCE', 'WORLD', 'BUSINESS', 'HEALTH', 'SPORTS',
+                'ENTERTAINMENT', 'POLITICS', 'NATION', 'ENVIRONMENT'
+            ]
+            for topic in topics_to_collect:
+                try:
+                    articles = google_news_collector.collect(
+                        query=None,
+                        language='it',
+                        country='IT',
+                        max_articles=8,  # Aumentato da 5 a 8
+                        topic=topic
+                    )
+
+                    for article_data in articles:
+                        try:
+                            # Determina categoria basandosi sul topic
+                            category_map = {
+                                'TECHNOLOGY': ('Technology', 1),
+                                'SCIENCE': ('Science', 2),
+                                'WORLD': ('Technology', 1),
+                                'BUSINESS': ('Business', 11),
+                                'HEALTH': ('Health', 12),
+                                'SPORTS': ('Sport', 9),
+                                'ENTERTAINMENT': ('Entertainment', 14),
+                                'POLITICS': ('Politics', 13),
+                                'NATION': ('Politics', 13),
+                                'ENVIRONMENT': ('Nature', 10),
+                            }
+                            category, category_id = category_map.get(topic, ('Technology', 1))
+
+                            # Estrae contenuto
+                            summary = article_data.get('summary', '')[:600]
+                            content = article_data.get('content', '')[:5000]
+
+                            # Calcola reading_time
+                            content_length = len(content) if content else len(summary)
+                            reading_time = max(1, int(content_length / 200))
+
+                            article = {
+                                "id": article_id,
+                                "title": article_data.get('title', '')[:200],
+                                "slug": article_data.get('title', '').lower().replace(' ', '-').replace("'", '').replace(',', '')[:50],
+                                "url": article_data.get('url', ''),
+                                "summary": summary,
+                                "content": content,
+                                "image_url": article_data.get('image_url'),
+                                "author": article_data.get('author', 'Google News'),
+                                "published_at": article_data.get('published_at').isoformat() if article_data.get('published_at') and isinstance(article_data.get('published_at'), datetime) else datetime.now().isoformat(),
+                                "collected_at": datetime.now().isoformat(),
+                                "source_id": 1,
+                                "category_id": category_id,
+                                "is_featured": google_articles_count == 0,
+                                "is_verified": True,
+                                "is_archived": False,
+                                "quality_score": 0.75,
+                                "reading_time_minutes": reading_time,
+                                "keywords": [category.lower(), "news", "it", "google news"],
+                                "language": "it",
+                                "original_language": None
+                            }
+
+                            all_articles.append(article)
+                            article_id += 1
+                            google_articles_count += 1
+                        except Exception as e:
+                            print(f"   ⚠️  Errore parsing articolo Google News: {e}")
+                            continue
+
+                    print(f"   ✅ Topic {topic}: {len(articles)} articoli raccolti")
+                except Exception as e:
+                    print(f"   ⚠️  Errore topic {topic}: {e}")
+                    continue
+
+            # Raccoglie da query specifiche italiane (ESPANSE)
+            print("   🔍 Raccolta da query specifiche...")
+            queries_to_collect = [
+                'intelligenza artificiale', 'cybersecurity', 'innovazione', 'startup',
+                'tecnologia', 'scienza', 'economia', 'politica', 'sport', 'salute',
+                'ambiente', 'cultura', 'etica', 'filosofia'
+            ]
+            for query in queries_to_collect:
+                try:
+                    articles = google_news_collector.collect(
+                        query=query,
+                        language='it',
+                        country='IT',
+                        max_articles=5  # Aumentato da 3 a 5
+                    )
+
+                    for article_data in articles:
+                        try:
+                            # Determina categoria dalla query (MAPPA ESPANSA)
+                            query_lower = query.lower()
+                            if 'intelligenza artificiale' in query_lower or 'ai' in query_lower:
+                                category, category_id = ('AI', 5)
+                            elif 'cybersecurity' in query_lower or 'security' in query_lower:
+                                category, category_id = ('Cybersecurity', 4)
+                            elif 'innovazione' in query_lower or 'startup' in query_lower:
+                                category, category_id = ('Innovation', 6)
+                            elif 'tecnologia' in query_lower or 'tech' in query_lower:
+                                category, category_id = ('Technology', 1)
+                            elif 'scienza' in query_lower or 'science' in query_lower:
+                                category, category_id = ('Science', 2)
+                            elif 'economia' in query_lower or 'business' in query_lower:
+                                category, category_id = ('Business', 11)
+                            elif 'politica' in query_lower or 'politics' in query_lower:
+                                category, category_id = ('Politics', 13)
+                            elif 'sport' in query_lower:
+                                category, category_id = ('Sport', 9)
+                            elif 'salute' in query_lower or 'health' in query_lower:
+                                category, category_id = ('Health', 12)
+                            elif 'ambiente' in query_lower or 'environment' in query_lower:
+                                category, category_id = ('Nature', 10)
+                            elif 'cultura' in query_lower or 'culture' in query_lower:
+                                category, category_id = ('Culture', 7)
+                            elif 'etica' in query_lower or 'ethics' in query_lower:
+                                category, category_id = ('Ethics', 8)
+                            elif 'filosofia' in query_lower or 'philosophy' in query_lower:
+                                category, category_id = ('Philosophy', 3)
+                            else:
+                                category, category_id = ('Technology', 1)
+
+                            summary = article_data.get('summary', '')[:600]
+                            content = article_data.get('content', '')[:5000]
+                            content_length = len(content) if content else len(summary)
+                            reading_time = max(1, int(content_length / 200))
+
+                            article = {
+                                "id": article_id,
+                                "title": article_data.get('title', '')[:200],
+                                "slug": article_data.get('title', '').lower().replace(' ', '-').replace("'", '').replace(',', '')[:50],
+                                "url": article_data.get('url', ''),
+                                "summary": summary,
+                                "content": content,
+                                "image_url": article_data.get('image_url'),
+                                "author": article_data.get('author', 'Google News'),
+                                "published_at": article_data.get('published_at').isoformat() if article_data.get('published_at') and isinstance(article_data.get('published_at'), datetime) else datetime.now().isoformat(),
+                                "collected_at": datetime.now().isoformat(),
+                                "source_id": 1,
+                                "category_id": category_id,
+                                "is_featured": False,
+                                "is_verified": True,
+                                "is_archived": False,
+                                "quality_score": 0.7,
+                                "reading_time_minutes": reading_time,
+                                "keywords": [category.lower(), "news", "it", "google news", query.lower()],
+                                "language": "it",
+                                "original_language": None
+                            }
+
+                            all_articles.append(article)
+                            article_id += 1
+                            google_articles_count += 1
+                        except Exception as e:
+                            print(f"   ⚠️  Errore parsing articolo Google News (query): {e}")
+                            continue
+
+                    print(f"   ✅ Query '{query}': {len(articles)} articoli raccolti")
+                except Exception as e:
+                    print(f"   ⚠️  Errore query '{query}': {e}")
+                    continue
+
+            print(f"✅ Google News: {google_articles_count} articoli totali raccolti")
+        except ImportError as e:
+            print(f"⚠️  Google News Collector non disponibile: {e}")
+        except Exception as e:
+            print(f"⚠️  Errore raccolta Google News: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # FASE 2: Salta spiegazioni AI - verranno generate in un secondo passaggio
+        # Le spiegazioni AI vengono generate chiamando /api/admin/generate-explanations
+        SKIP_AI_EXPLANATIONS = True  # Sempre True - spiegazioni in passaggio separato
+
+        if False:  # Disabilitato - spiegazioni in endpoint separato
+            print(f"\n🤖 FASE 2: Generazione spiegazioni AI per articoli nuovi...")
+            explanations_generated = 0
+            explanations_skipped = 0
+        else:
+            print(f"\n⏭️  FASE 2: Salto generazione spiegazioni AI (SKIP_AI_EXPLANATIONS=True)")
+            explanations_generated = 0
+            explanations_skipped = len(all_articles)
+
+        if not SKIP_AI_EXPLANATIONS:
+            # Carica articoli esistenti per confrontare (evita rigenerare spiegazioni vecchie)
+            existing_articles = {}
+            try:
+                existing_file_path = None
+                for path in [
+                    'final_news_italian.json',
+                    os.path.join('backend', 'final_news_italian.json'),
+                    os.path.join('api', 'final_news_italian.json')
+                ]:
+                    if os.path.exists(path):
+                        existing_file_path = path
+                        break
+
+                if existing_file_path:
+                    with open(existing_file_path, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                        for art in existing_data.get('items', []):
+                            # Usa URL come chiave univoca (più affidabile di ID)
+                            url = art.get('url', '')
+                            if url:
+                                existing_articles[url] = art
+                    print(f"   📚 Caricati {len(existing_articles)} articoli esistenti per confronto")
+            except Exception as e:
+                print(f"   ⚠️  Errore caricamento articoli esistenti: {e}")
+
+        if not SKIP_AI_EXPLANATIONS:
+            # Genera spiegazioni solo per articoli nuovi
+            try:
+                from app.ai_explainer import generate_explanation
+
+                articles_needing_explanations = []
+                for article in all_articles:
+                    url = article.get('url', '')
+                    existing = existing_articles.get(url) if url else None
+
+                    # Controlla se è nuovo o se non ha spiegazioni
+                    is_new = existing is None
+                    has_explanations = (
+                        (existing and existing.get('explanation_quick')) or
+                        article.get('explanation_quick')
+                    )
+
+                    if is_new or not has_explanations:
+                        articles_needing_explanations.append(article)
+                    else:
+                        # Copia spiegazioni esistenti dall'articolo vecchio
+                        if existing:
+                            article['explanation_quick'] = existing.get('explanation_quick')
+                            article['explanation_standard'] = existing.get('explanation_standard')
+                            article['explanation_deep'] = existing.get('explanation_deep')
+                        explanations_skipped += 1
+
+                print(f"   📊 Articoli da processare: {len(articles_needing_explanations)} nuovi")
+                print(f"   ⏭️  Articoli saltati: {explanations_skipped} (spiegazioni già presenti)")
+
+                # Genera spiegazioni solo per quelli nuovi
+                for i, article in enumerate(articles_needing_explanations):
+                    try:
+                        print(f"   [{i+1}/{len(articles_needing_explanations)}] Generando spiegazioni per: {article.get('title', '')[:50]}...")
+
+                        # Genera spiegazioni AI (usa cache interna)
+                        article['explanation_quick'] = generate_explanation(article, 'quick')
+                        article['explanation_standard'] = generate_explanation(article, 'standard')
+                        article['explanation_deep'] = generate_explanation(article, 'deep')
+
+                        explanations_generated += 1
+
+                        # Log ogni 5 articoli per non intasare
+                        if (i + 1) % 5 == 0:
+                            print(f"   ✅ {i+1}/{len(articles_needing_explanations)} articoli processati...")
+                    except Exception as e:
+                        print(f"   ⚠️  Errore generazione spiegazioni per articolo {i+1}: {e}")
+                        # Continua con gli altri articoli anche se uno fallisce
+                        continue
+
+                print(f"✅ Spiegazioni AI generate: {explanations_generated} nuovi articoli")
+                print(f"✅ Spiegazioni mantenute: {explanations_skipped} articoli esistenti")
+            except ImportError:
+                print("⚠️  Modulo AI non disponibile, salto generazione spiegazioni")
+            except Exception as e:
+                print(f"⚠️  Errore generazione spiegazioni: {e}")
+                print("   Continuo comunque con il salvataggio degli articoli...")
+        else:
+            print(f"✅ Raccolti {len(all_articles)} articoli senza spiegazioni AI (per velocità)")
+
+        # Aggiorna final_news_italian.json con spiegazioni incluse
+        output_data = {
+            "items": all_articles,
+            "total": len(all_articles),
+            "page": 1,
+            "size": len(all_articles),
+            "pages": 1,
+            "updated_at": datetime.now().isoformat()
+        }
+
+        # Salva in TUTTI i path necessari (backend, api, root)
+        file_paths = [
+            'final_news_italian.json',  # Root
+            os.path.join('backend', 'final_news_italian.json'),  # Backend
+            os.path.join('api', 'final_news_italian.json')  # API per Vercel
+        ]
+
+        for file_path in file_paths:
+            try:
+                # Crea directory se non esiste
+                os.makedirs(os.path.dirname(file_path), exist_ok=True) if os.path.dirname(file_path) else None
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(output_data, f, indent=2, ensure_ascii=False)
+                print(f"✅ File salvato: {file_path}")
+            except Exception as e:
+                print(f"⚠️  Errore salvataggio {file_path}: {e}")
+
+        file_path = file_paths[0]  # Usa il primo per il messaggio
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(output_data, f, indent=2, ensure_ascii=False)
+
+        # Invalida la cache per forzare il ricaricamento
+        global _articles_cache, _cache_timestamp, _cache_file_path
+        _articles_cache = None
+        _cache_timestamp = None
+        _cache_file_path = None
+        print(f"🔄 Cache invalidata - gli articoli verranno ricaricati alla prossima richiesta")
+
+        # Forza il reload immediato per avere i nuovi dati subito disponibili
+        try:
+            _load_articles(force_reload=True)
+            print(f"✅ Cache ricaricata immediatamente con {len(_articles_cache) if _articles_cache else 0} articoli")
+        except Exception as e:
+            print(f"⚠️  Errore durante reload cache: {e}")
+
+        # GENERA DIGEST AUTOMATICAMENTE con le notizie nuove
+        print(f"\n📰 Generazione digest giornaliero con notizie nuove...")
+        try:
+            import subprocess
+            import sys
+
+            # Path dello script digest
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            backend_dir = os.path.dirname(script_dir)
+            digest_script = os.path.join(backend_dir, 'genera_digest_giornaliero.py')
+
+            if os.path.exists(digest_script):
+                # Esegui lo script Python per generare il digest
+                result = subprocess.run(
+                    [sys.executable, digest_script],
+                    cwd=backend_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+
+                if result.returncode == 0:
+                    print(f"✅ Digest generato automaticamente con notizie nuove")
+                    # Mostra output se utile
+                    if result.stdout:
+                        for line in result.stdout.strip().split('\n'):
+                            if '✅' in line or '📊' in line or '✨' in line:
+                                print(f"   {line}")
+                else:
+                    print(f"⚠️  Errore generazione digest: {result.stderr}")
+            else:
+                print(f"⚠️  Script digest non trovato: {digest_script}")
+        except Exception as e:
+            print(f"⚠️  Errore generazione digest automatica: {e}")
+            # Non bloccare il processo se il digest fallisce
+            import traceback
+            traceback.print_exc()
+
+        print(f"✅ Aggiornate {len(all_articles)} notizie con spiegazioni AI!")
+
+        return {
+            "success": True,
+            "message": f"Collected and updated {len(all_articles)} articles successfully!",
+            "total_articles": len(all_articles),
+            "explanations_generated": explanations_generated,
+            "updated_at": datetime.now().isoformat(),
+            "next_collection": "In 4 hours"
+        }
+    except Exception as e:
+        print(f"❌ Errore aggiornamento: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/admin/reload-cache")
+def reload_cache():
+    """
+    Endpoint per forzare il reload della cache degli articoli.
+    Utile dopo aver aggiornato manualmente il file JSON.
+    """
+    global _articles_cache, _cache_timestamp, _cache_file_path
+    try:
+        # Invalida cache
+        _articles_cache = None
+        _cache_timestamp = None
+        _cache_file_path = None
+
+        # Forza reload
+        articles = _load_articles(force_reload=True)
+
+        return {
+            "success": True,
+            "message": f"Cache ricaricata con successo!",
+            "articles_count": len(articles) if articles else 0,
+            "reloaded_at": datetime.now().isoformat()
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/create-youtube-video")
+def create_youtube_video(max_articles: int = 5):
+    """
+    Crea un video YouTube automatico dalle notizie.
+
+    Args:
+        max_articles: Numero massimo di notizie da includere (default: 5)
+
+    Returns:
+        Informazioni sul video creato
+    """
+    return _create_youtube_video_internal(max_articles=max_articles)
+
+
+@app.post("/api/admin/create-youtube-video-long")
+def create_youtube_video_long(duration_minutes: int = 60):
+    """
+    Crea un video YouTube lungo per playlist 24/7.
+
+    Args:
+        duration_minutes: Durata target in minuti (default: 60 = 1 ora)
+                         Consigliato: 60-120 minuti per video
+
+    Returns:
+        Informazioni sul video creato
+    """
+    return _create_youtube_video_internal(target_duration_minutes=duration_minutes)
+
+
+@app.post("/api/admin/create-youtube-short-video")
+def create_youtube_short_video():
+    """
+    Crea video corto da 2 minuti con solo notizie che hanno immagini.
+    Perfetto per live brevi ogni 20 minuti.
+
+    Returns:
+        Informazioni sul video creato
+    """
+    try:
+        import sys
+        import os
+
+        # Aggiungi il percorso del backend al PYTHONPATH
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        from youtube_short_video_generator import create_short_video_2min
+
+        # Carica articoli
+        articles = _load_articles()
+
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessun articolo disponibile"
+            }
+
+        # Crea video corto (solo notizie con immagini)
+        video_path = create_short_video_2min(articles)
+
+        if video_path:
+            # Calcola durata reale
+            try:
+                from moviepy.editor import VideoFileClip
+                video_clip = VideoFileClip(video_path)
+                actual_duration_minutes = round(video_clip.duration / 60, 1)
+                video_clip.close()
+            except:
+                actual_duration_minutes = 2.0
+
+            file_size_mb = round(os.path.getsize(video_path) / (1024 * 1024), 2)
+
+            return {
+                "success": True,
+                "video_path": video_path,
+                "duration_minutes": actual_duration_minutes,
+                "target_duration_minutes": 2,
+                "file_size_mb": file_size_mb,
+                "articles_count": len(articles),
+                "message": "Video corto da 2 minuti creato con successo!"
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Errore durante la creazione del video"
+            }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/admin/create-youtube-live-video")
+def create_youtube_live_video(duration_minutes: int = 30):
+    """
+    Crea un video per YouTube Live che ripete le notizie fino a raggiungere la durata desiderata.
+    Perfetto per trasmettere un telegiornale continuo durante una live.
+
+    Args:
+        duration_minutes: Durata target del video per la live (default: 30 minuti)
+                         Consigliato: 30-60 minuti per live, 240 per TG 4 ore
+
+    Returns:
+        Informazioni sul video creato
+    """
+    try:
+        import sys
+        import os
+        # Aggiungi il percorso del backend al PYTHONPATH
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        from youtube_video_generator import YouTubeVideoGenerator
+
+        # Carica le notizie
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+
+        # Crea il generatore video
+        generator = YouTubeVideoGenerator(articles)
+
+        try:
+            # Crea il video per live (ripete le notizie fino alla durata target)
+            video_path = generator.create_live_video(duration_minutes=duration_minutes)
+
+            if video_path:
+                # Calcola durata reale del video
+                try:
+                    from moviepy.editor import VideoFileClip
+                    video_clip = VideoFileClip(video_path)
+                    actual_duration_minutes = round(video_clip.duration / 60, 1)
+                    video_clip.close()
+                except:
+                    actual_duration_minutes = duration_minutes
+
+                result = {
+                    "success": True,
+                    "message": f"Video per LIVE creato con successo!",
+                    "video_path": video_path,
+                    "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2) if os.path.exists(video_path) else 0,
+                    "duration_minutes": actual_duration_minutes,
+                    "target_duration_minutes": duration_minutes,
+                    "articles_count": len(articles),
+                    "repetitions": round(actual_duration_minutes * 60 / (len(articles) * 13), 1)
+                }
+
+                return result
+            else:
+                return {
+                    "success": False,
+                    "error": "Errore nella creazione del video"
+                }
+        finally:
+            try:
+                generator.cleanup()
+            except:
+                pass
+
+    except ImportError as e:
+        return {
+            "success": False,
+            "error": f"Dipendenze mancanti: {str(e)}",
+            "hint": "Installa con: pip install moviepy gtts pillow"
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/upload-tg-to-youtube")
+def upload_tg_to_youtube():
+    """
+    Carica automaticamente il video TG su YouTube.
+    Richiede YouTube API credentials configurate.
+
+    Returns:
+        Informazioni sull'upload
+    """
+    try:
+        import sys
+        import os
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        from youtube_api_manager import YouTubeAPIManager
+
+        # Verifica che il video esista
+        video_path = os.path.join(backend_path, "youtube_videos", "newsflow_tg.mp4")
+        if not os.path.exists(video_path):
+            return {
+                "success": False,
+                "error": "Video TG non trovato. Crea prima il video con /api/admin/create-tg-video"
+            }
+
+        # Crea manager YouTube
+        manager = YouTubeAPIManager()
+
+        # Autentica
+        if not manager.authenticate():
+            return {
+                "success": False,
+                "error": "Autenticazione YouTube fallita. Configura le credenziali.",
+                "hint": "Vedi: CONFIGURA_YOUTUBE_API.ps1"
+            }
+
+        # Upload video
+        title = f"TG NewsFlow - Notizie del {datetime.now().strftime('%d/%m/%Y')}"
+        description = "Telegiornale automatico con le ultime notizie. Aggiornato automaticamente."
+        tags = ["notizie", "telegiornale", "news", "italia", "informazione"]
+
+        video_id = manager.upload_video(
+            video_path=video_path,
+            title=title,
+            description=description,
+            tags=tags,
+            privacy_status="public"
+        )
+
+        if video_id:
+            return {
+                "success": True,
+                "message": "Video caricato su YouTube con successo!",
+                "video_id": video_id,
+                "video_url": f"https://www.youtube.com/watch?v={video_id}",
+                "title": title
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Errore durante l'upload del video"
+            }
+
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/create-youtube-live-auto")
+def create_youtube_live_auto(hour: int, minute: int = 0):
+    """
+    Crea una live YouTube programmata automaticamente.
+    Richiede YouTube API credentials configurate.
+
+    Args:
+        hour: Ora (0-23)
+        minute: Minuto (0-59)
+
+    Returns:
+        Informazioni sulla live creata
+    """
+    try:
+        import sys
+        import os
+        from datetime import datetime, timedelta
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        from youtube_api_manager import YouTubeAPIManager
+
+        # Calcola data/ora programmata
+        now = datetime.now()
+        scheduled_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+        # Se l'ora è già passata oggi, programma per domani
+        if scheduled_time < now:
+            scheduled_time += timedelta(days=1)
+
+        # Crea manager YouTube
+        manager = YouTubeAPIManager()
+
+        # Autentica
+        if not manager.authenticate():
+            return {
+                "success": False,
+                "error": "Autenticazione YouTube fallita. Configura le credenziali.",
+                "hint": "Vedi: CONFIGURA_YOUTUBE_API.ps1"
+            }
+
+        # Crea live broadcast
+        title = f"TG NewsFlow Live - {scheduled_time.strftime('%d/%m/%Y %H:%M')}"
+        description = "Telegiornale in diretta con le ultime notizie."
+
+        broadcast = manager.create_live_broadcast(
+            title=title,
+            description=description,
+            scheduled_start_time=scheduled_time,
+            privacy_status="public"
+        )
+
+        if broadcast:
+            return {
+                "success": True,
+                "message": "Live YouTube creata con successo!",
+                "broadcast_id": broadcast['broadcast_id'],
+                "title": title,
+                "scheduled_start_time": scheduled_time.isoformat(),
+                "note": "La live partirà automaticamente all'orario programmato"
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Errore durante la creazione della live"
+            }
+
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/create-tg-video")
+def create_tg_video():
+    """
+    Crea un video TG con tutte le notizie disponibili (~18-20 minuti).
+    Perfetto per live brevi che si accendono e spengono automaticamente.
+
+    Returns:
+        Informazioni sul video creato
+    """
+    try:
+        import sys
+        import os
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        from youtube_video_generator import YouTubeVideoGenerator
+
+        # Carica le notizie
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+
+        # Crea il generatore video
+        generator = YouTubeVideoGenerator(articles)
+
+        try:
+            # Crea video TG con TUTTE le notizie (non ripete, solo le 85 notizie)
+            # Durata stimata: ~18-20 minuti
+            output_filename = "newsflow_tg.mp4"
+
+            # Usa create_video con tutte le notizie (non create_live_video che ripete)
+            video_path = generator.create_video(max_articles=999, output_filename=output_filename)
+
+            if video_path:
+                # Calcola durata reale
+                try:
+                    from moviepy.editor import VideoFileClip
+                    video_clip = VideoFileClip(video_path)
+                    actual_duration_minutes = round(video_clip.duration / 60, 1)
+                    video_clip.close()
+                except:
+                    # Stima basata su numero articoli
+                    actual_duration_minutes = round(len(articles) * 13 / 60, 1)
+
+                result = {
+                    "success": True,
+                    "message": "Video TG creato con successo!",
+                    "video_path": video_path,
+                    "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2) if os.path.exists(video_path) else 0,
+                    "duration_minutes": actual_duration_minutes,
+                    "articles_count": len(articles),
+                    "note": "Video pronto per live di ~20 minuti. Usa AVVIA_SCHEDULER_LIVE.ps1 per programmare live automatiche"
+                }
+
+                return result
+            else:
+                return {
+                    "success": False,
+                    "error": "Errore nella creazione del video"
+                }
+        finally:
+            try:
+                generator.cleanup()
+            except:
+                pass
+
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.get("/api/admin/check-tg-sync")
+def check_tg_sync():
+    """
+    Controlla se il video TG deve essere rigenerato (notizie aggiornate)
+
+    Returns:
+        Stato della sincronizzazione
+    """
+    try:
+        import sys
+        import os
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        from news_sync_monitor import NewsSyncMonitor
+
+        monitor = NewsSyncMonitor(
+            news_file="final_news_italian.json",
+            video_file="youtube_videos/newsflow_live_4h.mp4"
+        )
+
+        should_regenerate = monitor.should_regenerate_video()
+        news_update_time = monitor.get_news_update_time()
+
+        return {
+            "success": True,
+            "should_regenerate": should_regenerate,
+            "news_update_time": news_update_time.isoformat() if news_update_time else None,
+            "video_exists": os.path.exists(monitor.video_file),
+            "message": "Video deve essere rigenerato" if should_regenerate else "Video aggiornato"
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+def _create_youtube_video_internal(max_articles: int = None, target_duration_minutes: int = None):
+    """
+    Funzione interna per creare video YouTube
+    """
+    try:
+        import sys
+        import os
+        # Aggiungi il percorso del backend al PYTHONPATH
+        backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        from youtube_video_generator import YouTubeVideoGenerator
+
+        # Carica le notizie
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+
+        # Crea il generatore video
+        generator = YouTubeVideoGenerator(articles)
+
+        try:
+            # Crea il video
+            if target_duration_minutes:
+                video_path = generator.create_video(target_duration_minutes=target_duration_minutes)
+                # Calcola durata reale del video
+                try:
+                    from moviepy.editor import VideoFileClip
+                    video_clip = VideoFileClip(video_path)
+                    actual_duration_minutes = round(video_clip.duration / 60, 1)
+                    video_clip.close()
+                except:
+                    actual_duration_minutes = target_duration_minutes
+            else:
+                video_path = generator.create_video(max_articles=max_articles or 5)
+                actual_duration_minutes = None
+
+            if video_path:
+                result = {
+                    "success": True,
+                    "message": f"Video creato con successo!",
+                    "video_path": video_path,
+                    "file_size_mb": round(os.path.getsize(video_path) / (1024 * 1024), 2) if os.path.exists(video_path) else 0
+                }
+
+                if target_duration_minutes:
+                    result["duration_minutes"] = actual_duration_minutes or target_duration_minutes
+                    result["target_duration_minutes"] = target_duration_minutes
+                    # Stima articoli inclusi
+                    result["articles_count"] = int((actual_duration_minutes or target_duration_minutes) * 4)
+                else:
+                    result["articles_count"] = min(max_articles or 5, len(articles))
+
+                return result
+            else:
+                return {
+                    "success": False,
+                    "error": "Errore nella creazione del video"
+                }
+        finally:
+            try:
+                generator.cleanup()
+            except:
+                pass
+
+    except ImportError as e:
+        return {
+            "success": False,
+            "error": f"Dipendenze mancanti: {str(e)}",
+            "hint": "Installa con: pip install moviepy gtts pillow"
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.post("/api/admin/create-daily-schedule")
+def create_daily_schedule():
+    """Crea programmazione giornaliera standard per YouTube Live"""
+    try:
+        articles = _load_articles()
+        if not articles:
+            return {
+                "success": False,
+                "error": "Nessuna notizia disponibile"
+            }
+
+        # Programmazione standard: 4 live al giorno
+        schedule_config = [
+            {"hour": 8, "minute": 0, "duration_minutes": 30, "time_slot": "morning"},
+            {"hour": 12, "minute": 0, "duration_minutes": 30, "time_slot": "afternoon"},
+            {"hour": 18, "minute": 0, "duration_minutes": 30, "time_slot": "evening"},
+            {"hour": 22, "minute": 0, "duration_minutes": 60, "time_slot": "night"},
+        ]
+
+        # Salva programmazione (puoi salvare su file JSON)
+        schedule_file = 'youtube_schedule.json'
+        with open(schedule_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                "created_at": datetime.now().isoformat(),
+                "scheduled_streams": schedule_config
+            }, f, indent=2, ensure_ascii=False)
+
+        return {
+            "success": True,
+            "message": "Programmazione giornaliera creata!",
+            "scheduled_streams": schedule_config,
+            "total_streams": len(schedule_config),
+            "note": "Avvia AVVIA_SCHEDULER_LIVE.ps1 per eseguire i live automatici"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.post("/api/admin/schedule-youtube-live")
+def schedule_youtube_live(hour: int, minute: int = 0, duration_minutes: int = 30):
+    """
+    Programma un singolo live stream
+
+    Args:
+        hour: Ora (0-23)
+        minute: Minuto (0-59)
+        duration_minutes: Durata del live
+    """
+    try:
+        if not (0 <= hour <= 23):
+            return {"success": False, "error": "Ora deve essere tra 0 e 23"}
+        if not (0 <= minute <= 59):
+            return {"success": False, "error": "Minuto deve essere tra 0 e 59"}
+
+        # Carica programmazione esistente
+        schedule_file = 'youtube_schedule.json'
+        if os.path.exists(schedule_file):
+            with open(schedule_file, 'r', encoding='utf-8') as f:
+                schedule_data = json.load(f)
+        else:
+            schedule_data = {"scheduled_streams": []}
+
+        # Determina time slot
+        time_slot = "morning" if 6 <= hour < 12 else \
+                   "afternoon" if 12 <= hour < 18 else \
+                   "evening" if 18 <= hour < 22 else "night"
+
+        # Aggiungi nuovo stream
+        new_stream = {
+            "hour": hour,
+            "minute": minute,
+            "duration_minutes": duration_minutes,
+            "time_slot": time_slot
+        }
+
+        schedule_data["scheduled_streams"].append(new_stream)
+        schedule_data["updated_at"] = datetime.now().isoformat()
+
+        # Salva
+        with open(schedule_file, 'w', encoding='utf-8') as f:
+            json.dump(schedule_data, f, indent=2, ensure_ascii=False)
+
+        return {
+            "success": True,
+            "message": f"Live programmato alle {hour:02d}:{minute:02d}",
+            "scheduled_stream": new_stream
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.get("/api/admin/youtube-schedule")
+def get_youtube_schedule():
+    """Ottieni la programmazione YouTube attuale"""
+    try:
+        schedule_file = 'youtube_schedule.json'
+        if os.path.exists(schedule_file):
+            with open(schedule_file, 'r', encoding='utf-8') as f:
+                schedule_data = json.load(f)
+            return {
+                "success": True,
+                "scheduled_streams": schedule_data.get("scheduled_streams", []),
+                "created_at": schedule_data.get("created_at"),
+                "updated_at": schedule_data.get("updated_at")
+            }
+        else:
+            return {
+                "success": True,
+                "scheduled_streams": [],
+                "message": "Nessuna programmazione trovata. Usa /api/admin/create-daily-schedule per crearne una."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main_simple:app", host="0.0.0.0", port=8000, reload=True)
+

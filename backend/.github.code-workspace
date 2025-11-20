@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../.github"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../frontend"
+		},
+		{
+			"path": "../screenshots_linkedin"
+		}
+	],
+	"settings": {
+		"powershell.cwd": ".github",
+		"liveServer.settings.multiRootWorkspaceName": ".github"
+	}
+}

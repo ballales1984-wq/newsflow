@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {},
+    "search.exclude": {},
+    "files.showHiddenFiles": true,
+    "explorer.fileNesting.enabled": false,
+    "explorer.experimental.fileNesting.enabled": false
+  }
+}
+

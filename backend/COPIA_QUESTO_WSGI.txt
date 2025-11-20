@@ -1,0 +1,17 @@
+import sys
+import os
+
+path = '/home/braccobaldo/newsflow/backend'
+if path not in sys.path:
+    sys.path.insert(0, path)
+
+os.chdir(path)
+
+from mangum import Mangum
+from app.main_simple import app
+
+mangum_handler = Mangum(app, lifespan="off")
+
+def application(environ, start_response):
+    return mangum_handler(environ, start_response)
+
