@@ -640,59 +640,59 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
 
         # Mappa categorie → keywords da cercare
         CATEGORY_KEYWORDS = {
-        1: ["technology", "tech", "tecnologia", "computer", "software", "hardware", "digital"],  # Technology
-        2: ["science", "scienz", "research", "ricerca", "studio", "arxiv"],  # Science
-        3: ["philosophy", "filosofia", "pensiero", "critica"],  # Philosophy
-        4: ["cybersecurity", "security", "sicurezza", "hacking", "exploit", "malware", "cyber"],  # Cybersecurity
-        5: ["ai", "artificial intelligence", "intelligenza artificiale", "machine learning", "gpt", "openai", "llm"],  # AI
-        6: ["innovation", "innovazione", "futuro", "new"],  # Innovation
-        7: ["culture", "cultura", "arte", "society", "società"],  # Culture
-        8: ["ethics", "etica", "morale", "diritti"],  # Ethics
-        9: ["sport", "calcio", "football", "soccer", "tennis", "basketball", "sports"],  # Sport
-        10: ["nature", "ambiente", "environment", "climate", "clima", "green", "ecologia"],  # Nature
-        11: ["business", "economia", "finance", "finanza", "market", "mercato", "company", "azienda"],  # Business
-        12: ["health", "salute", "medical", "medico", "hospital", "ospedale", "medicine"],  # Health
-        13: ["politics", "politica", "government", "governo", "election", "elezioni", "parliament"],  # Politics
-        14: ["entertainment", "intrattenimento", "movie", "film", "cinema", "music", "musica", "tv", "show"]  # Entertainment
-    }
-
-    if articles:
-        # Filtra per categoria se richiesto
-        if category_id and category_id in CATEGORY_KEYWORDS:
-            cat_keywords = CATEGORY_KEYWORDS[category_id]
-            filtered = []
-
-            for article in articles:
-                # Cerca match nei keywords dell'articolo
-                article_keywords = [k.lower() for k in article.get('keywords', [])]
-                article_title = article.get('title', '').lower()
-                article_summary = article.get('summary', '').lower()
-
-                # Match se almeno una keyword della categoria è presente
-                for cat_kw in cat_keywords:
-                    if any(cat_kw in akw for akw in article_keywords) or \
-                       cat_kw in article_title or \
-                       cat_kw in article_summary:
-                        filtered.append(article)
-                        break
-
-            articles = filtered
-
-        # Ordina: prima articoli con immagini, poi senza
-        # Usa una chiave di ordinamento: 0 se ha immagine, 1 se non ha
-        articles.sort(key=lambda x: (0 if x.get('image_url') else 1, -x.get('quality_score', 0)))
-
-        # Applica paginazione
-        total = len(articles)
-        paginated_articles = articles[skip:skip + limit]
-
-        return {
-            "items": paginated_articles,
-            "total": total,
-            "page": (skip // limit) + 1,
-            "size": len(paginated_articles),
-            "pages": (total + limit - 1) // limit if limit > 0 else 1
+            1: ["technology", "tech", "tecnologia", "computer", "software", "hardware", "digital"],  # Technology
+            2: ["science", "scienz", "research", "ricerca", "studio", "arxiv"],  # Science
+            3: ["philosophy", "filosofia", "pensiero", "critica"],  # Philosophy
+            4: ["cybersecurity", "security", "sicurezza", "hacking", "exploit", "malware", "cyber"],  # Cybersecurity
+            5: ["ai", "artificial intelligence", "intelligenza artificiale", "machine learning", "gpt", "openai", "llm"],  # AI
+            6: ["innovation", "innovazione", "futuro", "new"],  # Innovation
+            7: ["culture", "cultura", "arte", "society", "società"],  # Culture
+            8: ["ethics", "etica", "morale", "diritti"],  # Ethics
+            9: ["sport", "calcio", "football", "soccer", "tennis", "basketball", "sports"],  # Sport
+            10: ["nature", "ambiente", "environment", "climate", "clima", "green", "ecologia"],  # Nature
+            11: ["business", "economia", "finance", "finanza", "market", "mercato", "company", "azienda"],  # Business
+            12: ["health", "salute", "medical", "medico", "hospital", "ospedale", "medicine"],  # Health
+            13: ["politics", "politica", "government", "governo", "election", "elezioni", "parliament"],  # Politics
+            14: ["entertainment", "intrattenimento", "movie", "film", "cinema", "music", "musica", "tv", "show"]  # Entertainment
         }
+
+        if articles:
+            # Filtra per categoria se richiesto
+            if category_id and category_id in CATEGORY_KEYWORDS:
+                cat_keywords = CATEGORY_KEYWORDS[category_id]
+                filtered = []
+
+                for article in articles:
+                    # Cerca match nei keywords dell'articolo
+                    article_keywords = [k.lower() for k in article.get('keywords', [])]
+                    article_title = article.get('title', '').lower()
+                    article_summary = article.get('summary', '').lower()
+
+                    # Match se almeno una keyword della categoria è presente
+                    for cat_kw in cat_keywords:
+                        if any(cat_kw in akw for akw in article_keywords) or \
+                           cat_kw in article_title or \
+                           cat_kw in article_summary:
+                            filtered.append(article)
+                            break
+
+                articles = filtered
+
+            # Ordina: prima articoli con immagini, poi senza
+            # Usa una chiave di ordinamento: 0 se ha immagine, 1 se non ha
+            articles.sort(key=lambda x: (0 if x.get('image_url') else 1, -x.get('quality_score', 0)))
+
+            # Applica paginazione
+            total = len(articles)
+            paginated_articles = articles[skip:skip + limit]
+
+            return {
+                "items": paginated_articles,
+                "total": total,
+                "page": (skip // limit) + 1,
+                "size": len(paginated_articles),
+                "pages": (total + limit - 1) // limit if limit > 0 else 1
+            }
         
         # Fallback se non ci sono articoli dopo il filtro
         return {
