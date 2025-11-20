@@ -638,8 +638,8 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
                 "pages": 1
             }
 
-    # Mappa categorie → keywords da cercare
-    CATEGORY_KEYWORDS = {
+        # Mappa categorie → keywords da cercare
+        CATEGORY_KEYWORDS = {
         1: ["technology", "tech", "tecnologia", "computer", "software", "hardware", "digital"],  # Technology
         2: ["science", "scienz", "research", "ricerca", "studio", "arxiv"],  # Science
         3: ["philosophy", "filosofia", "pensiero", "critica"],  # Philosophy
@@ -693,8 +693,8 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
             "size": len(paginated_articles),
             "pages": (total + limit - 1) // limit if limit > 0 else 1
         }
-
-        # Fallback to demo if file not found
+        
+        # Fallback se non ci sono articoli dopo il filtro
         return {
             "items": [],
             "total": 0,
