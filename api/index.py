@@ -76,14 +76,45 @@ except Exception as e:
 def handler(event, context):
     """Handler per Vercel serverless functions"""
     try:
-        print(f"🔍 HANDLER: Received event path={event.get('path', 'unknown')}")
-        print(f"🔍 HANDLER: Received event method={event.get('httpMethod', 'unknown')}")
+        print(f"🔍 HANDLER: Received event type={type(event)}")
+        print(f"🔍 HANDLER: Event keys={list(event.keys()) if isinstance(event, dict) else 'not a dict'}")
         
-        # Mangum gestisce automaticamente il formato per Vercel
+        # Mangum si aspetta un formato specifico per Vercel
+        # Vercel passa eventi in formato AWS Lambda API Gateway
         response = handler_mangum(event, context)
         
-        print(f"✅ HANDLER: Response status={response.get('statusCode', 'unknown')}")
-        return response
+        # Assicurati che la risposta sia nel formato corretto
+        if isinstance(response, dict):
+            print(f"✅ HANDLER: Response status={response.get('statusCode', 'unknown')}")
+            # Se la risposta ha già statusCode, è già nel formato corretto
+            if "statusCode" in response:
+                return response
+            # Altrimenti, potrebbe essere un dict con body/headers
+            elif "body" in response or "headers" in response:
+                if "statusCode" not in response:
+                    response["statusCode"] = 200
+                return response
+            else:
+                # Dict semplice, convertilo in body JSON
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps(response)
+                }
+        elif isinstance(response, str):
+            # Stringa, potrebbe essere già JSON serializzato
+            return {
+                "statusCode": 200,
+                "headers": {"Content-Type": "application/json"},
+                "body": response
+            }
+        else:
+            # Altro tipo, serializza come JSON
+            return {
+                "statusCode": 200,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps(response)
+            }
     except Exception as e:
         print(f"❌ ERROR in handler: {str(e)}")
         print(f"❌ ERROR traceback: {traceback.format_exc()}")
