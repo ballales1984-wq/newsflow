@@ -50,38 +50,61 @@ try:
     # Crea handler Mangum per Vercel
     mangum_handler = Mangum(app, lifespan="off")
     print("DEBUG: Mangum handler created successfully")
+    initialization_error = None
 
 except Exception as e:
+    initialization_error = e
     print(f"ERROR during initialization: {str(e)}")
     print(f"ERROR traceback: {traceback.format_exc()}")
     import json
-    # Crea un handler di fallback che restituisce un errore
+    # Crea un handler di fallback che restituisce informazioni utili
     def error_handler(event, context):
+        import json
+        error_info = {
+            "error": "Serverless function initialization failed",
+            "message": str(initialization_error),
+            "path": event.get("path", "unknown") if event else "no event",
+            "method": event.get("httpMethod", "unknown") if event else "no event"
+        }
+        # Includi traceback solo in debug
+        if os.getenv("VERCEL_ENV") != "production":
+            error_info["traceback"] = traceback.format_exc()
         return {
             "statusCode": 500,
             "headers": {"Content-Type": "application/json"},
-            "body": json.dumps({
-                "error": "Serverless function initialization failed",
-                "message": str(e),
-                "traceback": traceback.format_exc()
-            })
+            "body": json.dumps(error_info)
         }
     mangum_handler = error_handler
 
 def handler(event, context):
     """Handler per Vercel serverless functions"""
     try:
-        return mangum_handler(event, context)
+        result = mangum_handler(event, context)
+        # Assicurati che la risposta sia nel formato corretto
+        if isinstance(result, dict) and "statusCode" in result:
+            return result
+        else:
+            # Se Mangum restituisce un formato diverso, convertilo
+            import json
+            return {
+                "statusCode": 200,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps(result) if not isinstance(result, str) else result
+            }
     except Exception as e:
         print(f"ERROR in handler: {str(e)}")
         print(f"ERROR traceback: {traceback.format_exc()}")
         import json
+        error_info = {
+            "error": "Serverless function execution failed",
+            "message": str(e),
+            "path": event.get("path", "unknown") if event else "no event"
+        }
+        if os.getenv("VERCEL_ENV") != "production":
+            error_info["traceback"] = traceback.format_exc()
         return {
             "statusCode": 500,
             "headers": {"Content-Type": "application/json"},
-            "body": json.dumps({
-                "error": "Serverless function execution failed",
-                "message": str(e)
-            })
+            "body": json.dumps(error_info)
         }
 
