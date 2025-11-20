@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  // Backend su PythonAnywhere (sempre online, gratuito!)
-  apiUrl: 'https://braccobaldo.pythonanywhere.com/api/v1'
+  // Backend su Vercel (serverless functions)
+  apiUrl: 'https://newsflow-orcin.vercel.app/api/v1'
 };
 

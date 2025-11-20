@@ -100,16 +100,22 @@ if (Test-Path $digestScript) {
             }
         }
         
-        # Sincronizza digest.json in frontend/src/assets/
+        # Sincronizza digest.json in tutte le cartelle necessarie
         $digestFile = Join-Path $rootDir "backend\digest.json"
         if (Test-Path $digestFile) {
-            $frontendDigest = Join-Path $rootDir "frontend\src\assets\digest.json"
-            $frontendDigestDir = Split-Path $frontendDigest -Parent
-            if (-not (Test-Path $frontendDigestDir)) {
-                New-Item -ItemType Directory -Path $frontendDigestDir -Force | Out-Null
+            $digestTargets = @(
+                (Join-Path $rootDir "api\digest.json"),
+                (Join-Path $rootDir "frontend\src\assets\digest.json")
+            )
+            
+            foreach ($target in $digestTargets) {
+                $targetDir = Split-Path $target -Parent
+                if (-not (Test-Path $targetDir)) {
+                    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+                }
+                Copy-Item $digestFile $target -Force
+                Write-Host "   ✅ Digest sincronizzato: $target" -ForegroundColor Green
             }
-            Copy-Item $digestFile $frontendDigest -Force
-            Write-Host "   ✅ Digest sincronizzato in frontend/src/assets/" -ForegroundColor Green
         }
     } catch {
         Write-Host "   ⚠️  Errore generazione digest: $_" -ForegroundColor Yellow
