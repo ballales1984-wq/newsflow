@@ -607,7 +607,36 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
         # Limita il limite massimo a 200 per evitare problemi di performance
         limit = min(limit, 200)
 
+        # Debug: verifica file prima di caricare
+        import os
+        debug_paths = [
+            os.path.join(os.getcwd(), 'api', 'final_news_italian.json'),
+            os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
+            os.path.join(os.getcwd(), 'final_news_italian.json'),
+        ]
+        print(f"DEBUG get_articles: cwd={os.getcwd()}")
+        for path in debug_paths:
+            exists = os.path.exists(path)
+            print(f"DEBUG get_articles: {path} exists={exists}")
+            if exists:
+                try:
+                    size = os.path.getsize(path)
+                    print(f"DEBUG get_articles: {path} size={size}")
+                except:
+                    pass
+
         articles = _load_articles()
+        
+        # Se non ci sono articoli, restituisci array vuoto invece di causare errore
+        if not articles:
+            print("⚠️  Nessun articolo caricato, restituisco array vuoto")
+            return {
+                "items": [],
+                "total": 0,
+                "page": 1,
+                "size": 0,
+                "pages": 1
+            }
 
     # Mappa categorie → keywords da cercare
     CATEGORY_KEYWORDS = {
