@@ -329,6 +329,8 @@ def _load_articles(force_reload=False):
             print(f"❌ Errore caricamento final_news_italian.json: {e}")
             import traceback
             traceback.print_exc()
+            # Restituisci array vuoto invece di None per evitare errori downstream
+            return []
 
     # Fallback su tutte le fonti (stessi path migliorati)
     possible_paths_all = [
@@ -601,10 +603,11 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
     """Get articles - REAL NEWS from RSS feeds - WITH CATEGORY FILTER AND PAGINATION
     Limit aumentato a 50 per permettere più articoli per pagina
     """
-    # Limita il limite massimo a 200 per evitare problemi di performance
-    limit = min(limit, 200)
+    try:
+        # Limita il limite massimo a 200 per evitare problemi di performance
+        limit = min(limit, 200)
 
-    articles = _load_articles()
+        articles = _load_articles()
 
     # Mappa categorie → keywords da cercare
     CATEGORY_KEYWORDS = {
@@ -649,7 +652,7 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
         # Ordina: prima articoli con immagini, poi senza
         # Usa una chiave di ordinamento: 0 se ha immagine, 1 se non ha
         articles.sort(key=lambda x: (0 if x.get('image_url') else 1, -x.get('quality_score', 0)))
-        
+
         # Applica paginazione
         total = len(articles)
         paginated_articles = articles[skip:skip + limit]
@@ -662,13 +665,26 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
             "pages": (total + limit - 1) // limit if limit > 0 else 1
         }
 
-    # Fallback to demo if file not found
-    return {
-        "items": [],
-        "total": 0,
-        "page": 1,
-        "size": 0,
-        "pages": 1
+        # Fallback to demo if file not found
+        return {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "size": 0,
+            "pages": 1
+        }
+    except Exception as e:
+        print(f"❌ Errore in get_articles: {e}")
+        import traceback
+        traceback.print_exc()
+        # Restituisci risposta vuota invece di causare 500
+        return {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "size": 0,
+            "pages": 1,
+            "error": str(e)
         }
 
 
