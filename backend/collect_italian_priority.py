@@ -9,18 +9,19 @@ from datetime import datetime
 print("🇮🇹 Raccogliendo notizie - PRIORITÀ ITALIANE")
 print("=" * 70)
 
-# STEP 0: Carica PRIMA le notizie vecchie (se esistono) per mantenerle durante l'aggiornamento
-print("\n📰 STEP 0: Caricamento notizie vecchie (se esistono)...")
-old_articles = []
+# STEP 0: NON cancellare i file vecchi PRIMA - li manterremo fino a quando le nuove sono pronte
+# Questo permette all'app di partire con le notizie vecchie invece di essere vuota
+print("\n📰 STEP 0: Mantenimento notizie vecchie durante raccolta...")
 old_file_path = 'final_news_italian.json'
+old_articles_count = 0
 if os.path.exists(old_file_path):
     try:
         with open(old_file_path, 'r', encoding='utf-8') as f:
             old_data = json.load(f)
-            old_articles = old_data.get('items', [])
-            print(f"   ✅ Caricate {len(old_articles)} notizie vecchie (verranno sostituite con le nuove)")
+            old_articles_count = len(old_data.get('items', []))
+            print(f"   ✅ Trovate {old_articles_count} notizie vecchie (verranno sostituite dopo raccolta nuove)")
     except Exception as e:
-        print(f"   ⚠️  Errore caricamento notizie vecchie: {e}")
+        print(f"   ⚠️  Errore lettura notizie vecchie: {e}")
 else:
     print(f"   ℹ️  Nessun file vecchio trovato - prima raccolta")
 
