@@ -11,6 +11,11 @@
       "destination": "/index.html"
     }
   ],
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.12"
+    }
+  },
   "headers": [
     {
       "source": "/api/(.*)",
