@@ -254,6 +254,47 @@ with open('italian_priority_news.json', 'w', encoding='utf-8') as f:
         "pages": 1
     }, f, indent=2, ensure_ascii=False)
 
-print(f"\n💾 Salvate in: italian_priority_news.json")
-print(f"🇮🇹 Pronto per app in italiano!")
+# Salva le NUOVE notizie (sostituiscono le vecchie)
+print(f"\n💾 Salvataggio nuove notizie...")
+with open('italian_priority_news.json', 'w', encoding='utf-8') as f:
+    json.dump({
+        "items": all_articles,
+        "total": len(all_articles),
+        "page": 1,
+        "size": 100,
+        "pages": 1
+    }, f, indent=2, ensure_ascii=False)
+
+print(f"✅ Salvate {len(all_articles)} nuove notizie in: italian_priority_news.json")
+
+# IMPORTANTE: Cancella i file vecchi SOLO DOPO aver salvato le nuove
+print(f"\n🗑️  Cancellazione file vecchi (ora che le nuove sono pronte)...")
+files_to_delete = [
+    'final_news_italian.json',
+    'all_sources_news.json'
+]
+
+deleted_count = 0
+for file_name in files_to_delete:
+    if os.path.exists(file_name):
+        try:
+            os.remove(file_name)
+            print(f"   ✅ Cancellato: {file_name}")
+            deleted_count += 1
+        except Exception as e:
+            print(f"   ⚠️  Errore cancellazione {file_name}: {e}")
+
+if deleted_count > 0:
+    print(f"   📊 {deleted_count} file vecchi cancellati (dopo salvataggio nuove)")
+else:
+    print(f"   ℹ️  Nessun file vecchio da cancellare")
+
+# Copia il nuovo file come final_news_italian.json
+if os.path.exists('italian_priority_news.json'):
+    import shutil
+    shutil.copy('italian_priority_news.json', 'final_news_italian.json')
+    shutil.copy('italian_priority_news.json', 'all_sources_news.json')
+    print(f"✅ File final_news_italian.json e all_sources_news.json aggiornati con nuove notizie")
+
+print(f"\n🇮🇹 Pronto per app in italiano!")
 
