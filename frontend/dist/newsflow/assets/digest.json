@@ -1,0 +1,30 @@
+{
+  "date": "2025-11-20",
+  "digest": [
+    {
+      "category": "💻 Tecnologia",
+      "articles": [
+        {
+          "title": "Iran-Linked Hackers Mapped Ship AIS Data Days Before Real-World Missile Strike Attempt",
+          "description": "Threat actors with ties to Iran engaged in cyber warfare as part of efforts to facilitate and enhance physical, real-world attacks, a trend that Amazon has called cyber-enabled kinetic targeting.\nThe "
+        },
+        {
+          "title": "New Sturnus Android Trojan Quietly Captures Encrypted Chats and Hijacks Devices",
+          "description": "Cybersecurity researchers have disclosed details of a new Android banking trojan called Sturnus that enables credential theft and full device takeover to conduct financial fraud.\n\"A key differentiator"
+        },
+        {
+          "title": "CTM360 Exposes a Global WhatsApp Hijacking Campaign: HackOnChat",
+          "description": "CTM360 has identified a rapidly expanding WhatsApp account-hacking campaign targeting users worldwide via a network of deceptive authentication portals and impersonation pages. The campaign, internall"
+        },
+        {
+          "title": "The Download: de-censoring DeepSeek, and Gemini 3",
+          "description": "This is today&#8217;s edition of The Download, our weekday newsletter that provides a daily dose of what&#8217;s going on in the world of technology. Quantum physicists have shrunk and “de-censored” D"
+        },
+        {
+          "title": "Scaling innovation in manufacturing with AI",
+          "description": "Manufacturing is getting a major system upgrade. As AI amplifies existing technologies—like digital twins, the cloud, edge computing, and the industrial internet of things (IIoT)—it is enabling factor"
+        }
+      ]
+    }
+  ]
+}
