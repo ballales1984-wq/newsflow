@@ -4,7 +4,15 @@ import json
 import re
 import requests
 import os
+import time
 from datetime import datetime
+from urllib.parse import urljoin
+try:
+    from bs4 import BeautifulSoup
+    BEAUTIFULSOUP_AVAILABLE = True
+except ImportError:
+    BEAUTIFULSOUP_AVAILABLE = False
+    print("⚠️  BeautifulSoup non disponibile - estrazione immagini avanzata disabilitata")
 
 print("🇮🇹 Raccogliendo notizie - PRIORITÀ ITALIANE")
 print("=" * 70)
@@ -24,6 +32,65 @@ if os.path.exists(old_file_path):
         print(f"   ⚠️  Errore lettura notizie vecchie: {e}")
 else:
     print(f"   ℹ️  Nessun file vecchio trovato - prima raccolta")
+
+def extract_image_from_webpage(url):
+    """Estrae immagine da una pagina web usando Open Graph, meta tags, ecc."""
+    if not BEAUTIFULSOUP_AVAILABLE:
+        return None
+    
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # 1. Open Graph image (priorità alta)
+        og_image = soup.find('meta', property='og:image')
+        if og_image and og_image.get('content'):
+            img_url = og_image.get('content')
+            if img_url.startswith('//'):
+                img_url = 'https:' + img_url
+            elif img_url.startswith('/'):
+                img_url = urljoin(url, img_url)
+            if img_url.startswith('http'):
+                return img_url
+        
+        # 2. Twitter card image
+        twitter_image = soup.find('meta', attrs={'name': 'twitter:image'})
+        if twitter_image and twitter_image.get('content'):
+            img_url = twitter_image.get('content')
+            if img_url.startswith('//'):
+                img_url = 'https:' + img_url
+            elif img_url.startswith('/'):
+                img_url = urljoin(url, img_url)
+            if img_url.startswith('http'):
+                return img_url
+        
+        # 3. Prima immagine <img> nel contenuto principale
+        content_areas = soup.find_all(['article', 'main', 'div'], class_=re.compile(r'content|article|post|entry', re.I))
+        if not content_areas:
+            content_areas = [soup.find('body')]
+        
+        for area in content_areas:
+            if area:
+                img = area.find('img', src=True)
+                if img:
+                    img_url = img.get('src')
+                    if img_url.startswith('//'):
+                        img_url = 'https:' + img_url
+                    elif img_url.startswith('/'):
+                        img_url = urljoin(url, img_url)
+                    if img_url.startswith('http') and not any(x in img_url.lower() for x in ['logo', 'icon', 'avatar', 'button']):
+                        return img_url
+        
+    except Exception as e:
+        # Silenzioso - non vogliamo rallentare la raccolta
+        pass
+    
+    return None
 
 # PRIMA: Fonti italiane (più notizie)
 ITALIAN_SOURCES = {
@@ -136,6 +203,20 @@ for source_name, rss_url in ITALIAN_SOURCES.items():
                             image_url = link.get('href')
                             break
                 
+                # Metodo 5: Estrai da pagina web (Open Graph, meta tags) - SOLO se non trovata nei feed
+                if not image_url and entry.get('link'):
+                    try:
+                        # Rate limiting: solo per articoli senza immagine
+                        image_url = extract_image_from_webpage(entry.get('link'))
+                        if image_url:
+                            # Pulisci URL (rimuovi parametri tracking)
+                            image_url = image_url.split('?')[0].split('&')[0]
+                            # Valida che sia un URL assoluto
+                            if not image_url.startswith(('http://', 'https://')):
+                                image_url = None
+                    except:
+                        pass
+                
                 article['image_url'] = image_url if image_url else None
                 
                 all_articles.append(article)
@@ -217,6 +298,20 @@ for source_name, rss_url in INTERNATIONAL_SOURCES.items():
                         if link.get('type', '').startswith('image/'):
                             image_url = link.get('href')
                             break
+                
+                # Metodo 4: Estrai da pagina web (Open Graph, meta tags) - SOLO se non trovata nei feed
+                if not image_url and entry.get('link'):
+                    try:
+                        # Rate limiting: solo per articoli senza immagine
+                        image_url = extract_image_from_webpage(entry.get('link'))
+                        if image_url:
+                            # Pulisci URL (rimuovi parametri tracking)
+                            image_url = image_url.split('?')[0].split('&')[0]
+                            # Valida che sia un URL assoluto
+                            if not image_url.startswith(('http://', 'https://')):
+                                image_url = None
+                    except:
+                        pass
                 
                 article['image_url'] = image_url if image_url else None
                 
