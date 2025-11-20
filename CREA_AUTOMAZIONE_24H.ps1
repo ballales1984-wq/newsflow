@@ -26,7 +26,7 @@ if (-not $rootDir) {
     $rootDir = Get-Location
 }
 
-$scriptPath = Join-Path $rootDir "AGGIORNA_TUTTO.ps1"
+$scriptPath = Join-Path $rootDir "AGGIORNA_TUTTO_COMPLETO.ps1"
 $taskName = "NewsFlow-Aggiornamento24H"
 $description = "Aggiornamento automatico notizie NewsFlow ogni 24 ore"
 
