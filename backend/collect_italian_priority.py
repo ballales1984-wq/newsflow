@@ -9,28 +9,20 @@ from datetime import datetime
 print("🇮🇹 Raccogliendo notizie - PRIORITÀ ITALIANE")
 print("=" * 70)
 
-# STEP 0: Cancella file JSON vecchi prima di iniziare
-print("\n🗑️  STEP 0: Cancellazione file JSON vecchi...")
-files_to_delete = [
-    'italian_priority_news.json',
-    'final_news_italian.json',
-    'all_sources_news.json'
-]
-
-deleted_count = 0
-for file_name in files_to_delete:
-    if os.path.exists(file_name):
-        try:
-            os.remove(file_name)
-            print(f"   ✅ Cancellato: {file_name}")
-            deleted_count += 1
-        except Exception as e:
-            print(f"   ⚠️  Errore cancellazione {file_name}: {e}")
-
-if deleted_count > 0:
-    print(f"   📊 {deleted_count} file vecchi cancellati")
+# STEP 0: Carica PRIMA le notizie vecchie (se esistono) per mantenerle durante l'aggiornamento
+print("\n📰 STEP 0: Caricamento notizie vecchie (se esistono)...")
+old_articles = []
+old_file_path = 'final_news_italian.json'
+if os.path.exists(old_file_path):
+    try:
+        with open(old_file_path, 'r', encoding='utf-8') as f:
+            old_data = json.load(f)
+            old_articles = old_data.get('items', [])
+            print(f"   ✅ Caricate {len(old_articles)} notizie vecchie (verranno sostituite con le nuove)")
+    except Exception as e:
+        print(f"   ⚠️  Errore caricamento notizie vecchie: {e}")
 else:
-    print(f"   ℹ️  Nessun file vecchio da cancellare")
+    print(f"   ℹ️  Nessun file vecchio trovato - prima raccolta")
 
 # PRIMA: Fonti italiane (più notizie)
 ITALIAN_SOURCES = {

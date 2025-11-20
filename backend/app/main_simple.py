@@ -48,32 +48,28 @@ app.add_middleware(
 import os
 is_vercel = os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV")
 
+# IMPORTANTE: Carica le notizie vecchie ALL'AVVIO per evitare pagina vuota
+# Le nuove notizie le sostituiranno quando saranno disponibili
 if not is_vercel:
     @app.on_event("startup")
     async def startup_event():
-        """Precarica la cache degli articoli all'avvio (solo locale, non Vercel)"""
-        print("🚀 Startup: lazy loading attivo (cache caricata alla prima richiesta)")
-        print("   Questo evita errori durante l'avvio e migliora la stabilità")
+        """Precarica la cache degli articoli all'avvio con NOTIZIE VECCHIE (se disponibili)"""
+        print("🚀 Startup: Caricamento notizie vecchie all'avvio...")
+        print("   Le nuove notizie sostituiranno le vecchie quando disponibili")
         
-        # Opzionale: prova a verificare che i file esistano (senza caricarli)
+        # Carica le notizie vecchie PRIMA che arrivino le nuove
         try:
-            possible_paths = [
-                os.path.join(os.getcwd(), 'final_news_italian.json'),
-                os.path.join(os.getcwd(), 'backend', 'final_news_italian.json'),
-                os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'final_news_italian.json'),
-            ]
-            file_found = False
-            for path in possible_paths:
-                if os.path.exists(path):
-                    file_found = True
-                    print(f"   ✅ File JSON trovato: {path}")
-                    break
-            if not file_found:
-                print("   ⚠️  File JSON non trovato - verrà cercato alla prima richiesta")
+            articles = _load_articles(force_reload=False)
+            if articles:
+                print(f"   ✅ Caricate {len(articles)} notizie vecchie all'avvio")
+            else:
+                print("   ⚠️  Nessuna notizia vecchia trovata - verrà cercato alla prima richiesta")
         except Exception as e:
-            print(f"   ⚠️  Errore verifica file: {e}")
+            print(f"   ⚠️  Errore caricamento notizie vecchie: {e}")
+            print("   Le notizie verranno caricate alla prima richiesta")
 else:
     print("🚀 Vercel rilevato - startup event disabilitato (lazy loading)")
+    # Su Vercel, carica comunque le notizie vecchie alla prima richiesta
 
 
 @app.get("/")
