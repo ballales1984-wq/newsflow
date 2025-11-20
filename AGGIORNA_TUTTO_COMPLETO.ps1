@@ -110,6 +110,57 @@ if (Test-Path $backendFile) {
 
 Write-Host ""
 
+# STEP 2.5: Scarica e salva immagini localmente (per frontend statico)
+Write-Host "🖼️  STEP 2.5: Download immagini per frontend..." -ForegroundColor Yellow
+$downloadImagesScript = Join-Path $rootDir "backend\scarica_e_salva_immagini.py"
+if (Test-Path $downloadImagesScript) {
+    Set-Location (Join-Path $rootDir "backend")
+    try {
+        Write-Host "   🔄 Download immagini da URL e salvataggio in frontend/src/assets/images/..." -ForegroundColor Gray
+        $output = python scarica_e_salva_immagini.py final_news_italian.json 2>&1
+        $output | ForEach-Object {
+            if ($_ -match "✅|Salvata|esistente|Completato|Risultati") {
+                Write-Host "   $_" -ForegroundColor Green
+            } elseif ($_ -match "❌|⚠️|ERROR|Errore") {
+                Write-Host "   $_" -ForegroundColor Red
+            } elseif ($_ -match "📊|📁|📰|Trovati|scaricate") {
+                Write-Host "   $_" -ForegroundColor Cyan
+            } else {
+                Write-Host "   $_" -ForegroundColor Gray
+            }
+        }
+        
+        # Sincronizza JSON aggiornato (con percorsi locali immagini: /assets/images/xxx.jpg)
+        $backendFile = Join-Path $rootDir "backend\final_news_italian.json"
+        if (Test-Path $backendFile) {
+            $targets = @(
+                (Join-Path $rootDir "api\final_news_italian.json"),
+                (Join-Path $rootDir "frontend\src\assets\final_news_italian.json")
+            )
+            
+            foreach ($target in $targets) {
+                Copy-Item $backendFile $target -Force
+                Write-Host "   ✅ JSON con percorsi immagini locali sincronizzato: $target" -ForegroundColor Green
+            }
+            
+            # Verifica immagini scaricate
+            $imagesDir = Join-Path $rootDir "frontend\src\assets\images"
+            if (Test-Path $imagesDir) {
+                $imageCount = (Get-ChildItem $imagesDir -File | Measure-Object).Count
+                Write-Host "   📊 Immagini in frontend/src/assets/images/: $imageCount" -ForegroundColor Cyan
+            }
+        }
+    } catch {
+        Write-Host "   ⚠️  Errore download immagini: $_" -ForegroundColor Yellow
+        Write-Host "   ℹ️  Continuo senza immagini locali (userà URL originali)..." -ForegroundColor Gray
+    }
+    Set-Location $rootDir
+} else {
+    Write-Host "   ⚠️  Script download immagini non trovato - salto" -ForegroundColor Yellow
+}
+
+Write-Host ""
+
 # STEP 3: Genera digest
 Write-Host "📰 STEP 3: Generazione digest giornaliero..." -ForegroundColor Yellow
 $digestScript = Join-Path $rootDir "backend\genera_digest_giornaliero.py"
