@@ -1,11 +1,6 @@
 {
   "version": 2,
   "buildCommand": "cd frontend && npm ci && npm run build",
-  "functions": {
-    "api/**/*.py": {
-      "runtime": "python3.12"
-    }
-  },
   "outputDirectory": "frontend/dist/newsflow",
   "rewrites": [
     {
