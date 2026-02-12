@@ -39,6 +39,7 @@ if (Test-Path ".git") {
 
         # Gestione Push con Auto-Fix (Pull se necessario)
         git push
+        Write-Host "✅ Modifiche inviate! Vercel aggiornerà il sito tra circa 2 minuti." -ForegroundColor Green
         if ($LASTEXITCODE -ne 0) {
             Write-Host "⚠️  Rilevate modifiche remote. Eseguo 'git pull --rebase'..." -ForegroundColor Yellow
             git pull --rebase
