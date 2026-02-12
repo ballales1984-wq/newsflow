@@ -1,28 +1,66 @@
 {
-  "date": "2025-11-20",
+  "date": "2026-02-10",
   "digest": [
     {
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "Iran-Linked Hackers Mapped Ship AIS Data Days Before Real-World Missile Strike Attempt",
-          "description": "Threat actors with ties to Iran engaged in cyber warfare as part of efforts to facilitate and enhance physical, real-world attacks, a trend that Amazon has called cyber-enabled kinetic targeting.\nThe "
+          "title": "La rete oscura delle evacuazioni da Gaza",
+          "description": "Un’indagine sulle evacuazioni dei civili da Gaza rivela corridoi paralleli, voli fantasma e operazioni gestite da entità opache. L'articolo La rete os"
         },
         {
-          "title": "New Sturnus Android Trojan Quietly Captures Encrypted Chats and Hijacks Devices",
-          "description": "Cybersecurity researchers have disclosed details of a new Android banking trojan called Sturnus that enables credential theft and full device takeover to conduct financial fraud.\n\"A key differentiator"
+          "title": "Digital Omnibus: l’Europa ridisegna il quadro normativo digitale tra competitività e ridefinizione d",
+          "description": "Il Digital Omnibus, presentato dalla Commissione Europea il 19 novembre 2025, rappresenta la più ampia revisione del quadro normativo digitale europeo"
         },
         {
-          "title": "CTM360 Exposes a Global WhatsApp Hijacking Campaign: HackOnChat",
-          "description": "CTM360 has identified a rapidly expanding WhatsApp account-hacking campaign targeting users worldwide via a network of deceptive authentication portals and impersonation pages. The campaign, internall"
+          "title": "Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre su Amazon",
+          "description": "Approfitta del Black Friday Amazon per acquistare Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre: solo oggi e domani. The post"
         },
         {
-          "title": "The Download: de-censoring DeepSeek, and Gemini 3",
-          "description": "This is today&#8217;s edition of The Download, our weekday newsletter that provides a daily dose of what&#8217;s going on in the world of technology. Quantum physicists have shrunk and “de-censored” D"
+          "title": "Telecamere nei negozi: guida a regole, rischi e buone pratiche",
+          "description": "La videosorveglianza nei negozi è lecita solo se fondata su finalità chiare, proporzionata e supportata dalle corrette procedure lavoristiche e privac"
         },
         {
-          "title": "Scaling innovation in manufacturing with AI",
-          "description": "Manufacturing is getting a major system upgrade. As AI amplifies existing technologies—like digital twins, the cloud, edge computing, and the industrial internet of things (IIoT)—it is enabling factor"
+          "title": "Cina e Giappone: non solo una crisi diplomatica",
+          "description": "Dalla questione Taiwan alle ritorsioni economiche: lo scontro tra Cina e Giappone riapre ferite storiche. L'articolo Cina e Giappone: non solo una cri"
+        }
+      ]
+    },
+    {
+      "category": "🤖 Intelligenza Artificiale",
+      "articles": [
+        {
+          "title": "Ripensare i contratti nella direzione legale aziendale nell’era dell’AI",
+          "description": "Dalla redazione automatica all’analisi intelligente del rischio, l’intelligenza artificiale trasforma la direzione legale in una funzione strategica e"
+        },
+        {
+          "title": "Black Friday 2025, le 70 migliori offerte scelte da Wired",
+          "description": "Abbiamo raccolto le offerte migliori del Black Friday in tutte le categorie: dai notebook alla cucina, passando per robot aspirapolvere e idee regalo"
+        },
+        {
+          "title": "L'Ucraina alla ricerca di alleati anche alla Cop30 perché “siamo contro tutto quello che è vitale pe",
+          "description": "Il viceministro all'Economia, Ambiente e Agricoltura Pavlo Kartashov a Belém racconta a Wired come Kyiv vuole ricostruire l'impegno ambientale. Ma la "
+        },
+        {
+          "title": "L’AI cambia l’università: non bastano policy, servono regole",
+          "description": "L’AI entra nei processi cognitivi di atenei e laboratori: accelera traduzioni, sintesi e ipotesi, ma solleva dubbi su autorialità, integrità e valutaz"
+        },
+        {
+          "title": "Come gli evals stanno guidando l’introduzione dell’AI nelle imprese",
+          "description": "Sempre più aziende integrano l’intelligenza artificiale nei processi, ma molte faticano a ottenere i risultati sperati. Il motivo spesso risiede nella"
+        }
+      ]
+    },
+    {
+      "category": "💼 Business",
+      "articles": [
+        {
+          "title": "La creazione di valore nel business del cloud fluisce verso l’America",
+          "description": "Servono alternative agli hyperscaler statunitensi, poiché i loro modelli spingono le imprese verso una dipendenza sempre più forte. In Europa il probl"
+        },
+        {
+          "title": "Talento come leva strategica: come attivarlo e misurarlo in azienda",
+          "description": "Il talento non è dote innata: è una costruzione dinamica che richiede cultura, leadership e contesti abilitanti. Dalle competenze all’impatto, ecco co"
         }
       ]
     }

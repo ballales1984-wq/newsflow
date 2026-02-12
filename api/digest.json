@@ -1,28 +1,66 @@
 {
-  "date": "2025-11-22",
+  "date": "2026-02-10",
   "digest": [
     {
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "Grafana Patches CVSS 10.0 SCIM Flaw Enabling Impersonation and Privilege Escalation",
-          "description": "Grafana has released security updates to address a maximum severity security flaw that could allow privilege escalation or user impersonation under certain configurations.\nThe vulnerability, tracked a"
+          "title": "La rete oscura delle evacuazioni da Gaza",
+          "description": "Un’indagine sulle evacuazioni dei civili da Gaza rivela corridoi paralleli, voli fantasma e operazioni gestite da entità opache. L'articolo La rete os"
         },
         {
-          "title": "CISA Warns of Actively Exploited Critical Oracle Identity Manager Zero-Day Vulnerability",
-          "description": "The U.S. Cybersecurity and Infrastructure Security Agency (CISA) on Friday added a critical security flaw impacting Oracle Identity Manager to its Known Exploited Vulnerabilities (KEV) catalog, citing"
+          "title": "Digital Omnibus: l’Europa ridisegna il quadro normativo digitale tra competitività e ridefinizione d",
+          "description": "Il Digital Omnibus, presentato dalla Commissione Europea il 19 novembre 2025, rappresenta la più ampia revisione del quadro normativo digitale europeo"
         },
         {
-          "title": "Matrix Push C2 Uses Browser Notifications for Fileless, Cross-Platform Phishing Attacks",
-          "description": "Bad actors are leveraging browser notifications as a vector for phishing attacks to distribute malicious links by means of a new command-and-control (C2) platform called Matrix Push C2.\n\"This browser-"
+          "title": "Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre su Amazon",
+          "description": "Approfitta del Black Friday Amazon per acquistare Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre: solo oggi e domani. The post"
         },
         {
-          "title": "Roundtables: Surviving the New Age of Conspiracies",
-          "description": "Everything is a conspiracy theory now. MIT Technology Review’s series, “The New Conspiracy Age,” explores how this moment is changing science and technology. Watch a discussion with our editors and Mi"
+          "title": "Telecamere nei negozi: guida a regole, rischi e buone pratiche",
+          "description": "La videosorveglianza nei negozi è lecita solo se fondata su finalità chiare, proporzionata e supportata dalle corrette procedure lavoristiche e privac"
         },
         {
-          "title": "We’re learning more about what vitamin D does to our bodies",
-          "description": "It has started to get really wintry here in London over the last few days. The mornings are frosty, the wind is biting, and it’s already dark by the time I pick my kids up from school. The darkness in"
+          "title": "Cina e Giappone: non solo una crisi diplomatica",
+          "description": "Dalla questione Taiwan alle ritorsioni economiche: lo scontro tra Cina e Giappone riapre ferite storiche. L'articolo Cina e Giappone: non solo una cri"
+        }
+      ]
+    },
+    {
+      "category": "🤖 Intelligenza Artificiale",
+      "articles": [
+        {
+          "title": "Ripensare i contratti nella direzione legale aziendale nell’era dell’AI",
+          "description": "Dalla redazione automatica all’analisi intelligente del rischio, l’intelligenza artificiale trasforma la direzione legale in una funzione strategica e"
+        },
+        {
+          "title": "Black Friday 2025, le 70 migliori offerte scelte da Wired",
+          "description": "Abbiamo raccolto le offerte migliori del Black Friday in tutte le categorie: dai notebook alla cucina, passando per robot aspirapolvere e idee regalo"
+        },
+        {
+          "title": "L'Ucraina alla ricerca di alleati anche alla Cop30 perché “siamo contro tutto quello che è vitale pe",
+          "description": "Il viceministro all'Economia, Ambiente e Agricoltura Pavlo Kartashov a Belém racconta a Wired come Kyiv vuole ricostruire l'impegno ambientale. Ma la "
+        },
+        {
+          "title": "L’AI cambia l’università: non bastano policy, servono regole",
+          "description": "L’AI entra nei processi cognitivi di atenei e laboratori: accelera traduzioni, sintesi e ipotesi, ma solleva dubbi su autorialità, integrità e valutaz"
+        },
+        {
+          "title": "Come gli evals stanno guidando l’introduzione dell’AI nelle imprese",
+          "description": "Sempre più aziende integrano l’intelligenza artificiale nei processi, ma molte faticano a ottenere i risultati sperati. Il motivo spesso risiede nella"
+        }
+      ]
+    },
+    {
+      "category": "💼 Business",
+      "articles": [
+        {
+          "title": "La creazione di valore nel business del cloud fluisce verso l’America",
+          "description": "Servono alternative agli hyperscaler statunitensi, poiché i loro modelli spingono le imprese verso una dipendenza sempre più forte. In Europa il probl"
+        },
+        {
+          "title": "Talento come leva strategica: come attivarlo e misurarlo in azienda",
+          "description": "Il talento non è dote innata: è una costruzione dinamica che richiede cultura, leadership e contesti abilitanti. Dalle competenze all’impatto, ecco co"
         }
       ]
     }

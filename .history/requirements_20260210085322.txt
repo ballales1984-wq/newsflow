@@ -1,0 +1,24 @@
+# Vercel Serverless Function Requirements - READ ONLY VERSION
+# Solo dipendenze leggere per lettura dati (no generazione IA, no operazioni lunghe)
+
+# Mangum - ASGI adapter per serverless (necessario per FastAPI su Vercel)
+mangum==0.17.0
+
+# Web Framework
+fastapi==0.109.0
+# uvicorn non necessario su Vercel (usa Mangum)
+python-multipart==0.0.6
+
+# Validation
+pydantic==2.7.4
+pydantic-settings==2.3.0
+
+# Utilities (solo per parsing JSON, no AI)
+python-slugify==8.0.1
+
+# NOTA: Rimossi per ridurre dimensione bundle:
+# - torch, transformers, spacy (troppo pesanti, ~3GB)
+# - feedparser, requests, beautifulsoup4 (non necessari per lettura JSON)
+# - sqlalchemy (non usato, solo JSON)
+# - langdetect (non necessario per lettura)
+

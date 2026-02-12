@@ -34,7 +34,7 @@ try:
     # Imposta working directory
     os.chdir(project_root)
     print(f"✅ DEBUG INIT: Changed cwd to {os.getcwd()}")
-
+    
     # Verifica file JSON
     json_path_api = os.path.join(project_root, 'api', 'final_news_italian.json')
     json_path_backend = os.path.join(project_root, 'backend', 'final_news_italian.json')
@@ -51,7 +51,7 @@ try:
     print("🔍 DEBUG INIT: Importing mangum...")
     from mangum import Mangum
     print("✅ DEBUG INIT: Mangum imported successfully")
-
+    
     # STEP 3: Import app FastAPI
     print("🔍 DEBUG INIT: Importing app.main_simple...")
     from app.main_simple import app

@@ -54,21 +54,21 @@ if not is_vercel:
     @app.on_event("startup")
     async def startup_event():
         """Precarica la cache degli articoli all'avvio con NOTIZIE VECCHIE (se disponibili)"""
-        print("🚀 Startup: Caricamento notizie vecchie all'avvio...")
+        print("Startup: Caricamento notizie vecchie all'avvio...")
         print("   Le nuove notizie sostituiranno le vecchie quando disponibili")
-        
+
         # Carica le notizie vecchie PRIMA che arrivino le nuove
         try:
             articles = _load_articles(force_reload=False)
             if articles:
-                print(f"   ✅ Caricate {len(articles)} notizie vecchie all'avvio")
+                print(f"   OK: Caricate {len(articles)} notizie vecchie all'avvio")
             else:
-                print("   ⚠️  Nessuna notizia vecchia trovata - verrà cercato alla prima richiesta")
+                print("   WARN: Nessuna notizia vecchia trovata - verrà cercato alla prima richiesta")
         except Exception as e:
-            print(f"   ⚠️  Errore caricamento notizie vecchie: {e}")
+            print(f"   WARN: Errore caricamento notizie vecchie: {e}")
             print("   Le notizie verranno caricate alla prima richiesta")
 else:
-    print("🚀 Vercel rilevato - startup event disabilitato (lazy loading)")
+    print("Vercel rilevato - startup event disabilitato (lazy loading)")
     # Su Vercel, carica comunque le notizie vecchie alla prima richiesta
 
 
@@ -79,7 +79,7 @@ def root():
         "name": "NewsFlow",
         "version": "1.0.0",
         "status": "running",
-        "message": "Backend is alive! 🚀"
+        "message": "Backend is alive!"
     }
 
 
@@ -111,7 +111,7 @@ def debug_files():
             "exists": os.path.exists(cwd),
             "files": os.listdir(cwd)[:20] if os.path.exists(cwd) else []
         })
-        
+
         # Lista api/
         api_dir = os.path.join(cwd, 'api')
         if os.path.exists(api_dir):
@@ -120,7 +120,7 @@ def debug_files():
                 "exists": True,
                 "files": os.listdir(api_dir)[:20]
             })
-        
+
         # Lista backend/
         backend_dir = os.path.join(cwd, 'backend')
         if os.path.exists(backend_dir):
@@ -199,7 +199,7 @@ def _load_articles(force_reload=False):
         except:
             # File non esiste più o errore, ricarica
             pass
-    
+
     # Se non c'è cache, prova a caricare le notizie vecchie PRIMA
     if _articles_cache is None:
         print("📰 Caricamento iniziale: cerco notizie vecchie da caricare...")
@@ -286,12 +286,12 @@ def _load_articles(force_reload=False):
         print(f"   Current working directory: {os.getcwd()}")
         print(f"   File location: {__file__}")
         print(f"   List files in backend/: {os.listdir(os.path.join(os.getcwd(), 'backend')) if os.path.exists(os.path.join(os.getcwd(), 'backend')) else 'backend/ does not exist'}")
-        
+
         # IMPORTANTE: Se non trova il file nuovo, prova a caricare le notizie vecchie dalla cache
         if _articles_cache is not None:
             print(f"✅ File nuovo non trovato, uso notizie vecchie dalla cache: {len(_articles_cache)} articoli")
             return _articles_cache
-        
+
         print("❌ Nessun file trovato e nessuna cache disponibile - restituisco array vuoto")
         return []  # Restituisci array vuoto invece di None
     if file_path and os.path.exists(file_path):
@@ -664,7 +664,7 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
                     pass
 
         articles = _load_articles()
-        
+
         # Se non ci sono articoli, restituisci array vuoto invece di causare errore
         if not articles:
             print("⚠️  Nessun articolo caricato, restituisco array vuoto")
@@ -731,7 +731,7 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
                 "size": len(paginated_articles),
                 "pages": (total + limit - 1) // limit if limit > 0 else 1
             }
-        
+
         # Fallback se non ci sono articoli dopo il filtro
         return {
             "items": [],
