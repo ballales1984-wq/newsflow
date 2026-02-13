@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "cd frontend && npm ci && npm run build",
-  "installCommand": "uv pip install --break-system-packages --python 3.13 -r requirements.txt",
+  "installCommand": "uv pip install --system --break-system-packages --python 3.13 -r requirements.txt",
   "outputDirectory": "frontend/dist/newsflow",
   "rewrites": [
     {
