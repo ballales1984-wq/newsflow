@@ -1,4 +1,4 @@
-"""Script per raccogliere notizie VERE immediatamente"""
+
 import os
 os.environ["DATABASE_URL"] = "sqlite:///./newsflow.db"
 os.environ["SECRET_KEY"] = "dev-key"
@@ -9,15 +9,13 @@ from datetime import datetime
 
 # Custom JSON encoder per gestire datetime
 class DateTimeEncoder(json.JSONEncoder):
-    def default(self, obj):
+collector = RSSCollector()
         if isinstance(obj, datetime):
             return obj.isoformat()
         return super().default(obj)
 
-print("Raccogliendo notizie da fonti RSS... - collect_news_now.py:17")
+print("🔍 Raccogliendo notizie VERE da fonti RSS... - collect_news_now.py:17")
 print("= - collect_news_now.py:18" * 50)
-
-collector = RSSCollector()
 all_articles = []
 
 # Raccoglie da 5 fonti principali
@@ -30,28 +28,28 @@ sources_to_try = [
 ]
 
 for name, url in sources_to_try:
-    print(f"\nRaccogliendo da: {name} - collect_news_now.py:33")
-    print(f"URL: {url} - collect_news_now.py:34")
+    print(f"\n📡 Raccogliendo da: {name} - collect_news_now.py:31")
+    print(f"URL: {url} - collect_news_now.py:32")
 
     try:
         articles = collector.collect(url, max_articles=3)
-        print(f"Trovate {len(articles)} notizie - collect_news_now.py:38")
+        print(f"✅ Trovate {len(articles)} notizie - collect_news_now.py:36")
 
         for article in articles:
             article['source_name'] = name
             all_articles.append(article)
-            print(f"{article['title'][:60]}... - collect_news_now.py:43")
+            print(f"{article['title'][:60]}... - collect_news_now.py:41")
 
     except Exception as e:
-        print(f"Errore: {e} - collect_news_now.py:46")
+        print(f"❌ Errore: {e} - collect_news_now.py:44")
 
-print("\n - collect_news_now.py:48" + "=" * 50)
-print(f"TOTALE: {len(all_articles)} notizie raccolte! - collect_news_now.py:49")
+print("\n - collect_news_now.py:46" + "=" * 50)
+print(f"📊 TOTALE: {len(all_articles)} notizie raccolte! - collect_news_now.py:47")
 
 # Salva in JSON per vedere
 with open('notizie_vere.json', 'w', encoding='utf-8') as f:
-    json.dump(all_articles, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+    json.dump(all_articles, f, indent=2, ensure_ascii=False)
 
-print(f"Salvate in: notizie_vere.json - collect_news_now.py:55")
-print("\nOra possiamo usarle nell'app! - collect_news_now.py:56")
+print(f"💾 Salvate in: notizie_vere.json - collect_news_now.py:53")
+print("\n✨ Ora possiamo usarle nell'app! - collect_news_now.py:54")
 

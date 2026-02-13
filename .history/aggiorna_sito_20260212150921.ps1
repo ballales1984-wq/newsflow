@@ -19,6 +19,7 @@ Set-Location $backendDir
 Write-Host "📥 Raccolta nuove notizie in corso (attendere)..." -ForegroundColor Yellow
 try {
     # Esegue la funzione di raccolta notizie del backend
+    python -c "from app.services.tasks import collect_all_news; collect_all_news()"
     # Nasconde l'output di errore di Python per gestirlo in modo pulito
     python -c "from app.services.tasks import collect_all_news; collect_all_news()" 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {

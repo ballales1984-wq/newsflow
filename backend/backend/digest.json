@@ -1,28 +1,62 @@
 {
-  "date": "2025-11-13",
+  "date": "2026-02-13",
   "digest": [
     {
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "Primo via libera alla estensione della pena di morte in Israele",
-          "description": "La formulazione contenuta nel disegno di legge passato in prima lettura è tale da applicarsi di fatto solo ai palestinesi. \nL'articolo <a href=\"https://www.micromega.net/primo-via-libera-alla-estensio"
+          "title": "Anthropic raises $30bn in latest round, valuing Claude bot maker at $380bn",
+          "description": "<p>Maker of chatbot with coding ability says annualised revenue grew tenfold in each of past three years, to $14bn</p><p>Anthropic, the US AI startup behind the Claude chatbot, has raised $30bn (£22bn"
         },
         {
-          "title": "Boualem Sansal torna in libertà",
-          "description": "Dopo un anno di prigionia e di colpevole silenzio della sinistra, Sansal torna finalmente libero: la sua vicenda resti come monito contro tutte le viltà.\nL'articolo <a href=\"https://www.micromega.net/"
+          "title": "NHS deal with AI firm Palantir called into question after officials’ concerns revealed",
+          "description": "<p>Exclusive: in 2025 briefing to Wes Streeting, officials warned reputation of tech firm behind US ICE operations would hinder rollout of data system in UK </p><p>Health officials fear Palantir’s rep"
         },
         {
-          "title": "Il mito della metropoli e la cecità italiana",
-          "description": "Architetti e politici rincorrono i modelli di Londra o New York, ma l’identità italiana resta policentrica. Ed è lì che sta la sua vera ricchezza.\nL'articolo <a href=\"https://www.micromega.net/il-mito"
+          "title": "The Download: an exclusive chat with Jim O’Neill, and the surprising truth about heists",
+          "description": "This is today&#8217;s edition of The Download, our weekday newsletter that provides a daily dose of what&#8217;s going on in the world of technology. US deputy health secretary: Vaccine guidelines are"
         },
         {
-          "title": "Dentro Gaza e la sua storia. Due libri di Jean-Pierre Filiu",
-          "description": "Il politologo francese firma l’unica testimonianza di un osservatore internazionale dal teatro di guerra.\nL'articolo <a href=\"https://www.micromega.net/dentro-gaza-e-la-sua-storia-due-libri-di-jean-pi"
+          "title": "The myth of the high-tech heist",
+          "description": "Making a movie is a lot like pulling off a heist. That’s what Steven Soderbergh—director of the Ocean’s franchise, among other heist-y classics—said a few years ago. You come up with a creative angle,"
         },
         {
-          "title": "Paolo Berizzi: “CasaPound coperta per anni dalle istituzioni”",
-          "description": "Intervista a Paolo Berizzi, che nel “Libro segreto di CasaPound” racconta i retroscena dell’organizzazione neofascista.\nL'articolo <a href=\"https://www.micromega.net/paolo-berizzi-casapound-coperta-pe"
+          "title": "Coding AI in tempo reale: cosa cambia con GPT-5.3-Codex-Spark",
+          "description": "<p><img alt=\"GPT-5.3-Codex-Spark\" class=\"attachment-post-thumbnail size-post-thumbnail wp-post-image\" src=\"https://www.punto-informatico.it/app/uploads/2026/02/gpt-53-codex-spark_art.jpg\" /></p>\n<p>La"
+        }
+      ]
+    },
+    {
+      "category": "🔬 Scienza",
+      "articles": [
+        {
+          "title": "US deputy health secretary: Vaccine guidelines are still subject to change",
+          "description": "Over the past year, Jim O’Neill has become one of the most powerful people in public health. As the US deputy health secretary, he holds two roles at the top of the country’s federal health and scienc"
+        }
+      ]
+    },
+    {
+      "category": "🤖 Intelligenza Artificiale",
+      "articles": [
+        {
+          "title": "OpenAI retired its most seductive chatbot – leaving users angry and grieving: ‘I can’t live like this’",
+          "description": "<p>Its human partners said the flirty, quirky GPT-4o was the perfect companion – on the eve of Valentine’s Day, it’s being turned off for good. How will users cope?</p><p>Brandie plans to spend her la"
+        },
+        {
+          "title": "Next AI-Integrated System, la poliedrica piattaforma AI pensata per gli yacht",
+          "description": "Next AI-Integrated System è un sistema evoluto che si occupa dell'assistenza a bordo a 360 gradi e che funziona anche offline"
+        },
+        {
+          "title": "State of Play, tutti i giochi annunciati per Ps5 e pc: da God of War a Silent Hill",
+          "description": "Annunciati da Sony Resident Evil Requiem, Pragmata, Metal Gear Solid Master Collection Volume 2, Death Stranding 2 On The Beach e a una lunga lista di titoli indie"
+        },
+        {
+          "title": "Da Diego a Nolan, su TikTok spopolano i buffi e teneri AI animals che secondo noi potrebbero diventare presto i nuovi br",
+          "description": "Procioni, tartarughe, gatti e conigli che preparano pietanze in stile ASMR: un trend silenzioso che esploderà a breve grazie (ancora) all'intelligenza artificiale?"
+        },
+        {
+          "title": "Malicious Chrome Extensions Caught Stealing Business Data, Emails, and Browsing History",
+          "description": "Cybersecurity researchers have discovered a malicious Google Chrome extension that's designed to steal data associated with Meta Business Suite and Facebook Business Manager.\nThe extension, named CL S"
         }
       ]
     }

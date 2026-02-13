@@ -1,0 +1,12 @@
+# Ignore backend files (not needed on Vercel)
+# but keep api/ for serverless functions and JSON data
+backend/
+*.py
+
+# But include necessary Python files for serverless
+!api/
+api/*.py
+
+# Include runtime and requirements for Python
+requirements.txt
+runtime.txt

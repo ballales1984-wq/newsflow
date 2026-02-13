@@ -1,0 +1,20 @@
+# Ignore unnecessary files but keep backend for serverless functions
+# Backend is needed for app modules (main_simple.py, etc.)
+backend/logs/
+backend/__pycache__/
+backend/.github.code-workspace
+backend/nginx/
+backend/screenshots_sito/
+backend/frontend/
+
+# Include all other backend files needed for serverless
+!backend/
+
+# Include api folder
+!api/
+api/*.py
+api/*.json
+
+# Include runtime and requirements for Python
+requirements.txt
+runtime.txt

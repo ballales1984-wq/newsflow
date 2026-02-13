@@ -1,0 +1,4 @@
+# Ignore backend files (not needed on Vercel)
+# but keep api/ for serverless functions and JSON data
+backend/
+*.py
