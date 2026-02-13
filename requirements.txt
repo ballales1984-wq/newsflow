@@ -9,9 +9,9 @@ fastapi==0.109.0
 # uvicorn non necessario su Vercel (usa Mangum)
 python-multipart==0.0.6
 
-# Validation
-pydantic==2.7.4
-pydantic-settings==2.3.0
+# Validation - versioni compatibili con Python 3.14
+pydantic==2.10.5
+pydantic-settings==2.7.1
 
 # Utilities (solo per parsing JSON, no AI)
 python-slugify==8.0.1
