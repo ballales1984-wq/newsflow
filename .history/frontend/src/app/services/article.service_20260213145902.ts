@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Article, ArticleList, ArticleSearch } from '../models/article.model';
 
@@ -46,38 +46,14 @@ export class ArticleService {
       }
     }
 
-    console.log('📡 API Request: - article.service.ts:49', { url: this.apiUrl, params: params.toString() });
+    console.log('📡 API Request:', { url: this.apiUrl, params: params.toString() });
     
     return this.http.get<ArticleList>(this.apiUrl, { params, headers: this.headers }).pipe(
       catchError(error => {
-        console.warn('⚠️ API non disponibile, uso fallback su file statico: - article.service.ts:53', error);
+        console.warn('⚠️ API non disponibile, uso fallback su file statico:', error);
         // Fallback: carica da file JSON statico
         return this.http.get<any>('/assets/final_news_italian.json').pipe(
           catchError(err => {
-            console.error('❌ Anche file statico non disponibile: - article.service.ts:57', err);
-            return of({
-              items: [],
-              total: 0,
-              page: page,
-              size: size,
-              pages: 1
-            });
-          }),
-          map((data: any) => {
-            // Converti formato file statico in ArticleList
-            const items = data.items || data || [];
-            return {
-              items: items.slice(0, size),
-              total: items.length,
-              page: page,
-              size: size,
-              pages: Math.ceil(items.length / size)
-            };
-          })
-        );
-      })
-    );
-  }
 
   getArticle(id: number): Observable<Article> {
     return this.http.get<Article>(`${this.apiUrl}/${id}`, { headers: this.headers });
