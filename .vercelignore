@@ -1,5 +1,7 @@
 # Ignore unnecessary files but keep backend for serverless functions
-# Backend is needed for app modules (main_simple.py, etc.)
+# Use explicit patterns - ! prefix doesn't work well with directory patterns
+
+# Ignore specific backend directories
 backend/logs/
 backend/__pycache__/
 backend/.github.code-workspace
@@ -7,14 +9,17 @@ backend/nginx/
 backend/screenshots_sito/
 backend/frontend/
 
-# Include all other backend files needed for serverless
+# Ignore specific root files/folders we don't need
+.github/
+vercel.json
+vercel.json.backup
+
+# Include api folder files (explicit include)
+!api/
+
+# Include backend folder files (explicit include)
 !backend/
 
-# Include api folder
-!api/
-api/*.py
-api/*.json
-
-# Include runtime and requirements for Python
-requirements.txt
-runtime.txt
+# Include root Python files needed
+!requirements.txt
+!runtime.txt
