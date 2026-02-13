@@ -26,11 +26,17 @@ export class ArticleCardComponent {
   viewArticle(): void {
     // Salva la posizione di scroll prima di navigare
     this.scrollPositionService.saveScrollPosition('home');
-    
+
     // Usa setTimeout per non bloccare il thread principale
     setTimeout(() => {
       this.analytics.trackArticleView(this.article.id, this.article.title);
-      this.router.navigate(['/article', this.article.slug]);
+      // Apri l'URL originale in una nuova scheda
+      if (this.article.url) {
+        window.open(this.article.url, '_blank');
+      } else {
+        // Fallback alla pagina interna se non c'è URL
+        this.router.navigate(['/article', this.article.slug]);
+      }
     }, 0);
   }
 
@@ -50,7 +56,7 @@ export class ArticleCardComponent {
   shareArticle(event: Event): void {
     event.stopPropagation();
     this.analytics.trackArticleShare(this.article.id, this.article.title);
-    
+
     if (navigator.share) {
       navigator.share({
         title: this.article.title,
@@ -70,10 +76,10 @@ export class ArticleCardComponent {
 
   explainArticle(event: Event): void {
     event.stopPropagation();
-    
+
     // Track "Spiegami" click
     this.analytics.trackExplainClick(this.article.id, this.article.title);
-    
+
     // Apre modal con spiegazione a 3 livelli!
     this.dialog.open(ExplainDialogComponent, {
       data: this.article,
