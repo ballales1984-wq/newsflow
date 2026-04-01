@@ -847,6 +847,83 @@ class ExplanationRequest(BaseModel):
 # Cache semplice per spiegazioni (evita rigenerazioni)
 _explanation_cache = {}
 
+
+def _generate_static_explanation(article: dict, explanation_type: str) -> str:
+    """Genera spiegazione template lato backend (fallback quando AI non disponibile)"""
+    title = article.get('title', '')
+    summary = article.get('summary', '') or ''
+    author = article.get('author', 'N/A')
+    keywords = article.get('keywords', [])
+    url = article.get('url', '')
+    quality = article.get('quality_score', 0.7)
+    quality_pct = round(quality * 100) if quality else 70
+    reading_time = article.get('reading_time_minutes', 5)
+    lang = (article.get('language', 'it') or 'it').upper()
+
+    if explanation_type == 'quick':
+        return f"""🎯 IN BREVE:
+
+{title}
+
+{summary[:250]}{'...' if len(summary) > 250 else ''}
+
+📍 PERCHÉ È IMPORTANTE:
+Questa notizia tratta di {', '.join(keywords[:3])} ed è rilevante per il settore.
+
+⭐ Quality Score: {quality_pct}%
+⏱️ Tempo lettura: {reading_time} minuti
+🔗 Fonte: {author}"""
+
+    if explanation_type == 'standard':
+        return f"""📰 CONTESTO:
+
+{title}
+
+{summary[:500]}
+
+🔍 COSA SIGNIFIPA:
+Questa notizia riguarda {', '.join(keywords[:3])}. È stata pubblicata da {author} e selezionata per la sua qualità ({quality_pct}%).
+
+👥 CHI È COINVOLUTO:
+• Autore: {author}
+• Lingua: {lang}
+• Tempo lettura: {reading_time} minuti
+
+📊 QUALITÀ:
+• Score: {quality_pct}% - {'Eccellente' if quality_pct >= 85 else 'Buona' if quality_pct >= 70 else 'Discreta'}
+• Verificato: {'Sì ✓' if article.get('is_verified') else 'In revisione'}
+
+🔗 PER APPROFONDIRE: {url}"""
+
+    # deep
+    return f"""📚 ANALISI APPROFONDITA:
+
+{'━' * 50}
+{title}
+{'━' * 50}
+
+📝 SINTESI:
+{summary[:800]}
+
+{'━' * 50}
+
+🧠 CONTESTO:
+Questa notizia si inserisce nell'evoluzione contemporanea del settore {keywords[0] if keywords else 'tecnologia'}.
+
+👥 ATTORI:
+• Autore: {author}
+• Lingua: {lang}
+• Pubblicato: {article.get('published_at', 'N/A')}
+
+📊 METRICHE:
+• Quality Score: {quality_pct}%
+• Tempo lettura: {reading_time} minuti
+• Featured: {'Sì' if article.get('is_featured') else 'No'}
+• Verificato: {'Sì ✓' if article.get('is_verified') else 'In revisione'}
+
+🔗 FONTI: {url}"""
+
+
 @app.post("/api/v1/articles/explain")
 def explain_article(request: ExplanationRequest):
     """
@@ -904,19 +981,48 @@ def explain_article(request: ExplanationRequest):
             "pre_generated": True
         }
 
-    # VERCEL FREE VERSION: Non genera al volo, solo lettura da JSON
-    # Le spiegazioni devono essere generate sul backend PC/Render
-    print(f"⚠️  Spiegazione non trovata nel JSON per articolo {article.get('id')}")
-    print(f"💡 Genera le spiegazioni sul backend PC/Render usando POST /api/admin/generate-explanations")
+    # Nessuna spiegazione pre-generata — genera al volo con AI explainer
+    print(f"🔄 Genero spiegazione al volo per articolo {article.get('id')} (tipo: {request.explanation_type})")
+    import time
+    gen_start = time.time()
 
+    explanation = None
+    ai_used = "Static fallback"
+
+    try:
+        from app.ai_explainer import generate_explanation
+        explanation = generate_explanation(article, request.explanation_type)
+        if explanation:
+            ai_used = "AI (auto-detected)"
+    except Exception as e:
+        print(f"⚠️ Errore generazione AI: {e}")
+
+    if explanation:
+        gen_time = round(time.time() - gen_start, 2)
+        return {
+            "success": True,
+            "article_id": article.get('id'),
+            "article_title": article.get('title'),
+            "explanation_type": request.explanation_type,
+            "explanation": explanation,
+            "ai_used": ai_used,
+            "cached": False,
+            "generation_time": gen_time,
+            "pre_generated": False
+        }
+
+    # Ultimo fallback: template statico
+    print(f"⚠️ Nessuna AI disponibile, uso template statico")
     return {
-        "success": False,
-        "error": "Explanation not available",
-        "message": f"Spiegazione '{request.explanation_type}' non disponibile per questo articolo. Genera le spiegazioni sul backend PC/Render usando POST /api/admin/generate-explanations",
+        "success": True,
         "article_id": article.get('id'),
         "article_title": article.get('title'),
         "explanation_type": request.explanation_type,
-        "note": "Questo è il backend Vercel (read-only). Per generare spiegazioni, usa il backend PC/Render."
+        "explanation": _generate_static_explanation(article, request.explanation_type),
+        "ai_used": "Static template",
+        "cached": False,
+        "generation_time": round(time.time() - gen_start, 2),
+        "pre_generated": False
     }
 
     # NOTA: La generazione AI è stata rimossa per Vercel Free Plan.
