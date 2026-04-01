@@ -89,3 +89,31 @@
   }
 }
 
+
+.cookie-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.9em;
+  
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+  }
+  
+  th {
+    font-weight: 600;
+    color: #aaa;
+    font-size: 0.85em;
+    text-transform: uppercase;
+  }
+  
+  td {
+    color: #ccc;
+  }
+  
+  tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+  }
+}

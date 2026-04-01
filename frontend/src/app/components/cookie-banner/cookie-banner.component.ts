@@ -41,26 +41,25 @@ export class CookieBannerComponent implements OnInit {
   }
 
   private enableTracking() {
-    // Abilita Google Analytics
+    // Abilita Google Analytics e AdSense tramite Consent Mode
     if (typeof (window as any).gtag !== 'undefined') {
       (window as any).gtag('consent', 'update', {
-        'analytics_storage': 'granted',
-        'ad_storage': 'granted'
+        'ad_storage': 'granted',
+        'ad_user_data': 'granted',
+        'ad_personalization': 'granted',
+        'analytics_storage': 'granted'
       });
-    }
-
-    // Abilita AdSense
-    if (typeof (window as any).adsbygoogle !== 'undefined') {
-      // Gli ads verranno caricati automaticamente
     }
   }
 
   private disableTracking() {
-    // Disabilita Google Analytics
+    // Disabilita Google Analytics e AdSense tramite Consent Mode
     if (typeof (window as any).gtag !== 'undefined') {
       (window as any).gtag('consent', 'update', {
-        'analytics_storage': 'denied',
-        'ad_storage': 'denied'
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'denied'
       });
     }
   }
