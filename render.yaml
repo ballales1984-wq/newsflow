@@ -1,12 +1,12 @@
 services:
-  # Backend API (Solo questo - GRATUITO!)
   - type: web
     name: newsflow-backend
-    runtime: python
-    rootDir: backend
+    env: docker
     plan: free
-    buildCommand: pip install -r requirements-minimal.txt
-    startCommand: uvicorn app.main_simple:app --host 0.0.0.0 --port $PORT
+    branch: main
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    healthCheckPath: /api/v1/health
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -16,4 +16,3 @@ services:
         value: https://newsflow-three.vercel.app,https://newsflow-orcin.vercel.app
       - key: DATABASE_URL
         value: sqlite:///./newsflow.db
-

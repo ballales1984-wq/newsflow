@@ -1,24 +1,31 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
 # Installa dipendenze di sistema
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copia requirements minimali
+COPY requirements-minimal.txt .
+RUN pip install --no-cache-dir -r requirements-minimal.txt
 
 # Copia tutto il backend
 COPY . .
 
-# Esponi porta (Fly.io usa 8080 di default, ma può essere configurato)
-EXPOSE 8080
+# Variabili ambiente
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app
 
-# Variabile d'ambiente per porta
-ENV PORT=8080
+# Esponi porta (Render usa 10000)
+EXPOSE 10000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:10000/api/v1/health || exit 1
 
 # Avvia FastAPI
-CMD python -m uvicorn app.main_simple:app --host 0.0.0.0 --port ${PORT:-8080}
+CMD ["python", "-m", "uvicorn", "app.main_simple:app", "--host", "0.0.0.0", "--port", "10000"]
