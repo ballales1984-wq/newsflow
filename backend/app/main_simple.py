@@ -1043,48 +1043,59 @@ def get_sources():
     ]
 
 
-def _load_digest():
-    """Helper to load daily digest from JSON file"""
-    import json
-    import os
+def _generate_dynamic_digest():
+    """Generate digest dynamically from loaded articles"""
     from datetime import datetime
 
-    # Prova diversi path per trovare il file digest.json
-    current_file_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root_from_file = os.path.dirname(current_file_dir)
-
-    possible_paths = [
-        # Path 0: api/digest.json (Vercel)
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'api', 'digest.json'),
-        os.path.join(os.getcwd(), 'api', 'digest.json'),
-        '/vercel/path0/api/digest.json',
-        # Path 1: backend/digest.json
-        os.path.join(os.getcwd(), 'backend', 'digest.json'),
-        os.path.join(project_root_from_file, 'digest.json'),
-        # Path 2: digest.json nella root
-        os.path.join(os.getcwd(), 'digest.json'),
-        # Path 3: backend/app/digest.json
-        os.path.join(current_file_dir, 'digest.json'),
-    ]
-
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    digest_data = json.load(f)
-                    print(f"✅ Digest caricato da: {path}")
-                    return digest_data
-            except Exception as e:
-                print(f"⚠️ Errore nel caricamento digest da {path}: {e}")
-                continue
-
-    # Se non trova il file, genera un digest vuoto con la data di oggi
-    print("⚠️ File digest.json non trovato, genero digest vuoto")
-    today = datetime.now().strftime("%Y-%m-%d")
-    return {
-        "date": today,
-        "digest": []
+    CATEGORIES = {
+        "💻 Tecnologia": ["technology", "tech", "computer", "software", "app", "quantum", "hardware", "coding", "google", "apple", "microsoft", "windows", "android", "iphone"],
+        "🤖 Intelligenza Artificiale": ["ai", "artificial intelligence", "chatgpt", "gpt", "machine learning", "llm", "deepmind", "neural", "openai", "anthropic", "claude", "model"],
+        "🔒 Cybersecurity": ["security", "cyber", "breach", "hack", "malware", "exploit", "vulnerability", "attack", "sicurezza", "phishing", "ransomware", "fbi"],
+        "🔬 Scienza": ["science", "research", "discovery", "study", "physics", "biology", "ricerca", "scoperta", "nasa", "space", "arxiv"],
+        "💼 Business": ["business", "economy", "market", "company", "startup", "finance", "economia", "azienda", "investimenti", "oracle", "openai"],
+        "🌍 Politica": ["politics", "government", "election", "parliament", "trump", "politica", "elezioni", "governo", "iran", "europa"],
+        "🎬 Intrattenimento": ["film", "movie", "music", "entertainment", "celebrity", "cinema", "musica", "serie"],
+        "🏥 Salute": ["health", "medical", "vaccine", "disease", "doctor", "salute", "medicina", "ospedale"],
+        "🌍 Ambiente": ["environment", "climate", "green", "eco", "nature", "ambiente", "clima"],
     }
+
+    def categorize(article):
+        text = (article.get('title', '') + ' ' + article.get('summary', '')).lower()
+        for category, keywords in CATEGORIES.items():
+            if any(kw in text for kw in keywords):
+                return category
+        return "💻 Tecnologia"
+
+    articles = _load_articles()
+    if not articles:
+        return {"date": datetime.now().strftime("%Y-%m-%d"), "digest": []}
+
+    categorized = {}
+    for article in articles[:100]:
+        cat = categorize(article)
+        if cat not in categorized:
+            categorized[cat] = []
+        categorized[cat].append({
+            "title": (article.get('title', '') or '')[:120],
+            "description": (article.get('summary', '') or article.get('description', '') or '')[:200]
+        })
+
+    digest_items = []
+    for cat in sorted(categorized.keys()):
+        digest_items.append({
+            "category": cat,
+            "articles": categorized[cat][:5]
+        })
+
+    return {
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "digest": digest_items
+    }
+
+
+def _load_digest():
+    """Helper to load daily digest - generates dynamically from articles"""
+    return _generate_dynamic_digest()
 
 
 @app.get("/api/v1/digest")
