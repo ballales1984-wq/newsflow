@@ -372,3 +372,51 @@
   color: rgba(0, 0, 0, 0.75);
 }
 
+// Fix mobile dropdown menu
+::ng-deep {
+  .mat-mdc-menu-panel {
+    z-index: 1100 !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .cdk-overlay-pane {
+    z-index: 1100 !important;
+  }
+  
+  .cdk-overlay-backdrop {
+    z-index: 1050 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  ::ng-deep {
+    .mat-mdc-menu-panel {
+      max-width: 90vw !important;
+      position: fixed !important;
+      top: 56px !important;
+      right: 8px !important;
+      left: auto !important;
+      transform: none !important;
+    }
+    
+    .user-menu-header {
+      padding: 12px;
+    }
+    
+    .mat-mdc-menu-item {
+      font-size: 14px;
+      min-height: 44px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  ::ng-deep {
+    .mat-mdc-menu-panel {
+      max-width: 95vw !important;
+      right: 4px !important;
+    }
+  }
+}
+
