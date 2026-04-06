@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./newsflow.db"
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        if not v or "sqlite:" in v:
+            return "sqlite:///./newsflow.db"
+        return v
+
     # Redis (optional)
     REDIS_URL: str = "redis://localhost:6379"
 
@@ -62,4 +69,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

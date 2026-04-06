@@ -15,4 +15,4 @@ services:
       - key: CORS_ORIGINS
         value: https://newsflow-three.vercel.app,https://newsflow-orcin.vercel.app
       - key: DATABASE_URL
-        value: sqlite:///./newsflow.db
+        value: 'sqlite:///./newsflow.db'
