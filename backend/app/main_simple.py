@@ -92,6 +92,12 @@ def health_check():
     return {"status": "healthy"}
 
 
+@app.get("/health")
+def health_check_root():
+    """Health check endpoint at root"""
+    return {"status": "healthy"}
+
+
 @app.get("/api/debug/files")
 def debug_files():
     """Debug endpoint per verificare se i file JSON sono accessibili"""
