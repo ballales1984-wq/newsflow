@@ -8,6 +8,10 @@ python-multipart==0.0.6
 # Database (SQLite)
 sqlalchemy==2.0.25
 
+# Password Hashing
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+
 # News Collection
 feedparser==6.0.11
 requests==2.31.0
