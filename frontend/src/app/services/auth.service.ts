@@ -90,13 +90,7 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
-    const formData = new HttpHeaders({
-      'Content-Type': 'application/x-www-form-urlencoded'
-    });
-    
-    const body = `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-    
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, body, { headers: formData }).pipe(
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password }).pipe(
       tap(response => this.handleAuthResponse(response))
     );
   }
