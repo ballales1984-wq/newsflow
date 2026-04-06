@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, timeout } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Article, ArticleList, ArticleSearch } from '../models/article.model';
@@ -49,6 +49,7 @@ export class ArticleService {
     console.log('📡 API Request: - article.service.ts:49', { url: this.apiUrl, params: params.toString() });
     
     return this.http.get<ArticleList>(this.apiUrl, { params, headers: this.headers }).pipe(
+      timeout(8000),
       catchError(error => {
         console.warn('⚠️ API non disponibile, uso fallback su file statico: - article.service.ts:53', error);
         // Fallback: carica da file JSON statico

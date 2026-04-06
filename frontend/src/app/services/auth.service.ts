@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, timeout } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
