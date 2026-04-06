@@ -10,7 +10,7 @@ import { catchError, timeout } from 'rxjs/operators';
 export class KeepAliveService {
   private apiUrl = `${environment.apiUrl.replace('/api/v1', '')}/api/health`;
   private subscription?: Subscription;
-  private readonly PING_INTERVAL = 10 * 60 * 1000; // 10 minuti
+  private readonly PING_INTERVAL = 5 * 60 * 1000; // 5 minuti
 
   constructor(private http: HttpClient) {}
 
