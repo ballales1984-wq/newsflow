@@ -7,9 +7,12 @@ import { SavedComponent } from './pages/saved/saved.component';
 import { DigestComponent } from './pages/digest/digest.component';
 import { PrivacyComponent } from './pages/privacy/privacy.component';
 import { TermsComponent } from './pages/terms/terms.component';
+import { AuthComponent } from './pages/auth/auth.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
+  { path: 'login', component: AuthComponent },
+  { path: 'register', component: AuthComponent },
   { path: 'article/:slug', component: ArticleDetailComponent },
   { path: 'search', component: SearchComponent },
   { path: 'saved', component: SavedComponent },

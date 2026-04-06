@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1770729106247,
+  "timestamp": 1775478407459,
   "index": "/index.html",
   "assetGroups": [
     {
@@ -13,7 +13,7 @@
       "urls": [
         "/favicon.ico",
         "/index.html",
-        "/main.7dd0a51f95d3cdda.js",
+        "/main.56aac64e44018735.js",
         "/manifest.webmanifest",
         "/polyfills.e025b7ac400a9bc2.js",
         "/runtime.0f209a7abcb9adf7.js",
@@ -174,15 +174,17 @@
         "/assets/images/f87d497f8232.png",
         "/assets/images/f888eab42882.jpg",
         "/assets/images/fbd9d4d8df53.jpg",
-        "/assets/images/ff65b4e8e9a6.jpg"
+        "/assets/images/ff65b4e8e9a6.jpg",
+        "/assets/italian_priority_news.json",
+        "/assets/notizie_vere.json"
       ],
       "patterns": []
     }
   ],
   "dataGroups": [],
   "hashTable": {
-    "/assets/digest.json": "058013af1ac78c4c0fd65e58a1a57492cbc5a052",
-    "/assets/final_news_italian.json": "c4ffb300d230509f38c207aef965ee0c0799868d",
+    "/assets/digest.json": "db31adef36cbafbb73ba363716cb341a904fe30c",
+    "/assets/final_news_italian.json": "c265cfc38cb21f4c4efa00b93cff340339fea929",
     "/assets/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
     "/assets/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
     "/assets/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
@@ -327,9 +329,11 @@
     "/assets/images/f888eab42882.jpg": "f07ddff99d4f7e1eb9513265e24cf6cf1dfce334",
     "/assets/images/fbd9d4d8df53.jpg": "85d7d0b85978dfa8f699ede135b8872c13a8790f",
     "/assets/images/ff65b4e8e9a6.jpg": "ef67d9eead0d1748e699958f65dbf6254ba70ae4",
+    "/assets/italian_priority_news.json": "05bf2efaa066e8d12d341b1f6d7d7a6d252c5ca9",
+    "/assets/notizie_vere.json": "02f7e491e8fc4913258cfa9f77174f41c5f7b75a",
     "/favicon.ico": "e079dc279ac76041df31fbf9d55cdc06cecfe2f2",
-    "/index.html": "28b60a03ec4242e207b8a020f8483fb443d3d9a4",
-    "/main.7dd0a51f95d3cdda.js": "2b905c9e9f001146564d77ba7e51d4f6b11f2a92",
+    "/index.html": "13ddd2b43121d27882a8126ed4284a712c44fde0",
+    "/main.56aac64e44018735.js": "6371f8f6d73047b47fefa3361095311c3461554a",
     "/manifest.webmanifest": "183b2fc1d0a2dd0e9218e45ff0033284fafc4d95",
     "/polyfills.e025b7ac400a9bc2.js": "bd2f3fa2c4642d16e3911d0be86da2548072b812",
     "/runtime.0f209a7abcb9adf7.js": "b4894d3bfdbe7905b93361d2ca34b57a2db22581",

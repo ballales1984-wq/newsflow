@@ -38,19 +38,25 @@
         </mat-icon>
       </button>
 
-      <button mat-icon-button [matMenuTriggerFor]="userMenu" *ngIf="currentUser" [attr.aria-label]="'Menu utente: ' + currentUser.name">
-        <div class="user-avatar">{{ currentUser.name.substring(0, 2).toUpperCase() }}</div>
+      <!-- User logged in -->
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" *ngIf="currentUser" [attr.aria-label]="'Menu utente: ' + currentUser.username">
+        <div class="user-avatar">{{ currentUser.username.substring(0, 2).toUpperCase() }}</div>
+      </button>
+      
+      <!-- User not logged in -->
+      <button mat-icon-button routerLink="/login" *ngIf="!currentUser" matTooltip="Accedi">
+        <mat-icon>login</mat-icon>
       </button>
       
       <mat-menu #userMenu="matMenu">
         <div class="user-menu-header" *ngIf="currentUser">
-          <div class="user-avatar-large">{{ currentUser.name.substring(0, 2).toUpperCase() }}</div>
+          <div class="user-avatar-large">{{ currentUser.username.substring(0, 2).toUpperCase() }}</div>
           <div class="user-info">
-            <div class="user-name">{{ currentUser.name }}</div>
-            <div class="user-status">Lettore attivo</div>
+            <div class="user-name">{{ currentUser.username }}</div>
+            <div class="user-status">Utente registrato</div>
           </div>
         </div>
-        <mat-divider></mat-divider>
+        <mat-divider *ngIf="currentUser"></mat-divider>
         <button mat-menu-item routerLink="/saved">
           <mat-icon>bookmark</mat-icon>
           <span>Articoli salvati ({{ savedCount }})</span>
@@ -59,7 +65,7 @@
           <mat-icon>settings</mat-icon>
           <span>Impostazioni</span>
         </button>
-        <mat-divider></mat-divider>
+        <mat-divider *ngIf="currentUser"></mat-divider>
         <button mat-menu-item routerLink="/privacy">
           <mat-icon>privacy_tip</mat-icon>
           <span>Privacy Policy</span>
@@ -68,10 +74,14 @@
           <mat-icon>description</mat-icon>
           <span>Termini di Servizio</span>
         </button>
-        <mat-divider></mat-divider>
-        <button mat-menu-item disabled>
-          <mat-icon>info</mat-icon>
-          <span class="small-text">Auto-login attivo</span>
+        <mat-divider *ngIf="currentUser"></mat-divider>
+        <button mat-menu-item *ngIf="currentUser" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Esci</span>
+        </button>
+        <button mat-menu-item *ngIf="!currentUser" routerLink="/login">
+          <mat-icon>login</mat-icon>
+          <span>Accedi / Registrati</span>
         </button>
       </mat-menu>
     </div>

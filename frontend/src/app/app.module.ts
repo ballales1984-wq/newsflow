@@ -41,6 +41,7 @@ import { ExplainDialogComponent } from './components/explain-dialog/explain-dial
 import { DigestComponent } from './pages/digest/digest.component';
 import { PrivacyComponent } from './pages/privacy/privacy.component';
 import { TermsComponent } from './pages/terms/terms.component';
+import { AuthComponent } from './pages/auth/auth.component';
 import { AdBannerComponent } from './components/ad-banner/ad-banner.component';
 import { CookieBannerComponent } from './components/cookie-banner/cookie-banner.component';
 import { StripHtmlPipe } from './pipes/strip-html.pipe';
@@ -62,6 +63,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     DigestComponent,
     PrivacyComponent,
     TermsComponent,
+    AuthComponent,
     AdBannerComponent,
     CookieBannerComponent,
     StripHtmlPipe
