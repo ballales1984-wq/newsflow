@@ -90,8 +90,16 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
+    console.log('🔐 Login attempt:', email);
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password }).pipe(
-      tap(response => this.handleAuthResponse(response))
+      tap(response => {
+        console.log('✅ Login success:', response);
+        this.handleAuthResponse(response);
+      }),
+      catchError(error => {
+        console.error('❌ Login error:', error);
+        throw error;
+      })
     );
   }
 
