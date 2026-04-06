@@ -1669,6 +1669,113 @@ def whoami(request: Request):
     }
 
 
+class RegisterRequest(BaseModel):
+    email: str
+    username: str
+    password: str
+    full_name: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/api/v1/users/register")
+def register_user(data: RegisterRequest, request: Request):
+    """
+    Registra un nuovo utente con email/password
+    """
+    import hashlib
+
+    users_file = "users_db.json"
+
+    try:
+        with open(users_file, "r", encoding="utf-8") as f:
+            users = json.load(f)
+    except:
+        users = {}
+
+    # Controlla se email già registrata
+    for fp, user in users.items():
+        if user.get("email") == data.email:
+            return {"error": "Email già registrata"}, 400
+
+    # Controlla se username già usato
+    for fp, user in users.items():
+        if user.get("username") == data.username:
+            return {"error": "Username già usato"}, 400
+
+    # Crea nuovo utente
+    fingerprint = hashlib.sha256(
+        f"{data.email}{datetime.now().isoformat()}".encode()
+    ).hexdigest()[:32]
+
+    new_user = {
+        "id": len(users) + 1,
+        "email": data.email,
+        "username": data.username,
+        "full_name": data.full_name or data.username,
+        "password_hash": hashlib.sha256(data.password.encode()).hexdigest(),
+        "created_at": datetime.now().isoformat(),
+        "last_seen": datetime.now().isoformat(),
+        "is_active": True,
+    }
+
+    users[fingerprint] = new_user
+
+    with open(users_file, "w", encoding="utf-8") as f:
+        json.dump(users, f, indent=2, ensure_ascii=False)
+
+    # Rimuungi password_hash dalla risposta
+    new_user.pop("password_hash", None)
+
+    return {
+        "success": True,
+        "user": new_user,
+    }
+
+
+@app.post("/api/v1/users/login")
+def login_user(data: LoginRequest, request: Request):
+    """
+    Login utente con email/password
+    """
+    import hashlib
+
+    users_file = "users_db.json"
+
+    try:
+        with open(users_file, "r", encoding="utf-8") as f:
+            users = json.load(f)
+    except:
+        return {"error": "Credenziali non valide"}, 401
+
+    password_hash = hashlib.sha256(data.password.encode()).hexdigest()
+
+    # Cerca utente
+    for fingerprint, user in users.items():
+        if user.get("email") == data.email:
+            if user.get("password_hash") == password_hash:
+                # Aggiorna last_seen
+                user["last_seen"] = datetime.now().isoformat()
+
+                with open(users_file, "w", encoding="utf-8") as f:
+                    json.dump(users, f, indent=2, ensure_ascii=False)
+
+                user.pop("password_hash", None)
+
+                return {
+                    "access_token": f"fingerprint_{fingerprint}",
+                    "user": user,
+                    "token_type": "bearer",
+                }
+            else:
+                return {"error": "Credenziali non valide"}, 401
+
+    return {"error": "Credenziali non valide"}, 401
+
+
 @app.post("/api/admin/generate-explanations")
 def trigger_explanations_generation():
     """
