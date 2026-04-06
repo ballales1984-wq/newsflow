@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
@@ -1705,12 +1706,16 @@ def register_user(data: RegisterRequest, request: Request):
     # Controlla se email già registrata
     for fp, user in users.items():
         if user.get("email") == data.email:
-            return {"error": "Email già registrata"}, 400
+            return JSONResponse(
+                status_code=400, content={"error": "Email già registrata"}
+            )
 
     # Controlla se username già usato
     for fp, user in users.items():
         if user.get("username") == data.username:
-            return {"error": "Username già usato"}, 400
+            return JSONResponse(
+                status_code=400, content={"error": "Username già usato"}
+            )
 
     # Crea nuovo utente
     fingerprint = hashlib.sha256(
@@ -1755,7 +1760,9 @@ def login_user(data: LoginRequest, request: Request):
         with open(users_file, "r", encoding="utf-8") as f:
             users = json.load(f)
     except:
-        return {"error": "Credenziali non valide"}, 401
+        return JSONResponse(
+            status_code=401, content={"error": "Credenziali non valide"}
+        )
 
     password_hash = hashlib.sha256(data.password.encode()).hexdigest()
 
@@ -1777,9 +1784,11 @@ def login_user(data: LoginRequest, request: Request):
                     "token_type": "bearer",
                 }
             else:
-                return {"error": "Credenziali non valide"}, 401
+                return JSONResponse(
+                    status_code=401, content={"error": "Credenziali non valide"}
+                )
 
-    return {"error": "Credenziali non valide"}, 401
+    return JSONResponse(status_code=401, content={"error": "Credenziali non valide"})
 
 
 @app.post("/api/admin/generate-explanations")
