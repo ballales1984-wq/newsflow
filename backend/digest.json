@@ -1,66 +1,28 @@
 {
-  "date": "2026-02-10",
+  "date": "2026-02-13",
   "digest": [
     {
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "La rete oscura delle evacuazioni da Gaza",
-          "description": "Un’indagine sulle evacuazioni dei civili da Gaza rivela corridoi paralleli, voli fantasma e operazioni gestite da entità opache. L'articolo La rete os"
+          "title": "Researchers Observe In-the-Wild Exploitation of BeyondTrust CVSS 9.9 Vulnerability",
+          "description": "Threat actors have started to exploit a recently disclosed critical security flaw impacting BeyondTrust Remote Support (RS) and Privileged Remote Access (PRA) products, according to watchTowr.\n\"Overni"
         },
         {
-          "title": "Digital Omnibus: l’Europa ridisegna il quadro normativo digitale tra competitività e ridefinizione d",
-          "description": "Il Digital Omnibus, presentato dalla Commissione Europea il 19 novembre 2025, rappresenta la più ampia revisione del quadro normativo digitale europeo"
+          "title": "npm’s Update to Harden Their Supply Chain, and Points to Consider",
+          "description": "In December 2025, in response to the Sha1-Hulud incident, npm completed a major authentication overhaul intended to reduce supply-chain attacks. While the overhaul is a solid step forward, the changes"
         },
         {
-          "title": "Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre su Amazon",
-          "description": "Approfitta del Black Friday Amazon per acquistare Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre: solo oggi e domani. The post"
+          "title": "Malicious Chrome Extensions Caught Stealing Business Data, Emails, and Browsing History",
+          "description": "Cybersecurity researchers have discovered a malicious Google Chrome extension that's designed to steal data associated with Meta Business Suite and Facebook Business Manager.\nThe extension, named CL S"
         },
         {
-          "title": "Telecamere nei negozi: guida a regole, rischi e buone pratiche",
-          "description": "La videosorveglianza nei negozi è lecita solo se fondata su finalità chiare, proporzionata e supportata dalle corrette procedure lavoristiche e privac"
+          "title": "RFK Jr. follows a carnivore diet. That doesn’t mean you should.",
+          "description": "Americans have a new set of diet guidelines. Robert F. Kennedy Jr. has taken an old-fashioned food pyramid, turned it upside down, and plonked a steak and a stick of butter in prime positions. Kennedy"
         },
         {
-          "title": "Cina e Giappone: non solo una crisi diplomatica",
-          "description": "Dalla questione Taiwan alle ritorsioni economiche: lo scontro tra Cina e Giappone riapre ferite storiche. L'articolo Cina e Giappone: non solo una cri"
-        }
-      ]
-    },
-    {
-      "category": "🤖 Intelligenza Artificiale",
-      "articles": [
-        {
-          "title": "Ripensare i contratti nella direzione legale aziendale nell’era dell’AI",
-          "description": "Dalla redazione automatica all’analisi intelligente del rischio, l’intelligenza artificiale trasforma la direzione legale in una funzione strategica e"
-        },
-        {
-          "title": "Black Friday 2025, le 70 migliori offerte scelte da Wired",
-          "description": "Abbiamo raccolto le offerte migliori del Black Friday in tutte le categorie: dai notebook alla cucina, passando per robot aspirapolvere e idee regalo"
-        },
-        {
-          "title": "L'Ucraina alla ricerca di alleati anche alla Cop30 perché “siamo contro tutto quello che è vitale pe",
-          "description": "Il viceministro all'Economia, Ambiente e Agricoltura Pavlo Kartashov a Belém racconta a Wired come Kyiv vuole ricostruire l'impegno ambientale. Ma la "
-        },
-        {
-          "title": "L’AI cambia l’università: non bastano policy, servono regole",
-          "description": "L’AI entra nei processi cognitivi di atenei e laboratori: accelera traduzioni, sintesi e ipotesi, ma solleva dubbi su autorialità, integrità e valutaz"
-        },
-        {
-          "title": "Come gli evals stanno guidando l’introduzione dell’AI nelle imprese",
-          "description": "Sempre più aziende integrano l’intelligenza artificiale nei processi, ma molte faticano a ottenere i risultati sperati. Il motivo spesso risiede nella"
-        }
-      ]
-    },
-    {
-      "category": "💼 Business",
-      "articles": [
-        {
-          "title": "La creazione di valore nel business del cloud fluisce verso l’America",
-          "description": "Servono alternative agli hyperscaler statunitensi, poiché i loro modelli spingono le imprese verso una dipendenza sempre più forte. In Europa il probl"
-        },
-        {
-          "title": "Talento come leva strategica: come attivarlo e misurarlo in azienda",
-          "description": "Il talento non è dote innata: è una costruzione dinamica che richiede cultura, leadership e contesti abilitanti. Dalle competenze all’impatto, ecco co"
+          "title": "US deputy health secretary: Vaccine guidelines are still subject to change",
+          "description": "Over the past year, Jim O’Neill has become one of the most powerful people in public health. As the US deputy health secretary, he holds two roles at the top of the country’s federal health and scienc"
         }
       ]
     }

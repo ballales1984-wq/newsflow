@@ -59,20 +59,20 @@
       <!-- Mostra content completo se disponibile -->
       <div class="content" *ngIf="article.content && article.content.length > 0">
         <div class="content-text">
-          <p *ngFor="let paragraph of getContentParagraphs(article.content)">{{ paragraph | stripHtml }}</p>
+          <p *ngFor="let paragraph of getContentParagraphs(article.content)">{{ paragraph }}</p>
         </div>
       </div>
-
+      
       <!-- Mostra summary solo se non c'è content completo o come riassunto -->
       <div class="summary" *ngIf="(!article.content || article.content.length === 0) && article.summary">
         <h3>Sommario</h3>
-        <p>{{ article.summary | stripHtml }}</p>
+        <p>{{ article.summary }}</p>
       </div>
-
+      
       <!-- Se c'è content ma è diverso da summary, mostra anche summary come riassunto -->
       <div class="summary" *ngIf="article.content && article.content.length > 0 && article.summary && article.summary !== article.content.substring(0, article.summary.length)">
         <h3>Riassunto</h3>
-        <p>{{ article.summary | stripHtml }}</p>
+        <p>{{ article.summary }}</p>
       </div>
     </div>
 
@@ -88,7 +88,7 @@
 
       <div class="entities-section" *ngIf="article.entities">
         <h3>Entità Riconosciute</h3>
-
+        
         <div class="entity-group" *ngIf="article.entities.persons?.length">
           <h4>Persone</h4>
           <mat-chip-set>

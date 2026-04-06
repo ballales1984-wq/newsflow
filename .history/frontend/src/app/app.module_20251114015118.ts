@@ -43,7 +43,6 @@ import { PrivacyComponent } from './pages/privacy/privacy.component';
 import { TermsComponent } from './pages/terms/terms.component';
 import { AdBannerComponent } from './components/ad-banner/ad-banner.component';
 import { CookieBannerComponent } from './components/cookie-banner/cookie-banner.component';
-import { StripHtmlPipe } from './pipes/strip-html.pipe';
 import { ServiceWorkerModule } from '@angular/service-worker';
 
 @NgModule({
@@ -63,8 +62,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     PrivacyComponent,
     TermsComponent,
     AdBannerComponent,
-    CookieBannerComponent,
-    StripHtmlPipe
+    CookieBannerComponent
   ],
   imports: [
     BrowserModule,

@@ -20,10 +20,10 @@
   <mat-card-content>
     <!-- Mostra content completo se disponibile, altrimenti summary -->
     <p class="summary" *ngIf="article.content && article.content.length > 0">
-      {{ (article.content.length > 400 ? (article.content.substring(0, 400) + '...') : article.content) | stripHtml }}
+      {{ article.content.length > 400 ? (article.content.substring(0, 400) + '...') : article.content }}
     </p>
     <p class="summary" *ngIf="!article.content || article.content.length === 0">
-      {{ article.summary | stripHtml }}
+      {{ article.summary }}
     </p>
 
     <div class="keywords" *ngIf="article.keywords && article.keywords.length > 0">
@@ -37,27 +37,27 @@
 
   <mat-card-actions>
     <div class="actions-left">
-      <button
-        mat-icon-button
-        matTooltip="Salva"
+      <button 
+        mat-icon-button 
+        matTooltip="Salva" 
         (click)="saveArticle($event)"
         [color]="isSaved() ? 'primary' : ''"
         [attr.aria-label]="isSaved() ? 'Rimuovi dai salvati' : 'Salva articolo'"
       >
         <mat-icon>{{ isSaved() ? 'bookmark' : 'bookmark_border' }}</mat-icon>
       </button>
-      <button
-        mat-icon-button
-        matTooltip="Condividi"
+      <button 
+        mat-icon-button 
+        matTooltip="Condividi" 
         (click)="shareArticle($event)"
         aria-label="Condividi articolo"
       >
         <mat-icon>share</mat-icon>
       </button>
-      <a
-        [href]="article.url"
-        target="_blank"
-        mat-icon-button
+      <a 
+        [href]="article.url" 
+        target="_blank" 
+        mat-icon-button 
         matTooltip="Apri originale"
         (click)="$event.stopPropagation()"
         aria-label="Apri articolo originale in nuova scheda"
@@ -66,9 +66,9 @@
       </a>
     </div>
     <div class="actions-right">
-      <button
-        mat-stroked-button
-        color="accent"
+      <button 
+        mat-stroked-button 
+        color="accent" 
         (click)="explainArticle($event)"
         matTooltip="Spiegazione AI con 3 livelli di profondità"
       >

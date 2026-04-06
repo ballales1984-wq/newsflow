@@ -15,7 +15,7 @@
           <ul class="digest-articles">
             <li class="digest-article" *ngFor="let article of categoryData.articles">
               <strong class="article-title">{{ article.title }}</strong>
-              <p class="article-description">{{ article.description | stripHtml }}</p>
+              <p class="article-description">{{ article.description }}</p>
             </li>
           </ul>
         </div>

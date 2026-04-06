@@ -5,58 +5,24 @@
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "Anthropic raises $30bn in latest round, valuing Claude bot maker at $380bn",
-          "description": "<p>Maker of chatbot with coding ability says annualised revenue grew tenfold in each of past three years, to $14bn</p><p>Anthropic, the US AI startup behind the Claude chatbot, has raised $30bn (£22bn"
+          "title": "Researchers Observe In-the-Wild Exploitation of BeyondTrust CVSS 9.9 Vulnerability",
+          "description": "Threat actors have started to exploit a recently disclosed critical security flaw impacting BeyondTrust Remote Support (RS) and Privileged Remote Access (PRA) products, according to watchTowr.\n\"Overni"
         },
         {
-          "title": "NHS deal with AI firm Palantir called into question after officials’ concerns revealed",
-          "description": "<p>Exclusive: in 2025 briefing to Wes Streeting, officials warned reputation of tech firm behind US ICE operations would hinder rollout of data system in UK </p><p>Health officials fear Palantir’s rep"
-        },
-        {
-          "title": "The Download: an exclusive chat with Jim O’Neill, and the surprising truth about heists",
-          "description": "This is today&#8217;s edition of The Download, our weekday newsletter that provides a daily dose of what&#8217;s going on in the world of technology. US deputy health secretary: Vaccine guidelines are"
-        },
-        {
-          "title": "The myth of the high-tech heist",
-          "description": "Making a movie is a lot like pulling off a heist. That’s what Steven Soderbergh—director of the Ocean’s franchise, among other heist-y classics—said a few years ago. You come up with a creative angle,"
-        },
-        {
-          "title": "Coding AI in tempo reale: cosa cambia con GPT-5.3-Codex-Spark",
-          "description": "<p><img alt=\"GPT-5.3-Codex-Spark\" class=\"attachment-post-thumbnail size-post-thumbnail wp-post-image\" src=\"https://www.punto-informatico.it/app/uploads/2026/02/gpt-53-codex-spark_art.jpg\" /></p>\n<p>La"
-        }
-      ]
-    },
-    {
-      "category": "🔬 Scienza",
-      "articles": [
-        {
-          "title": "US deputy health secretary: Vaccine guidelines are still subject to change",
-          "description": "Over the past year, Jim O’Neill has become one of the most powerful people in public health. As the US deputy health secretary, he holds two roles at the top of the country’s federal health and scienc"
-        }
-      ]
-    },
-    {
-      "category": "🤖 Intelligenza Artificiale",
-      "articles": [
-        {
-          "title": "OpenAI retired its most seductive chatbot – leaving users angry and grieving: ‘I can’t live like this’",
-          "description": "<p>Its human partners said the flirty, quirky GPT-4o was the perfect companion – on the eve of Valentine’s Day, it’s being turned off for good. How will users cope?</p><p>Brandie plans to spend her la"
-        },
-        {
-          "title": "Next AI-Integrated System, la poliedrica piattaforma AI pensata per gli yacht",
-          "description": "Next AI-Integrated System è un sistema evoluto che si occupa dell'assistenza a bordo a 360 gradi e che funziona anche offline"
-        },
-        {
-          "title": "State of Play, tutti i giochi annunciati per Ps5 e pc: da God of War a Silent Hill",
-          "description": "Annunciati da Sony Resident Evil Requiem, Pragmata, Metal Gear Solid Master Collection Volume 2, Death Stranding 2 On The Beach e a una lunga lista di titoli indie"
-        },
-        {
-          "title": "Da Diego a Nolan, su TikTok spopolano i buffi e teneri AI animals che secondo noi potrebbero diventare presto i nuovi br",
-          "description": "Procioni, tartarughe, gatti e conigli che preparano pietanze in stile ASMR: un trend silenzioso che esploderà a breve grazie (ancora) all'intelligenza artificiale?"
+          "title": "npm’s Update to Harden Their Supply Chain, and Points to Consider",
+          "description": "In December 2025, in response to the Sha1-Hulud incident, npm completed a major authentication overhaul intended to reduce supply-chain attacks. While the overhaul is a solid step forward, the changes"
         },
         {
           "title": "Malicious Chrome Extensions Caught Stealing Business Data, Emails, and Browsing History",
           "description": "Cybersecurity researchers have discovered a malicious Google Chrome extension that's designed to steal data associated with Meta Business Suite and Facebook Business Manager.\nThe extension, named CL S"
+        },
+        {
+          "title": "RFK Jr. follows a carnivore diet. That doesn’t mean you should.",
+          "description": "Americans have a new set of diet guidelines. Robert F. Kennedy Jr. has taken an old-fashioned food pyramid, turned it upside down, and plonked a steak and a stick of butter in prime positions. Kennedy"
+        },
+        {
+          "title": "US deputy health secretary: Vaccine guidelines are still subject to change",
+          "description": "Over the past year, Jim O’Neill has become one of the most powerful people in public health. As the US deputy health secretary, he holds two roles at the top of the country’s federal health and scienc"
         }
       ]
     }
