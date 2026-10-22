@@ -5,6 +5,11 @@ import { ArticleService } from '../../services/article.service';
 import { AnalyticsService } from '../../services/analytics.service';
 import { Category } from '../../models/category.model';
 
+/**
+ * Sidebar con l'elenco delle categorie e i relativi contatori.
+ * La lista delle categorie arriva dal backend (CategoryService), mentre i
+ * contatori sono calcolati qui con più chiamate all'elenco articoli.
+ */
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
@@ -27,10 +32,14 @@ export class SidebarComponent implements OnInit {
 
   @HostListener('window:resize', ['$event'])
   onResize() {
+    // Soglia 768px: sotto questo valore la sidebar diventa un drawer,
+    // quindi il menu va chiuso al tap su una voce.
     this.isMobile = window.innerWidth < 768;
   }
 
   ngOnInit(): void {
+    // La larghezza va letta subito: al primo render la sidebar potrebbe
+    // risultare già "desktop" se il resize non viene innescato.
     this.isMobile = window.innerWidth < 768;
     this.loadCategories();
     this.loadArticleCounts();
@@ -42,6 +51,8 @@ export class SidebarComponent implements OnInit {
         this.categories = categories;
       },
       error: (error) => {
+        // Senza categorie la sidebar resta vuota: l'errore viene solo loggato,
+        // la navigazione principale resta comunque disponibile.
         console.error('Error loading categories:', error);
       }
     });
@@ -49,6 +60,7 @@ export class SidebarComponent implements OnInit {
 
   loadArticleCounts(): void {
     // Carica totale articoli
+    // Il totale arriva già nella risposta dell'API: non serve un endpoint dedicato.
     this.articleService.getArticles(1, 1000).subscribe({
       next: (response) => {
         this.totalArticles = response.total;
@@ -56,6 +68,9 @@ export class SidebarComponent implements OnInit {
     });
 
     // Carica conteggi per ogni categoria (tutte le 14 categorie)
+    // Il backend non espone un conteggio aggregato per categoria, quindi si
+    // interroga l'elenco articoli filtrato: una richiesta per categoria, tutte
+    // in parallelo, e si usa il campo 'total' di ogni risposta.
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].forEach(catId => {
       this.articleService.getArticles(1, 1000, { category_id: catId }).subscribe({
         next: (response) => {
@@ -66,6 +81,9 @@ export class SidebarComponent implements OnInit {
   }
 
   selectCategory(categoryId: number | null): void {
+    // La categoria attiva viene tenuta in campo per evidenziare la voce
+    // di menu; la fonte di verità restituita dal reload è però la query
+    // param dell'URL.
     this.selectedCategoryId = categoryId;
     
     // Track category filter
@@ -77,6 +95,9 @@ export class SidebarComponent implements OnInit {
     // Chiudi sidebar immediatamente (sia mobile che desktop)
     this.linkClicked.emit();
     
+    // La navigazione passa il filtro nell'URL: la home lo rileva nei query
+    // params e ricarica gli articoli, così il filtro è condivisibile e
+    // sopravvive a un refresh.
     if (categoryId) {
       this.router.navigate(['/'], { queryParams: { category: categoryId } });
     } else {
@@ -92,6 +113,8 @@ export class SidebarComponent implements OnInit {
 
   scrollToFilteredArticles(): void {
     // Cerca l'elemento degli articoli filtrati con retry multipli
+    // L'elemento esiste solo dopo il render della lista filtrata: si ritenta
+    // fino a 5 volte (ogni 200ms) prima di rinunciare.
     let attempts = 0;
     const maxAttempts = 5;
     
@@ -101,6 +124,8 @@ export class SidebarComponent implements OnInit {
       
       if (element) {
         const headerOffset = 80; // Offset per l'header fisso
+        // L'header è fisso in alto: senza questo scarto il primo articolo
+        // finirebbe sotto la barra di navigazione.
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -123,12 +148,15 @@ export class SidebarComponent implements OnInit {
   }
 
   onLinkClick(): void {
+    // Su mobile la sidebar è un drawer: va richiusa a ogni link seguito.
     if (this.isMobile) {
       this.linkClicked.emit();
     }
   }
 
   getCategoryCount(categoryId: number): number {
+    // 0 quando il conteggio non è ancora arrivato: preferibile mostrare 0
+    // piuttosto che nascondere la voce di menu.
     return this.categoryCounts[categoryId] || 0;
   }
 }

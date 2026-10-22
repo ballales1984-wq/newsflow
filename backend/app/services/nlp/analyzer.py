@@ -26,10 +26,14 @@ class NLPAnalyzer:
     
     def __init__(self):
         """Initialize NLP models"""
+        # Models start as None; they are loaded in __init__ and stay None
+        # if unavailable, so analysis degrades gracefully instead of crashing.
         self.nlp_it = None
         self.nlp_en = None
         
         if SPACY_AVAILABLE:
+            # spaCy models are large downloads; their absence is not fatal and
+            # simply disables the NLP features that depend on them.
             try:
                 self.nlp_it = spacy.load("it_core_news_lg")
                 logger.info("Loaded Italian spaCy model")
@@ -59,14 +63,19 @@ class NLPAnalyzer:
             return self._empty_analysis()
         
         # Detect language
+        # Language drives which spaCy model is used; the wrong model yields
+        # poor keywords and entities for that language.
         language = self._detect_language(text)
         
         # Select appropriate model
+        # Binary Italian/English choice; unsupported languages fall back to
+        # the English model, or to an empty analysis when no model loaded.
         nlp = self.nlp_it if language == "it" else self.nlp_en
         if not nlp:
             return self._empty_analysis()
         
         # Process text
+        # 1M character cap prevents memory blowup on very long articles.
         full_text = f"{title} {text}" if title else text
         doc = nlp(full_text[:1000000])  # Limit to 1M chars
         
@@ -91,6 +100,9 @@ class NLPAnalyzer:
         if not LANGDETECT_AVAILABLE:
             return "en"
         try:
+            # Only the first 1000 chars are inspected; short or ambiguous
+            # text is unreliable, and any detection failure falls back to
+            # "en" rather than mislabelling the article.
             lang = detect(text[:1000])
             return lang
         except (LangDetectException, Exception):
@@ -99,6 +111,9 @@ class NLPAnalyzer:
     def _extract_keywords(self, doc, top_n: int = 15) -> List[str]:
         """Extract keywords using POS tagging and frequency"""
         # Filter for nouns, proper nouns, and adjectives
+        # Content words only (nouns, proper nouns, adjectives); stop words,
+        # punctuation and very short tokens are filtered out before ranking
+        # by frequency to surface representative terms.
         words = [
             token.lemma_.lower()
             for token in doc
@@ -148,6 +163,8 @@ class NLPAnalyzer:
         Calculate sentiment score
         Simple implementation - can be enhanced with transformers
         """
+        # Sentiment is intentionally a neutral placeholder: no sentiment
+        # model is wired yet, so every article scores 0.0 here.
         # Placeholder - implement with sentiment model
         # For now, return neutral
         return 0.0
@@ -159,9 +176,15 @@ class NLPAnalyzer:
         Returns:
             Score between 0 and 1
         """
+        # Heuristic quality score (not ML-based): rewards length in the
+        # 500-5000 word band, keyword richness, paragraph structure and the
+        # presence of reference URLs; capped at 1.0.
         score = 0.5  # Base score
         
         # Length factor (prefer 500-5000 words)
+        # 500-5000 words adds most credit, 200-500 some credit, recognising
+        # that very short articles are thin and very long ones are less
+        # likely to be read in full.
         word_count = len(text.split())
         if 500 <= word_count <= 5000:
             score += 0.2
@@ -187,6 +210,8 @@ class NLPAnalyzer:
     
     def _calculate_reading_time(self, text: str) -> int:
         """Calculate estimated reading time in minutes (avg 200 words/min)"""
+        # 200 words per minute is the average adult reading speed; max(1,)
+        # guarantees at least one minute even for tiny texts.
         word_count = len(text.split())
         return max(1, round(word_count / 200))
     
@@ -224,6 +249,9 @@ class NLPAnalyzer:
         article_set = set(k.lower() for k in article_keywords)
         interest_set = set(k.lower() for k in user_interests)
         
+        # Keyword-overlap relevance between the article and the user's
+        # interests; returns a neutral 0.5 when either side is empty so
+        # uninteresting articles are not penalised by missing data.
         overlap = len(article_set.intersection(interest_set))
         max_possible = min(len(article_set), len(interest_set))
         

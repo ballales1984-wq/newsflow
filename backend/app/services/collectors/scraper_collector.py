@@ -12,7 +12,10 @@ class ScraperCollector:
     """Collector for web scraping (ethical)"""
     
     def __init__(self):
+        # User-Agent carries a contact URL so site operators can identify
+        # and reach the crawler (polite scraping convention).
         self.user_agent = "NewsFlow/1.0 (Intelligent News Curation; +https://newsflow.app)"
+        # 30s per-request timeout for fetching and parsing a page.
         self.timeout = 30
     
     async def collect_from_url(self, url: str) -> Optional[Dict[str, Any]]:
@@ -27,10 +30,14 @@ class ScraperCollector:
         """
         try:
             article = NewspaperArticle(url)
+            # newspaper3k fetches the page, extracts the article body,
+            # strips chrome (nav, ads), and derives summary, authors and dates.
             article.download()
             article.parse()
             article.nlp()
             
+            # top_image and publish_date may be None when the page lacks the
+            # relevant metadata; keywords are capped at 10 to bound the payload.
             return {
                 'title': article.title,
                 'url': url,
@@ -63,6 +70,8 @@ class ScraperCollector:
         """
         try:
             url = "https://www.europeana.eu/api/v2/search.json"
+            # Europeana demo key (api2demo) is rate-limited and a
+            # placeholder; a real key is required for reliable production use.
             params = {
                 "wskey": "api2demo",  # Replace with actual key
                 "query": query,
@@ -107,6 +116,8 @@ class ScraperCollector:
         """
         try:
             url = "https://archive.org/advancedsearch.php"
+            # Internet Archive advancedsearch returns JSON docs; the
+            # identifier is reused to build the details URL and image thumb.
             params = {
                 "q": f"collection:{collection} AND ({query})",
                 "fl[]": ["identifier", "title", "description", "date", "creator"],
@@ -134,6 +145,8 @@ class ScraperCollector:
     
     def _parse_europeana_item(self, item: Dict) -> Optional[Dict[str, Any]]:
         """Parse Europeana item"""
+        # Europeana does not reliably provide publication dates, so
+        # published_at stays None for these items.
         try:
             return {
                 'title': item.get('title', [''])[0] if isinstance(item.get('title'), list) else item.get('title', ''),
@@ -150,6 +163,8 @@ class ScraperCollector:
     
     def _parse_archive_item(self, item: Dict) -> Optional[Dict[str, Any]]:
         """Parse Internet Archive item"""
+        # The Internet Archive does not reliably provide publication dates,
+        # so published_at stays None for these items.
         try:
             identifier = item.get('identifier', '')
             url = f"https://archive.org/details/{identifier}" if identifier else ''

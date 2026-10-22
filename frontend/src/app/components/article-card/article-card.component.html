@@ -8,6 +8,17 @@
     </div>
   </div>
 
+  <div class="card-image card-placeholder-banner" *ngIf="!article.image_url" [ngClass]="'category-theme-' + (article.category_id || 1)">
+    <div class="placeholder-pattern"></div>
+    <mat-icon class="category-icon">{{ getCategoryIcon() }}</mat-icon>
+    <span class="category-pill">{{ getCategoryName() }}</span>
+    <div class="quality-badge" *ngIf="article.quality_score">
+      <mat-chip [color]="getQualityColor(article.quality_score)">
+        {{ (article.quality_score * 100).toFixed(0) }}%
+      </mat-chip>
+    </div>
+  </div>
+
   <mat-card-header>
     <mat-card-title>{{ article.title }}</mat-card-title>
     <mat-card-subtitle>

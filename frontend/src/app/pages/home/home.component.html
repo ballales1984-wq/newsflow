@@ -8,6 +8,34 @@
         <mat-icon>article</mat-icon>
         {{ selectedCategoryId ? 'Articoli Filtrati' : 'Tutte le Notizie' }}
       </h2>
+
+      <!-- Barra di ricerca rapida -->
+      <div class="quick-search-box">
+        <mat-icon class="search-prefix-icon">search</mat-icon>
+        <input 
+          type="text" 
+          placeholder="Cerca per titolo, parola chiave o autore..." 
+          [value]="searchQuery" 
+          (input)="onSearchInput($any($event.target).value)"
+          aria-label="Cerca notizia"
+        />
+        <button 
+          *ngIf="searchQuery" 
+          mat-icon-button 
+          (click)="clearSearch()" 
+          matTooltip="Cancella ricerca"
+          class="clear-search-btn"
+          type="button"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Feedback conteggio ricerca attiva -->
+    <div class="search-feedback" *ngIf="searchQuery">
+      <span>Trovati <strong>{{ articles.length }}</strong> articoli per "<em>{{ searchQuery }}</em>"</span>
+      <button mat-button color="primary" (click)="clearSearch()">Ripristina tutti</button>
     </div>
 
     <app-category-filter

@@ -4,10 +4,20 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class SpeechService {
-  private synth: SpeechSynthesis | null = null;
+private synth: SpeechSynthesis | null = null;
   private isSupported = false;
+  // Flag per evitare di ripetere il messaggio di benvenuto più volte di seguito.
+  // Viene messo a true alla fine di `onend` e reso false da reset().
+  // Permette di riprodurre lo stesso testo solo dopo un reset manuale o un force.
   private hasSpoken = false; // Flag per evitare di ripetere il messaggio
 
+  // Al costruttore verifica se il browser supporta speechSynthesis.
+  // Se non è supportato, isSupported rimane false e tutti i metodi
+  // restituiscono immediatamente senza errori in console.
+  // Le voci possono non essere disponibili immediatamente all'avvio
+  // (caricate in background): si registra onvoiceschanged per quando
+  // saranno pronte. Se non ci sono voci al momento, il codice che
+  // chiama speak() aspetta con un polling di 100ms fino a un timeout di 2s.
   constructor() {
     if ('speechSynthesis' in window) {
       this.synth = window.speechSynthesis;
@@ -35,7 +45,9 @@ export class SpeechService {
       return;
     }
 
-    // Se già pronunciato e non forzato, non ripetere
+    // Se già pronunciato e non forzato, non ripetere.
+    // Il flag hasSpoken impedisce di riascoltare il benvenuto più volte
+    // senza un intervento esplicito (reset() o force=true).
     if (this.hasSpoken && !force) {
       return;
     }
@@ -51,12 +63,16 @@ export class SpeechService {
       // Imposta lingua italiana
       utterance.lang = 'it-IT';
       
-      // Velocità e volume
+      // Velocità e volume: rate=0.9 (più lento per chiarezza), pitch=1.1
+      // (più acuto per suono "femminile"), volume=0.8 (moderato).
       utterance.rate = 0.9; // Leggermente più lento per chiarezza
       utterance.pitch = 1.1; // Leggermente più acuto per suono più femminile
       utterance.volume = 0.8; // Volume moderato
 
-      // Cerca una voce femminile italiana
+      // Selezione voce per lingua: cerca prima una voce italiana "femminile"
+      // (name contiene female/Zira/Elena/Silvia/Paola/Chiara). Se non la trova,
+      // cerca qualsiasi voce con lang che inizia per 'it'. Se nemmeno quella
+      // esiste, usa la voce di default del browser (nessun utterance.voice).
       const voices = this.synth!.getVoices();
       const italianFemaleVoice = voices.find(voice => 
         voice.lang.startsWith('it') && 
@@ -82,7 +98,8 @@ export class SpeechService {
         }
       }
 
-      // Eventi
+      // Eventi: onstart/onend/onerror forniscono feedback per il debugging
+      // e permettono di gestire lo stato (es. hasSpoken = true in onend).
       utterance.onstart = () => {
         console.log('🔊 Inizio riproduzione vocale');
       };
@@ -104,7 +121,9 @@ export class SpeechService {
       }
     };
 
-    // Se le voci non sono ancora caricate, aspetta
+    // Se le voci non sono ancora caricate, aspetta con un polling di 100ms.
+    // Timeout di 2s: se dopo 2 secondi non ci sono voci, riproduce comunque
+    // con la voce di default (potrebbe non essere italiana).
     if (this.synth.getVoices().length === 0) {
       console.log('⏳ Voci non ancora caricate, aspetto...');
       const checkVoices = setInterval(() => {
@@ -138,6 +157,9 @@ export class SpeechService {
   /**
    * Ferma la riproduzione corrente
    */
+  // Ferma la riproduzione corrente.
+  // cancel() interrompe il messaggio in coda e il corrente; non restituisce
+  // uno stato, quindi non si sa se il messaggio era iniziato o no.
   stop(): void {
     if (this.synth) {
       this.synth.cancel();
@@ -147,6 +169,8 @@ export class SpeechService {
   /**
    * Resetta il flag per permettere di riprodurre di nuovo
    */
+  // Resetta il flag per permettere di riprodurre di nuovo.
+  // Dopo un reset, speak() può riprodurre lo stesso testo anche se già pronunciato.
   reset(): void {
     this.hasSpoken = false;
   }
@@ -154,6 +178,8 @@ export class SpeechService {
   /**
    * Verifica se il supporto è disponibile
    */
+  // Verifica se il supporto è disponibile.
+  // Restituisce isSupported, che è true solo se window.speechSynthesis esiste.
   isAvailable(): boolean {
     return this.isSupported;
   }

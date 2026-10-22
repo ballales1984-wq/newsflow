@@ -11,6 +11,8 @@ class RSSCollector:
     """Collector for RSS feeds"""
     
     def __init__(self):
+        # User-Agent identifies this bot to feed servers so site operators
+        # can tell who is fetching and contact us if needed.
         self.user_agent = "NewsFlow/1.0 (Intelligent News Curation)"
     
     def collect(self, rss_url: str, max_articles: int = 50) -> List[Dict[str, Any]]:
@@ -28,11 +30,16 @@ class RSSCollector:
             # Parse feed
             feed = feedparser.parse(rss_url, agent=self.user_agent)
             
+            # bozo is set when feedparser hit parsing errors; entries may
+            # still be usable, so we log and keep processing rather than
+            # aborting the whole feed.
             if feed.bozo:
                 logger.warning(f"RSS feed has errors: {rss_url}")
             
             articles = []
             
+            # Each entry is parsed in its own try block so one malformed
+            # entry cannot abort the rest of the feed.
             for entry in feed.entries[:max_articles]:
                 try:
                     article = self._parse_entry(entry)
@@ -45,6 +52,8 @@ class RSSCollector:
             logger.info(f"Collected {len(articles)} articles from {rss_url}")
             return articles
             
+        # Any failure fetching or parsing this feed returns an empty
+        # list: a dead or unreachable source must not abort the run.
         except Exception as e:
             logger.error(f"Error collecting RSS feed {rss_url}: {e}")
             return []
@@ -53,6 +62,8 @@ class RSSCollector:
         """Parse RSS entry to article dictionary"""
         
         # Get published date
+        # Date may be missing or in an unparseable format; published_at
+        # stays None and callers must tolerate undated articles.
         published_at = None
         if hasattr(entry, 'published_parsed') and entry.published_parsed:
             published_at = datetime(*entry.published_parsed[:6])
@@ -63,6 +74,8 @@ class RSSCollector:
                 pass
         
         # Get content
+        # RSS feeds disagree on which field carries the body, so fall back
+        # from content to description to summary instead of losing it.
         content = ""
         if hasattr(entry, 'content'):
             content = entry.content[0].value
@@ -72,12 +85,16 @@ class RSSCollector:
             content = entry.summary
         
         # Get image
+        # Image is optional: media_content/media_thumbnail are RSS
+        # extensions absent on many feeds, so image_url may be None.
         image_url = None
         if hasattr(entry, 'media_content') and entry.media_content:
             image_url = entry.media_content[0].get('url')
         elif hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
             image_url = entry.media_thumbnail[0].get('url')
         
+        # Title and url are stripped to normalise feed whitespace; summary
+        # is truncated to 500 chars to bound stored payload size.
         return {
             'title': entry.get('title', '').strip(),
             'url': entry.get('link', '').strip(),

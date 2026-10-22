@@ -23,9 +23,14 @@ class ArticleClassifier:
             return
             
         try:
+            # facebook/bart-large-mnli is a zero-shot NLI model: it
+            # classifies into arbitrary categories without per-category
+            # training data.
             self.classifier = pipeline(
                 "zero-shot-classification",
                 model="facebook/bart-large-mnli",
+                # device=-1 forces CPU inference; device 0 would use a GPU
+                # but one is rarely available in this environment.
                 device=-1  # CPU, use 0 for GPU
             )
             logger.info("Loaded classification model")
@@ -55,11 +60,15 @@ class ArticleClassifier:
         
         try:
             # Limit text length
+            # 512-character truncation matches the model's effective input
+            # limit and keeps inference latency predictable.
             text = text[:512]
             
             result = self.classifier(
                 text,
                 candidate_labels,
+                # multi_label=False means exactly one category is chosen;
+                # an article cannot belong to multiple categories here.
                 multi_label=False
             )
             
@@ -97,6 +106,9 @@ class ArticleClassifier:
         best_label = result['labels'][0]
         best_score = result['scores'][0]
         
+        # Low-confidence predictions are rejected (None) instead of forcing
+        # a possibly wrong label; callers must handle None as the neutral
+        # fallback category.
         if best_score >= threshold:
             return best_label
         
@@ -104,6 +116,8 @@ class ArticleClassifier:
     
     def _get_default_categories(self) -> List[str]:
         """Get default category labels"""
+        # Default label set mirrors the site's editorial verticals; it is
+        # used when the caller supplies no candidate labels.
         return [
             'Technology',
             'Science',

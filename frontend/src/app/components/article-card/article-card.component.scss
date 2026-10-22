@@ -67,10 +67,61 @@
     position: absolute;
     top: 12px;
     right: 12px;
+    z-index: 2;
 
     @media (max-width: 480px) {
       top: 8px;
       right: 8px;
+    }
+  }
+
+  &.card-placeholder-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+    position: relative;
+    overflow: hidden;
+
+    &.category-theme-1 { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%); } // Tech
+    &.category-theme-2 { background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%); } // Science
+    &.category-theme-3 { background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #a855f7 100%); } // Philo
+    &.category-theme-4 { background: linear-gradient(135deg, #450a0a 0%, #991b1b 50%, #dc2626 100%); } // Cyber
+    &.category-theme-5 { background: linear-gradient(135deg, #431407 0%, #c2410c 50%, #f97316 100%); } // AI
+    &.category-theme-6 { background: linear-gradient(135deg, #713f12 0%, #ca8a04 50%, #eab308 100%); } // Innovation
+    &.category-theme-7 { background: linear-gradient(135deg, #831843 0%, #be185d 50%, #ec4899 100%); } // Culture
+
+    .placeholder-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+      background-image: radial-gradient(#ffffff 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+
+    .category-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 6px;
+      z-index: 1;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+    }
+
+    .category-pill {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: rgba(255, 255, 255, 0.95);
+      background: rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(4px);
+      padding: 3px 12px;
+      border-radius: 12px;
+      z-index: 1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
   }
 }

@@ -10,25 +10,43 @@ import { PageEvent } from '@angular/material/paginator';
 import { timeout, catchError, filter } from 'rxjs/operators';
 import { of, Subscription } from 'rxjs';
 
+/**
+ * Pagina principale: elenco articoli, filtro per categoria, ricerca rapida
+ * e paginazione.
+ *
+ * L'URL è la fonte di verità dello stato di navigazione: la categoria scelta
+ * vive in ?category=<id> e il componente si ricostruisce da lì (reload, link
+ * condiviso, back dal browser).
+ */
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  // articles = vista filtrata mostrata a schermo; rawArticles = pagina
+  // ricevuta dal server. La ricerca client-side lavora solo su rawArticles.
   articles: Article[] = [];
+  rawArticles: Article[] = [];
   categories: Category[] = [];
   categoryCounts: { [categoryId: number]: number } = {}; // Conteggio articoli per categoria
   loading = false;
   selectedCategoryId: number | null = null;
+  searchQuery: string = '';
   private routerSubscription?: Subscription;
   
   // Pagination
   totalArticles = 0;
+  // Pagina grande di proposito: con il filtro e la ricerca applicati lato
+  // client, una pagina più piccola mostrerebbe pochi risultati utili.
   pageSize = 50; // Aumentato per mostrare più articoli per pagina
+  // Numero di pagina 1-based come atteso dal servizio, che lo converte in
+  // skip = (pagina - 1) * pageSize per l'API.
   currentPage = 1;
   
   // Error display
+  // Dettagli dell'ultimo errore mostrati in un pannello e salvati in
+  // localStorage, così restano recuperabili anche dopo un reload.
   lastError: string | null = null;
   showError = false;
 
@@ -47,6 +65,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.loadCategories();
       
       // Ascolta navigazione per ripristinare scroll quando si torna dalla pagina articolo
+      // La posizione è salvata dalla card prima di aprire l'articolo e ripristinata
+      // qui al rientro, così l'utente torna al punto esatto della lista.
       this.routerSubscription = this.router.events
         .pipe(filter(event => event instanceof NavigationEnd))
         .subscribe((event: any) => {
@@ -59,11 +79,17 @@ export class HomeComponent implements OnInit, OnDestroy {
         });
       
       // Load articles immediately on init and listen to query params changes
+      // Ogni cambio di ?category rilancia il caricamento: il filtro non viene
+      // applicato in locale, è il server a restituire gli articoli della categoria.
       this.route.queryParams.subscribe(params => {
         console.log('📋 Query params changed:', params);
         const previousCategoryId = this.selectedCategoryId;
         const isFirstLoad = this.selectedCategoryId === null && previousCategoryId === null;
+        // La categoria arriva come stringa nella query param: va convertita
+        // in numero per confrontarla con gli id delle categorie.
         this.selectedCategoryId = params['category'] ? +params['category'] : null;
+        // Cambio di filtro = nuova pagina 1: la pagina corrente riguarderebbe
+        // un insieme di articoli diverso.
         this.currentPage = 1;
         this.loadArticles();
         
@@ -104,11 +130,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   loadCategoryCounts(): void {
     // Ottimizzato: usa requestAnimationFrame per non bloccare UI
     // Carica tutti gli articoli per contare quelli per categoria
+    // Il backend non espone un conteggio per categoria, quindi si scarica una
+    // pagina molto grande (fino a 1000 articoli) e si conta qui: è un costo
+    // una tantum, contenuto dal fatto che il conteggio gira a chunk.
     this.articleService.getArticles(1, 1000, {}).subscribe({
       next: (response) => {
         const allArticles = response.items || [];
         
         // Mappa keywords → category_id (come nel backend) - ottimizzata per lookup veloce
+        // Replica la classificazione del backend: serve solo per gli articoli
+        // che arrivano senza category_id.
         const KEYWORD_TO_CATEGORY_ID: { [key: string]: number } = {
           'technology': 1, 'tech': 1, 'tecnologia': 1,
           'science': 2, 'scienz': 2,
@@ -128,9 +159,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         
         // Inizializza conteggi
         this.categoryCounts = {};
+        // La chiave 0 rappresenta "Tutte" nel filtro.
         this.categoryCounts[0] = allArticles.length; // "Tutte"
         
         // Ottimizzazione: usa requestAnimationFrame per spezzare il lavoro e non bloccare UI
+        // Il conteggio gira a blocchi da 50 articoli, uno per frame: il browser
+        // resta responsivo mentre i conteggi si riempiono.
         const processInChunks = (articles: any[], categories: any[], chunkSize: number = 50) => {
           let articleIndex = 0;
           
@@ -178,6 +212,8 @@ export class HomeComponent implements OnInit, OnDestroy {
               requestAnimationFrame(processChunk);
             } else {
               // Inizializza a 0 le categorie senza articoli
+              // Senza questa passata una categoria vuota resterebbe assente
+              // dalla mappa e il filtro la mostrerebbe con un conteggio 'undefined'.
               categories.forEach(category => {
                 if (!this.categoryCounts[category.id]) {
                   this.categoryCounts[category.id] = 0;
@@ -214,6 +250,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     const apiUrl = (this.articleService as any).apiUrl || 'N/A';
     console.log('🌐 API URL:', apiUrl);
     
+    // Filtro solo per categoria: gli altri filtri (ricerca, qualità) sono
+    // applicati lato client su rawArticles.
     const filters = this.selectedCategoryId 
       ? { category_id: this.selectedCategoryId } 
       : {};
@@ -283,7 +321,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         next: (response) => {
           console.log('✅ Articles loaded:', { count: response.items?.length || 0, total: response.total });
           console.log('✅ First article:', response.items?.[0]?.title || 'N/A');
-          this.articles = response.items || [];
+          // La pagina grezza viene conservata: la ricerca client-side la filtra
+          // senza dover richiedere nuovi dati al server.
+          this.rawArticles = response.items || [];
+          this.applyClientSearch();
           this.totalArticles = response.total || 0;
           this.loading = false;
           
@@ -294,6 +335,8 @@ export class HomeComponent implements OnInit, OnDestroy {
           
           // Riproduci messaggio vocale quando gli articoli vengono caricati per la prima volta
           // Solo quando non c'è una categoria selezionata (homepage principale)
+          // Il messaggio di benvenuto introduce l'elenco generale: con un
+          // filtro attivo sarebbe fuorviante.
           if (this.articles.length > 0 && !this.selectedCategoryId) {
             // Resetta il flag per permettere la riproduzione anche dopo refresh
             this.speechService.reset();
@@ -342,6 +385,31 @@ export class HomeComponent implements OnInit, OnDestroy {
           alert(`Errore subscribe: ${errorDetails.message}\n\nErrore salvato! Clicca sul pulsante "Mostra Errore" in basso per copiarlo.`);
         }
       });
+  }
+
+  onSearchInput(query: string): void {
+    this.searchQuery = query;
+    this.applyClientSearch();
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.applyClientSearch();
+  }
+
+  applyClientSearch(): void {
+    const q = (this.searchQuery || '').trim().toLowerCase();
+    if (!q) {
+      this.articles = [...this.rawArticles];
+      return;
+    }
+    this.articles = this.rawArticles.filter(article => {
+      const titleMatch = article.title?.toLowerCase().includes(q) || false;
+      const summaryMatch = article.summary?.toLowerCase().includes(q) || false;
+      const authorMatch = article.author?.toLowerCase().includes(q) || false;
+      const keywordsMatch = article.keywords?.some(k => k.toLowerCase().includes(q)) || false;
+      return titleMatch || summaryMatch || authorMatch || keywordsMatch;
+    });
   }
 
   onCategoryChange(categoryId: number | null): void {

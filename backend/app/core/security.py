@@ -11,12 +11,25 @@ from .config import settings
 from .database import get_db
 from ..models import User
 
+# bcrypt is the only accepted scheme, and deprecated="auto" means that a hash
+# written with any other scheme is treated as outdated and transparently
+# re-hashed on the next successful verification.
+# Note: passlib 1.7.4 probes `bcrypt.__about__`, an attribute removed in
+# bcrypt 4.x, so a "(trapped) error reading bcrypt version" warning may be
+# printed on the first hash. The result itself is unaffected.
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# tokenUrl only drives the "Authorize" button of the Swagger UI, but it has to
+# match the real login route (/api/v1/users/login, see api/v1/endpoints/users.py)
+# for that button to work. The token itself is read from the
+# "Authorization: Bearer <token>" header, and since auto_error defaults to True,
+# a missing header is rejected by FastAPI before the endpoint code runs.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify password against hash"""
+    # bcrypt only hashes the first 72 bytes of the password, so two passwords
+    # sharing that prefix are equivalent for the hash.
     return pwd_context.verify(plain_password, hashed_password)
 
 
@@ -27,6 +40,9 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token"""
+    # The payload is copied so the dict passed by the caller is not mutated.
+    # `data` carries the subject only ({"sub": "<user id>"}), the expiry is
+    # added here and the default lifetime comes from ACCESS_TOKEN_EXPIRE_MINUTES.
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -35,6 +51,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
+    # Note: `exp` is written as an ISO-8601 string, while the JWT specification
+    # (and python-jose) expect a numeric Unix timestamp. Decoding such a token
+    # raises JWTClaimsError("Expiration Time claim (exp) must be an integer"),
+    # and since JWTClaimsError is a JWTError, decode_token() maps it to None and
+    # the token is rejected with 401. Left unchanged on purpose: the auth layer
+    # has its own remediation item.
     to_encode.update({"exp": expire.isoformat()})
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
@@ -44,6 +66,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def create_refresh_token(data: dict) -> str:
     """Create JWT refresh token (longer lasting)"""
+    # Refresh tokens live 30 days and carry an extra "type": "refresh" claim, so
+    # the /users/refresh endpoint can tell them apart from access tokens.
+    # Note: get_current_user() never inspects the "type" claim, so a refresh
+    # token would also pass the access token check.
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=30)
     to_encode.update({"exp": expire.isoformat(), "type": "refresh"})
@@ -55,6 +81,8 @@ def create_refresh_token(data: dict) -> str:
 
 def decode_token(token: str) -> Optional[dict]:
     """Decode JWT token"""
+    # Every JWTError (bad signature, expired token, invalid claims) is collapsed
+    # into None, so the callers cannot tell the failure modes apart.
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
@@ -68,6 +96,8 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     """Get current user from JWT token"""
+    # The same 401 is returned for every failure, so the client cannot probe
+    # whether a token exists, only that it was rejected.
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -78,6 +108,9 @@ async def get_current_user(
     if payload is None:
         raise credentials_exception
 
+    # The subject is the user id stored as a string, so it has to be converted
+    # before the lookup. The user is read from the database on every request:
+    # a token of a deleted or disabled account stops working immediately.
     user_id: str = payload.get("sub")
     if user_id is None:
         raise credentials_exception
@@ -93,6 +126,12 @@ async def get_current_user_optional(
     token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> Optional[User]:
     """Get current user from JWT token (optional - returns None if not authenticated)"""
+    # Optional variant, for endpoints that serve anonymous and logged-in readers
+    # alike: it returns None instead of raising, so the endpoint can branch on
+    # the result.
+    # Note: the scheme dependency runs with auto_error=True, so a completely
+    # missing Authorization header is rejected before this function is reached;
+    # the guard below only covers an empty bearer value.
     if not token:
         return None
 
@@ -104,4 +143,9 @@ async def get_current_user_optional(
 
 def generate_api_key() -> str:
     """Generate unique API key for user"""
+    # 32 random bytes from the OS CSPRNG, encoded URL-safe (about 43 characters).
+    # The "nf_" prefix makes the key recognisable in logs and in secret
+    # scanners, so a leaked key can be traced back to its owner.
+    # The endpoint stores the key in the preferences JSON of the user, there is
+    # no dedicated column for it.
     return f"nf_{secrets.token_urlsafe(32)}"

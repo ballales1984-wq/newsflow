@@ -5,6 +5,11 @@ import { ArticleService } from '../../services/article.service';
 import { ScrollPositionService } from '../../services/scroll-position.service';
 import { Article } from '../../models/article.model';
 
+/**
+ * Pagina di dettaglio dell'articolo, aperta dal route /article/:slug.
+ * I dati arrivano da slug: il componente non riceve l'articolo via @Input
+ * e quindi deve essere ricaricato a ogni cambio di parametro.
+ */
 @Component({
   selector: 'app-article-detail',
   templateUrl: './article-detail.component.html',
@@ -23,6 +28,8 @@ export class ArticleDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // La sottoscrizione ai parametri copre anche i cambi di slug sulla stessa
+    // rotta: in quel caso il componente viene riusato e deve ricaricare.
     this.route.params.subscribe(params => {
       const slug = params['slug'];
       if (slug) {
@@ -32,6 +39,8 @@ export class ArticleDetailComponent implements OnInit {
   }
 
   loadArticle(slug: string): void {
+    // Flag di caricamento acceso prima della richiesta: distingue
+    // "articolo non ancora arrivato" da "articolo non trovato".
     this.loading = true;
     this.articleService.getArticleBySlug(slug).subscribe({
       next: (article) => {
@@ -39,6 +48,8 @@ export class ArticleDetailComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
+        // Slug inesistente o backend giù: si torna alla home, che mostra
+        // l'elenco completo invece di una pagina di errore vuota.
         console.error('Error loading article:', error);
         this.loading = false;
         this.router.navigate(['/']);
@@ -52,6 +63,8 @@ export class ArticleDetailComponent implements OnInit {
     this.location.back();
     
     // Fallback: se location.back() non funziona, naviga alla home
+    // Dopo 100ms la navigazione indietro dovrebbe aver già cambiato l'URL:
+    // se il percorso contiene ancora /article significa che non è successo.
     setTimeout(() => {
       if (this.router.url.includes('/article')) {
         this.router.navigate(['/']);
@@ -61,6 +74,10 @@ export class ArticleDetailComponent implements OnInit {
 
   saveArticle(): void {
     if (this.article) {
+      // Scrittura diretta nel localStorage: replica la logica di
+      // SavedArticleService, ma senza passare dal servizio. Di conseguenza
+      // il flusso savedArticles$ non viene notificato e il badge dei salvati
+      // nell'header non si aggiorna.
       const saved = localStorage.getItem('savedArticles');
       const savedIds = saved ? JSON.parse(saved) : [];
       
@@ -104,6 +121,8 @@ export class ArticleDetailComponent implements OnInit {
   getContentParagraphs(content: string): string[] {
     if (!content) return [];
     // Divide il contenuto in paragrafi (per doppio a capo o punti)
+    // Il testo è grezzo (HTML incluso): viene segmentato qui per poterlo
+    // renderizzare come blocchi separati nel template.
     return content
       .split(/\n\n+|\.\s+(?=[A-Z])/)
       .map(p => p.trim())

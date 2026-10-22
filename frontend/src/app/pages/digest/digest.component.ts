@@ -19,6 +19,12 @@ interface DailyDigest {
   digest: DigestCategory[];
 }
 
+/**
+ * Pagina del riepilogo giornaliero ("Digest"): mostra i titoli e le descrizioni
+ * delle notizie raggruppate per categoria.
+ * I dati vengono dal backend con un fallback su file JSON statico, così la
+ * pagina resta leggibile anche se l'API non è disponibile.
+ */
 @Component({
   selector: 'app-digest',
   templateUrl: './digest.component.html',
@@ -28,6 +34,8 @@ export class DigestComponent implements OnInit, OnDestroy {
   digest: DailyDigest | null = null;
   loading = false;
   error: string | null = null;
+  // La sottoscrizione viene conservata per poterla chiudere alla distruzione:
+  // senza, una risposta tardiva aggiornerebbe un componente già rimosso.
   private subscription?: Subscription;
   private digestUrl = `${environment.apiUrl}/digest`;
 
@@ -45,10 +53,13 @@ export class DigestComponent implements OnInit, OnDestroy {
   }
 
   loadDigest(): void {
+    // Ogni caricamento riparte da zero: loading attivo, errore precedente azzerato.
     this.loading = true;
     this.error = null;
 
     // Prova prima a caricare dal backend, poi fallback su file statico
+    // Catena di fallback: API -> /assets/digest.json -> null (nessun digest).
+    // L'ultimo valore null è trasformato in un messaggio leggibile dal template.
     this.subscription = this.http.get<DailyDigest>(this.digestUrl).pipe(
       catchError(error => {
         console.warn('⚠️ Errore nel caricamento digest dal backend, provo file statico:', error);
@@ -69,6 +80,8 @@ export class DigestComponent implements OnInit, OnDestroy {
       next: (digest) => {
         this.digest = digest;
         this.loading = false;
+        // digest null = nessuna fonte disponibile (backend e file statico
+        // hanno fallito): si mostra un avviso invece di una pagina vuota.
         if (!digest) {
           this.error = 'Nessun digest disponibile per oggi';
         }
@@ -93,6 +106,9 @@ export class DigestComponent implements OnInit, OnDestroy {
   }
 
   getCategoryEmoji(category: string): string {
+    // Le etichette delle categorie nel digest non coincidono sempre con le
+    // chiavi della mappa, quindi il confronto è "contiene" in entrambe le
+    // direzioni; in mancanza di match si usa l'emoji generica.
     const emojiMap: { [key: string]: string } = {
       'Cybersecurity': '🔒',
       'Intelligenza Artificiale & Tecnologia': '🤖',

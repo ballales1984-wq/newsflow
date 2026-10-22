@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 from ....core.database import get_db
 from ....models import Article
 from ....schemas import article as schemas
+# L'import di `collect_from_source` è opzionale perché dipende da Celery/Redis,
+# che potrebbero non essere disponibili in ambienti di test o di sviluppo.
+# Se il modulo non è importabile, TASKS_AVAILABLE diventa False e l'endpoint
+# corrispondente restituisce un messaggio di "disattivato" invece di crashare.
 try:
     from ....services.tasks import collect_from_source
     TASKS_AVAILABLE = True
@@ -28,7 +32,12 @@ def get_articles(
     min_quality_score: Optional[float] = Query(None, ge=0, le=1),
     db: Session = Depends(get_db)
 ):
-    """Get paginated list of articles with filters"""
+    """Get paginated list of articles with filters.
+
+    Contratto di risposta: un dict con `items` (lista articoli), `total`
+    (conteggio totale), `page` (numero di pagina corrente, 1-based), `size`
+    (elementi per pagina) e `pages` (numero totale di pagine).
+    """
     
     query = db.query(Article).filter(Article.is_archived == False)
     
@@ -50,6 +59,12 @@ def get_articles(
     total = query.count()
     
     # Get paginated results
+    # L'ordinamento è always `published_at desc`, garantendo che gli articoli
+    # più recenti appaiano primi. La paginazione usa `skip` (offset) e `limit`.
+    # `page` è calcolato come `skip // limit + 1` (es. skip=0, limit=50 → page 1).
+    # `pages` usa la formula `(total + limit - 1) // limit` per l'arrotondamento
+    # verso l'alto, evitando una pagina extra vuota quando `total` non è multiplo
+    # di `limit`.
     articles = query.order_by(Article.published_at.desc()).offset(skip).limit(limit).all()
     
     return {
@@ -63,7 +78,12 @@ def get_articles(
 
 @router.get("/{article_id}", response_model=schemas.Article)
 def get_article(article_id: int, db: Session = Depends(get_db)):
-    """Get single article by ID"""
+    """Get single article by ID.
+
+    Restituisce 404 se l'articolo non esiste o è archiviato (quest'ultimo
+    caso non si verifica perché la query filtra solo su id, non su
+    is_archived — vedi nota potenziale nel codice).
+    """
     
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
@@ -74,7 +94,11 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
 
 @router.get("/slug/{slug}", response_model=schemas.Article)
 def get_article_by_slug(slug: str, db: Session = Depends(get_db)):
-    """Get single article by slug"""
+    """Get single article by slug.
+
+    Lo slug è un identificatore friendly (es. "microsoft-lancia-ai-runway"),
+    utile per gli URL pubblici. Restituisce 404 se non trovato.
+    """
     
     article = db.query(Article).filter(Article.slug == slug).first()
     if not article:
@@ -90,7 +114,14 @@ def search_articles(
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    """Search articles with advanced filters"""
+    """Search articles with advanced filters.
+
+    A differenza di GET /articles, i filtri qui vengono passati nel body
+    della richiesta (schemas.ArticleSearch), permettendo combinazioni più
+    complesse (es. intervallo di date con date_from e date_to). La ricerca
+    testuale Cerca nel titolo e nel riassunto con ILIKE (case-insensitive).
+    Contratto di risposta identico a GET /articles.
+    """
     
     query = db.query(Article).filter(Article.is_archived == False)
     
@@ -137,7 +168,13 @@ def update_article(
     article_update: schemas.ArticleUpdate,
     db: Session = Depends(get_db)
 ):
-    """Update article (admin only)"""
+    """Update article (admin only).
+
+    NOTA: l'endpoint è documentato come "admin only" ma non applica alcuna
+    dipendenza di autenticazione (nessun Depends(get_current_admin)).
+    Qualsiasi client può chiamarlo. Questa è una potenziale incongruenza
+    di sicurezza da correggere prima del deploy in produzione.
+    """
     
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
@@ -159,7 +196,12 @@ def get_featured_articles(
     limit: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db)
 ):
-    """Get featured articles"""
+    """Get featured articles.
+
+    Restituisce solo articoli con is_featured=True e non archiviati, ordinati
+    dal più recente. Usato solitamente per la homepage o una sezione
+    "in evidenza". Max 50 elementi.
+    """
     
     articles = db.query(Article).filter(
         Article.is_featured == True,
@@ -175,7 +217,12 @@ def get_recent_articles(
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    """Get recent articles from last N days"""
+    """Get recent articles from last N days.
+
+    Calcola dinamicamente la data di cutoff come `datetime.utcnow() - timedelta(days=days)`.
+    `days` è limitato tra 1 e 30 per evitare query troppo costose.
+    Restituisce solo articoli non archiviati, ordinati dal più recente.
+    """
     
     cutoff_date = datetime.utcnow() - timedelta(days=days)
     
@@ -189,7 +236,14 @@ def get_recent_articles(
 
 @router.post("/collect/{source_id}")
 def trigger_collection(source_id: int):
-    """Trigger news collection for specific source (admin only)"""
+    """Trigger news collection for specific source (admin only).
+
+    Questo endpoint è anch'esso "admin only" ma senza alcuna autenticazione.
+    Inoltre, se Celery non è disponibile (TASKS_AVAILABLE=False), restituisce
+    un JSON con status "disabled" invece di fallire. Se disponibile, chiama
+    `collect_from_source.delay()` per avviare un task asincrono e restituisce
+    l'ID del task per permettere al client di tracciarlo.
+    """
     
     if not TASKS_AVAILABLE:
         return {"message": "Background tasks not available", "status": "disabled"}

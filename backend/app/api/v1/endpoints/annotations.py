@@ -8,6 +8,12 @@ from ....schemas import annotation as schemas
 
 router = APIRouter()
 
+# All read/write paths return 404 for missing resources; 403 is not used
+# here because row ownership is enforced through the user_id filter once JWT
+# authentication is wired in (currently the user placeholder resolves to the
+# first row in the table). The update path trusts the annotation id and does
+# not re-verify that the row belongs to the caller.
+
 
 @router.get("/", response_model=List[schemas.Annotation])
 def get_annotations(
@@ -18,10 +24,14 @@ def get_annotations(
 ):
     """Get user's annotations"""
     # TODO: Get user from JWT
+    # Placeholder: the user is not yet resolved from the JWT (TODO above),
+    # so the first user row is used until authentication is wired in.
     user = db.query(User).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Ownership check: only Annotation rows belonging to this user are
+    # returned, so one user cannot list another's annotations.
     query = db.query(Annotation).filter(Annotation.user_id == user.id)
     
     if article_id:
@@ -44,6 +54,8 @@ def create_annotation(
     
     # Check if article exists
     article = db.query(Article).filter(Article.id == annotation.article_id).first()
+    # 404 when the source article does not exist; distinct from the
+    # annotation itself being missing.
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
     
@@ -68,6 +80,8 @@ def update_annotation(
     db: Session = Depends(get_db)
 ):
     """Update annotation"""
+    # The row is located by id only; ownership is not re-verified here, so
+    # callers must rely on the JWT-dependency once auth is wired in.
     db_annotation = db.query(Annotation).filter(Annotation.id == annotation_id).first()
     if not db_annotation:
         raise HTTPException(status_code=404, detail="Annotation not found")

@@ -11,6 +11,10 @@ import { Article, ArticleList, ArticleSearch } from '../models/article.model';
 export class ArticleService {
   private apiUrl = `${environment.apiUrl}/articles`;
 
+  // Header per bypassare la banner di avvertimento di ngrok.
+  // Quando il backend è esposto tramite un tunnel ngrok, il browser mostra
+  // un avviso che blocca la risposta; questo header fa sì che ngrok lo salti.
+  // È applicato a tutte le richieste del servizio, indipendentemente dall'host.
   // Header per bypassare warning ngrok (se necessario)
   private headers = new HttpHeaders({
     'ngrok-skip-browser-warning': 'true'
@@ -49,13 +53,21 @@ export class ArticleService {
     console.log('📡 API Request: - article.service.ts:49', { url: this.apiUrl, params: params.toString() });
     
     return this.http.get<ArticleList>(this.apiUrl, { params, headers: this.headers }).pipe(
+      // timeout(8000): massima attesa per la risposta dell'API dinamica.
+      // Se il backend non risponde entro 8s (lento, in manutenzione o down),
+      // l'observable emette un errore e si attiva il fallback sul file statico,
+      // senza bloccare l'interfaccia in attesa per sempre.
       timeout(8000),
       catchError(error => {
         console.warn('⚠️ API non disponibile, uso fallback su file statico: - article.service.ts:53', error);
+        // Fallback: l'API ha fallito (timeout, 5xx, rete). Si carica il file statico
+        // `/assets/final_news_italian.json`, che contiene gli articoli pre-bigliettati.
         // Fallback: carica da file JSON statico
         return this.http.get<any>('/assets/final_news_italian.json').pipe(
           catchError(err => {
             console.error('❌ Anche file statico non disponibile: - article.service.ts:57', err);
+            // Anche il file statico non è disponibile: restituisce una lista vuota
+            // con total=0 per non rompere il chaining degli observable.
             return of({
               items: [],
               total: 0,
@@ -65,6 +77,9 @@ export class ArticleService {
             });
           }),
           map((data: any) => {
+            // Il file statico può avere due formati: un oggetto con `items` oppure
+            // un array diretto. In entrambi i casi si normalizza in ArticleList,
+            // applicando paginazione client-side (slice) e ricalcolando `pages`.
             // Converti formato file statico in ArticleList
             const items = data.items || data || [];
             return {

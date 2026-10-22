@@ -17,6 +17,11 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Opzionale (tier gratuito dis
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")  # Opzionale (gratuita con account)
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")  # Locale, completamente gratuito
 
+# Nessuna chiave API richiesta per Ollama: punta all'istanza locale dell'utente (default localhost:11434).
+# OPENAI_API_KEY, DEEPSEEK_API_KEY e HUGGINGFACE_API_KEY vengono lette solo da variabili d'ambiente;
+# quando mancano il relativo provider restituisce None e la catena di fallback prova il provider successivo.
+
+
 def generate_explanation_with_chatgpt(article: Dict, explanation_type: str = "quick") -> Optional[str]:
     """
     Genera spiegazione usando ChatGPT (OpenAI)
@@ -29,7 +34,7 @@ def generate_explanation_with_chatgpt(article: Dict, explanation_type: str = "qu
         Spiegazione generata o None se errore
     """
     if not OPENAI_API_KEY:
-        return None
+        return None  # Nessuna chiave: salta il provider, il caller proverà il successivo nella catena di fallback
     
     try:
         # Prepara prompt in base al tipo
@@ -81,6 +86,12 @@ Fornisci un'analisi completa con:
 
 Rispondi in italiano, ben strutturato, professionale ma accessibile."""
         
+        # Endpoint OpenAI Chat Completions (https://api.openai.com/v1/chat/completions); autenticazione Bearer tramite OPENAI_API_KEY.
+        # Il ruolo system fissa il tono (giornalista esperto) e vincola la risposta all'italiano (non c'è un passo di traduzione esplicito);
+        # il ruolo user passa l'articolo con la struttura richiesta: cosa è successo, perché è importante, impatto principale.
+        # gpt-4o-mini: modello a basso costo adatto a sintesi di notizie. temperature 0.7 bilancia coerenza e varietà.
+        # max_tokens scalato per tipo (quick 1000, standard 2000, deep 3000) per rispettare i vincoli di lunghezza del prompt.
+        # timeout 30s: oltre tale limite la richiesta si interrompe e il caller prova il provider successivo.
         # Chiamata API OpenAI
         headers = {
             "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -112,6 +123,9 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
         
         if response.status_code == 200:
             data = response.json()
+            # Estrazione difensiva: chiavi mancanti restituiscono default vuoti invece di sollevare eccezione.
+            # Risposta malformata (es. choices vuoto) restituisce stringa vuota: il caller la tratta come assenza di spiegazione
+            # e prosegue con il provider successivo nella catena di fallback.
             return data.get('choices', [{}])[0].get('message', {}).get('content', '')
         else:
             print(f"Errore OpenAI: {response.status_code} - {response.text}")
@@ -119,7 +133,7 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
             
     except Exception as e:
         print(f"Errore chiamata ChatGPT: {e}")
-        return None
+        return None  # Eccezione assorbita senza fallback interno: il chiamante gestisce il passaggio al provider successivo
 
 
 def generate_explanation_with_huggingface(article: Dict, explanation_type: str = "quick") -> Optional[str]:
@@ -140,7 +154,7 @@ def generate_explanation_with_huggingface(article: Dict, explanation_type: str =
     """
     # Hugging Face è gratuito ma richiede API key (gratuita da ottenere)
     if not HUGGINGFACE_API_KEY:
-        return None
+        return None  # Nessuna chiave: salta il provider
     
     try:
         # Prepara prompt
@@ -194,6 +208,7 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
         
         # Usa modello gratuito di Hugging Face
         # Prova prima con Llama 3.2 (gratuito e potente)
+        # Catena di fallback tra modelli: se uno fallisce o non è caricato si passa al successivo.
         models = [
             "meta-llama/Llama-3.2-3B-Instruct",
             "microsoft/Phi-3-mini-4k-instruct",
@@ -204,6 +219,9 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
             "Authorization": f"Bearer {HUGGINGFACE_API_KEY}",
             "Content-Type": "application/json"
         }
+        
+        # Endpoint Inference API: https://api-inference.huggingface.co/models/{model};
+        # timeout 60s perché i modelli gratuiti possono impiegare tempo a caricarsi a freddo.
         
         for model in models:
             try:
@@ -225,6 +243,8 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
                 
                 if response.status_code == 200:
                     data = response.json()
+                    # La risposta può essere lista o dict a seconda del modello; entrambe le forme vengono gestite.
+                    # generated_text vuoto o assente significa risposta non valida: si prova il modello successivo.
                     if isinstance(data, list) and len(data) > 0:
                         result = data[0].get('generated_text', '')
                         if result:
@@ -234,7 +254,7 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
                         if result:
                             return result
                 elif response.status_code == 503:
-                    # Modello in caricamento, prova il prossimo
+                    # Modello ancora in caricamento sull'infrastruttura gratuita: prova il prossimo modello invece di fallire.
                     continue
                 else:
                     print(f"Errore Hugging Face ({model}): {response.status_code}")
@@ -244,7 +264,7 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
                 print(f"Errore con modello {model}: {e}")
                 continue
         
-        return None
+        return None  # Tutti i modelli Hugging Face hanno fallito: il caller tenta il provider successivo
             
     except Exception as e:
         print(f"Errore chiamata Hugging Face: {e}")
@@ -298,10 +318,11 @@ Keywords: {', '.join(article.get('keywords', [])[:5])}
 Fornisci: contesto, attori coinvolti, conseguenze, perché è importante."""
         
         # Prova modelli Ollama comuni (in ordine di preferenza)
-        # Usa modelli più piccoli e veloci per risposte rapide
+        # Ordine dal modello più piccolo/veloce a quelli più grandi: il primo disponibile viene usato,
+        # evitando di attendere modelli pesanti su macchine con poche risorse.
         models = ["gemma3:1b", "phi3", "llama3.2", "mistral", "llama3"]
         
-        # Riduci drasticamente i token per risposte più veloci
+        # Riduci drasticamente i token per risposte più veloci (l'inferenza locale su CPU è lenta)
         max_tokens = {
             "quick": 100,      # Ridotto da 500 a 100
             "standard": 200,   # Ridotto da 1000 a 200
@@ -326,7 +347,7 @@ Fornisci: contesto, attori coinvolti, conseguenze, perché è importante."""
                 response = requests.post(
                     f"{OLLAMA_URL}/api/generate",
                     json=payload,
-                    timeout=30  # Ridotto da 120 a 30 secondi
+                    timeout=30  # Ridotto da 120 a 30 secondi per non bloccare la richiesta HTTP
                 )
                 
                 if response.status_code == 200:
@@ -335,17 +356,17 @@ Fornisci: contesto, attori coinvolti, conseguenze, perché è importante."""
                     if result:
                         return result
                 else:
-                    # Modello non disponibile, prova il prossimo
+                    # Modello non caricato su questa istanza Ollama: prova il prossimo della lista.
                     continue
                     
             except requests.exceptions.ConnectionError:
-                # Ollama non disponibile
+                # Ollama non è in esecuzione: inutile provare altri modelli locali, esce subito.
                 return None
             except Exception as e:
                 print(f"Errore con modello Ollama {model}: {e}")
                 continue
         
-        return None
+        return None  # Nessun modello Ollama disponibile: il caller passa al provider successivo
             
     except Exception as e:
         print(f"Errore chiamata Ollama: {e}")
@@ -364,7 +385,7 @@ def generate_explanation_with_deepseek(article: Dict, explanation_type: str = "q
         Spiegazione generata o None se errore
     """
     if not DEEPSEEK_API_KEY:
-        return None
+        return None  # Nessuna chiave: salta il provider
     
     try:
         # Stesso prompt di ChatGPT
@@ -416,6 +437,10 @@ Fornisci un'analisi completa con:
 
 Rispondi in italiano, ben strutturato, professionale ma accessibile."""
         
+        # Chiamata API DeepSeek (https://api.deepseek.com/v1/chat/completions); modello deepseek-chat.
+        # Stesse regole di system/user di ChatGPT (giornalista esperto, risposta sempre in italiano).
+        # temperature 0.7 e max_tokens scalati per tipo (quick 1000, standard 2000, deep 3000);
+        # timeout 30s, oltre il quale il caller tenta il provider successivo.
         # Chiamata API DeepSeek
         headers = {
             "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
@@ -454,7 +479,7 @@ Rispondi in italiano, ben strutturato, professionale ma accessibile."""
             
     except Exception as e:
         print(f"Errore chiamata DeepSeek: {e}")
-        return None
+        return None  # Eccezione assorbita: il chiamante gestisce il fallback al provider successivo
 
 
 def generate_explanation(article: Dict, explanation_type: str = "quick") -> str:
@@ -485,11 +510,13 @@ def generate_explanation(article: Dict, explanation_type: str = "quick") -> str:
     try:
         from app.local_ai_explainer import generate_explanation_local_ai
         explanation = generate_explanation_local_ai(article, explanation_type)
+        # Soglia di 100 caratteri: scarta output troppo brevi per essere utili come spiegazione.
         if explanation and len(explanation) > 100:  # Verifica che sia una spiegazione valida
             print("✅ Usato AI Locale Integrata (T5/GPT-2, completamente offline)")
             return explanation
     except ImportError:
         print("⚠️ AI Locale non disponibile (transformers/torch non installati)")
+        # ImportError assorbito: senza dipendenze il fallback chain continua con i provider remoti.
     except Exception as e:
         print(f"⚠️ Errore AI Locale: {e}")
     
@@ -512,12 +539,15 @@ def generate_explanation(article: Dict, explanation_type: str = "quick") -> str:
         return explanation
     
     # Fallback finale: spiegazione statica migliorata
+    # Usata quando nessun provider (locale o remoto) è disponibile; garantisce che l'API restituisca sempre una spiegazione.
     print("⚠️ Nessun servizio AI disponibile, uso spiegazione statica")
     return _generate_static_explanation(article, explanation_type)
 
 
 def _generate_static_explanation(article: Dict, explanation_type: str) -> str:
     """Genera spiegazione statica migliorata come fallback"""
+    # Costruita esclusivamente dai campi dell'articolo (titolo, riassunto, keywords, autore): nessun modello,
+    # zero latenza e zero costo. quality_score default 0.7 e reading_time default 3 quando i campi mancano.
     if explanation_type == "quick":
         return f"""🎯 IN BREVE:
 

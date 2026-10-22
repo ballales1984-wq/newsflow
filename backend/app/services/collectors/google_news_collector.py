@@ -13,6 +13,8 @@ class GoogleNewsCollector:
     
     def __init__(self):
         self.user_agent = "NewsFlow/1.0 (Intelligent News Curation)"
+        # Google News RSS endpoint; used as an aggregator fallback when
+        # direct RSS feeds or APIs are unavailable for a topic.
         self.base_url = "https://news.google.com/rss"
     
     def collect(
@@ -76,11 +78,16 @@ class GoogleNewsCollector:
         """Build Google News RSS URL"""
         
         params = {
+            # hl sets the UI language, gl and ceid set the region; region
+            # and language-specific feeds surface locally relevant stories.
             'hl': language,
             'gl': country,
             'ceid': f"{country}:{language}"
         }
         
+        # Three URL shapes: /search for a query, /headlines/section/{topic}
+        # for a topic, /headlines for top stories; all carry the hl/gl
+        # localisation parameters.
         if query:
             # Search query
             params['q'] = query
@@ -102,6 +109,8 @@ class GoogleNewsCollector:
         try:
             # Google News entries have a special format
             # The link is usually a redirect URL, we need to extract the actual URL
+            # The link is Google's redirect URL and is stored unchanged;
+            # the real publisher is recovered from the title suffix below.
             link = entry.get('link', '').strip()
             
             # Get published date
@@ -130,6 +139,8 @@ class GoogleNewsCollector:
             title = entry.get('title', '').strip()
             source_name = "Google News"
             
+            # Google News titles end with "Title - Source Name"; split on
+            # the last " - " to recover the original publisher from the title.
             # Try to extract source from title (format: "Title - Source Name")
             if ' - ' in title:
                 parts = title.rsplit(' - ', 1)
@@ -151,6 +162,8 @@ class GoogleNewsCollector:
                     if isinstance(thumb_item, dict) and 'url' in thumb_item:
                         image_url = thumb_item['url']
             
+            # The source is tagged "Google News" and the language is
+            # recorded so the NLP stage can pick the right spaCy model.
             return {
                 'title': title,
                 'url': link,
@@ -188,6 +201,8 @@ class GoogleNewsCollector:
         """
         all_articles = []
         
+        # Each topic is wrapped in its own try block so one failing topic
+        # does not abort the remaining topics.
         for topic in topics:
             try:
                 articles = self.collect(

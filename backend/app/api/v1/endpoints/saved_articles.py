@@ -9,6 +9,11 @@ from ....schemas import saved_article as schemas
 
 router = APIRouter()
 
+# All read/write paths return 404 for missing resources; 403 is not used
+# here because row ownership is enforced through the user_id filter once JWT
+# authentication is wired in (currently the user placeholder resolves to the
+# first row in the table).
+
 
 @router.get("/", response_model=List[schemas.SavedArticle])
 def get_saved_articles(
@@ -20,10 +25,14 @@ def get_saved_articles(
 ):
     """Get user's saved articles"""
     # TODO: Get user from JWT
+    # Placeholder: the user is not yet resolved from the JWT (TODO above),
+    # so the first user row is used until authentication is wired in.
     user = db.query(User).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Ownership check: only SavedArticle rows belonging to this user are
+    # returned, so one user cannot list another's archive.
     query = db.query(SavedArticle).filter(SavedArticle.user_id == user.id)
     
     if is_read is not None:
@@ -48,10 +57,15 @@ def save_article(
     
     # Check if article exists
     article = db.query(Article).filter(Article.id == saved.article_id).first()
+    # 404 when the source article does not exist; distinct from the saved
+    # row itself being missing.
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
     
     # Check if already saved
+    # The (user_id, article_id) pair acts as a uniqueness guard: if the
+    # article is already saved, return the existing row rather than creating
+    # a duplicate archive entry.
     existing = db.query(SavedArticle).filter(
         SavedArticle.user_id == user.id,
         SavedArticle.article_id == saved.article_id
@@ -76,6 +90,9 @@ def save_article(
 @router.put("/{saved_id}/read")
 def mark_as_read(saved_id: int, db: Session = Depends(get_db)):
     """Mark saved article as read"""
+    # 404 when the saved-article row itself does not exist; note the row is
+    # located by id only with no additional ownership check beyond the user
+    # filter applied once JWT auth is wired in.
     saved = db.query(SavedArticle).filter(SavedArticle.id == saved_id).first()
     if not saved:
         raise HTTPException(status_code=404, detail="Saved article not found")

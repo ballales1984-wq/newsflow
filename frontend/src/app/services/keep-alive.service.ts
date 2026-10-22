@@ -10,6 +10,10 @@ import { catchError, timeout } from 'rxjs/operators';
 export class KeepAliveService {
   private apiUrl = `${environment.apiUrl.replace('/api/v1', '')}/api/health`;
   private subscription?: Subscription;
+  // Hostless/serverless: l'API può spegnersi dopo un periodo di inattività.
+  // Un ping periodico mantiene l'istanza sveglia; l'intervallo è di 5 minuti.
+  // L'API URL è costruita rimuendo `/api/v1` dall'API base e aggiungendo `/api/health`,
+  // per colpire l'health check root del backend.
   private readonly PING_INTERVAL = 5 * 60 * 1000; // 5 minuti
 
   constructor(private http: HttpClient) {}
@@ -28,7 +32,8 @@ export class KeepAliveService {
     // Ping immediato
     this.pingBackend();
 
-    // Ping periodico ogni 10 minuti
+    // Ping periodico ogni 5 minuti (valore effettivo della costante PING_INTERVAL).
+    // Il ping è best-effort: un errore non interrompe il servizio né gli altri observable.
     this.subscription = interval(this.PING_INTERVAL).subscribe(() => {
       this.pingBackend();
     });

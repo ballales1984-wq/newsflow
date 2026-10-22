@@ -26,6 +26,8 @@ router = APIRouter(prefix="/users", tags=["Authentication"])
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register new user"""
     existing = db.query(User).filter(User.email == user.email).first()
+    # 400: the email is already taken; registration fails fast instead of
+    # creating a duplicate account.
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
@@ -49,6 +51,8 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
             "push_enabled": True,
             "email_enabled": False,
         },
+        # Preferences live in a JSON blob alongside theme and language; this
+        # same blob later stores the user's API key.
     )
 
     db.add(db_user)
@@ -65,6 +69,8 @@ def login(
     """Login user with email/password"""
     user = db.query(User).filter(User.email == form_data.username).first()
 
+    # 401: credentials invalid or user missing; WWW-Authenticate header
+    # prompts the client to retry with fresh credentials.
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -72,17 +78,25 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # 403: the account exists but is disabled, distinct from bad credentials
+    # (401) so clients can surface the right message.
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="User account is disabled"
         )
 
     access_token = create_access_token(
+        # Access token is short-lived (minutes, from settings); the refresh
+        # token is longer-lived and is used to obtain new access tokens
+        # without re-entering the password.
         data={"sub": str(user.id)},
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    # Refresh token issued at login; it is rotated (replaced) on every
+    # /refresh call so a stolen refresh token has a limited lifespan.
 
+    # Records the last login timestamp; the inline import is kept as-is.
     user.last_login = __import__("datetime").datetime.utcnow()
     db.commit()
 
@@ -99,6 +113,8 @@ def refresh_token(token_data: schemas.TokenRefresh, db: Session = Depends(get_db
     """Refresh access token using refresh token"""
     payload = decode_token(token_data.refresh_token)
 
+    # Only tokens typed "refresh" are accepted here; an access token cannot
+    # be used to refresh, limiting the damage of a leaked token.
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
@@ -108,6 +124,7 @@ def refresh_token(token_data: schemas.TokenRefresh, db: Session = Depends(get_db
     user = db.query(User).filter(User.id == int(user_id)).first()
 
     if not user or not user.is_active:
+        # 401: invalid refresh token, or the user is missing/disabled.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or disabled",
@@ -117,6 +134,8 @@ def refresh_token(token_data: schemas.TokenRefresh, db: Session = Depends(get_db
         data={"sub": str(user.id)},
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
+    # Rotate the refresh token on every use: issue a new one so the old
+    # value should be discarded by the client, shrinking the theft window.
     new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
     return {
@@ -129,12 +148,16 @@ def refresh_token(token_data: schemas.TokenRefresh, db: Session = Depends(get_db
 
 @router.post("/logout")
 def logout(current_user: User = Depends(get_current_user)):
+    # Stateless JWT logout: the server only tells the client to discard its
+    # tokens; there is no token blacklist or revocation here.
     """Logout user (client should discard tokens)"""
     return {"message": "Successfully logged out"}
 
 
 @router.get("/me", response_model=schemas.User)
 def get_profile(current_user: User = Depends(get_current_user)):
+    # get_current_user resolves the caller from the JWT, so a user can only
+    # read their own profile; ownership is enforced by the dependency.
     """Get current user profile"""
     return current_user
 
@@ -170,6 +193,8 @@ def update_preferences(
     db: Session = Depends(get_db),
 ):
     """Update user preferences"""
+    # The preferences JSON blob is overwritten wholesale with the schema
+    # fields, including digest and notification toggles.
     current_user.preferences = {
         "theme": prefs.theme,
         "language": prefs.language,
@@ -211,6 +236,9 @@ def generate_new_api_key(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Generate new API key for user"""
+    # The API key is stored inside the preferences JSON blob rather than a
+    # dedicated column; it is returned in the response, the only time it is
+    # ever shown to the client.
     api_key = generate_api_key()
     current_user.preferences = current_user.preferences or {}
     current_user.preferences["api_key"] = api_key

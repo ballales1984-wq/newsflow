@@ -17,7 +17,11 @@ def get_sources(
     is_active: bool = None,
     db: Session = Depends(get_db)
 ):
-    """Get all sources"""
+    """Get all sources.
+
+    Filtro opzionale `is_active`: quando fornito, restituisce solo fonti
+    attive o disattive. Paginazione con skip/limit (default 100 elementi).
+    """
     query = db.query(Source)
     
     if is_active is not None:
@@ -29,7 +33,7 @@ def get_sources(
 
 @router.get("/{source_id}", response_model=schemas.Source)
 def get_source(source_id: int, db: Session = Depends(get_db)):
-    """Get single source by ID"""
+    """Get single source by ID. Restituisce 404 se non trovata."""
     source = db.query(Source).filter(Source.id == source_id).first()
     if not source:
         raise HTTPException(status_code=404, detail="Source not found")
@@ -41,7 +45,11 @@ def create_source(
     source: schemas.SourceCreate,
     db: Session = Depends(get_db)
 ):
-    """Create new source (admin only)"""
+    """Create new source (admin only).
+
+    Come in categories.py, lo slug viene generato dal nome e la duplicazione
+    è bloccata con 400. NOTA: nessuna autenticazione è applicata.
+    """
     
     slug = slugify(source.name)
     
@@ -76,7 +84,11 @@ def update_source(
     source: schemas.SourceUpdate,
     db: Session = Depends(get_db)
 ):
-    """Update source (admin only)"""
+    """Update source (admin only). Nessuna autenticazione applicata.
+
+    A differenza di categories, qui non viene rigenerato lo slug quando il
+    nome cambia: lo slug è considerato immutabile dopo la creazione.
+    """
     
     db_source = db.query(Source).filter(Source.id == source_id).first()
     if not db_source:
@@ -94,7 +106,10 @@ def update_source(
 
 @router.delete("/{source_id}")
 def delete_source(source_id: int, db: Session = Depends(get_db)):
-    """Delete source (admin only)"""
+    """Delete source (admin only). Nessuna autenticazione applicata.
+
+    Restituisce 200 con JSON di conferma, non 204.
+    """
     
     source = db.query(Source).filter(Source.id == source_id).first()
     if not source:

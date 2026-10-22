@@ -1,4 +1,7 @@
 """Celery tasks for background jobs"""
+# Pipeline order: collect (per source) -> persist -> analyze (per article).
+# Every task here can run both as a Celery task and as a plain function, so
+# the same code path works with or without a worker.
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 import logging
@@ -13,6 +16,8 @@ from ..core.config import settings
 try:
     from slugify import slugify
 except ImportError:
+    # Fallback slugifier used when python-slugify is missing: lowercase and
+    # dash-joined only, so accented characters stay verbatim in the slug.
     def slugify(text):
         return text.lower().replace(" ", "-")[:500]
 
@@ -21,6 +26,11 @@ logger = logging.getLogger(__name__)
 
 def _task_decorator(func):
     """Decorator that works with or without Celery"""
+    # The explicit task name must stay "app.services.tasks.<func>": the beat
+    # schedule in core/celery_app.py references those exact names.
+    # No bind=True / autoretry / max_retries is configured here: retries are
+    # handled inside the task bodies and the only timeout is the global hard
+    # limit (task_time_limit = 30 min) from core/celery_app.py.
     if CELERY_AVAILABLE and celery_app:
         return celery_app.task(name=f"app.services.tasks.{func.__name__}")(func)
     return func
@@ -30,7 +40,9 @@ def _task_decorator(func):
 def collect_all_news():
     """Collect news from all active sources"""
     logger.info("Starting news collection task")
-    
+
+    # The task owns its session and closes it in the finally block, so a
+    # long-lived worker does not keep the connection checked out between runs.
     db = SessionLocal()
     try:
         # Get all active sources

@@ -4,6 +4,14 @@ import { HttpClient } from '@angular/common/http';
 import { Article } from '../../models/article.model';
 import { environment } from '../../../environments/environment';
 
+/**
+ * Dialog "Spiegami": mostra la spiegazione di un articolo su tre livelli
+ * (30 secondi, 3 minuti, approfondimento).
+ *
+ * Il dialog non ricarica l'articolo: riceve l'oggetto Article completo tramite
+ * MAT_DIALOG_DATA, quindi può rispondere subito e solo in seguito chiedere,
+ * se necessario, la versione generata dall'AI.
+ */
 @Component({
   selector: 'app-explain-dialog',
   templateUrl: './explain-dialog.component.html',
@@ -13,22 +21,32 @@ export class ExplainDialogComponent implements OnInit {
   selectedTabIndex = 1; // Start con tab "3 minuti"
   
   // Cache per spiegazioni AI
+  // Chiave = tipo di spiegazione ('quick' | 'standard' | 'deep').
+  // La cache evita richieste duplicate: cambiando tab e tornando indietro
+  // si rilegge il testo già ottenuto invece di ripetere la chiamata all'API.
   explanations: { [key: string]: string } = {};
+  // Un flag per tipo: il template mostra lo spinner solo per il livello in caricamento.
   loading: { [key: string]: boolean } = {};
   aiUsed: string = '';
 
   constructor(
     public dialogRef: MatDialogRef<ExplainDialogComponent>,
+    // L'articolo è passato dalla card (vedi ArticleCardComponent.explainArticle).
     @Inject(MAT_DIALOG_DATA) public article: Article,
     private http: HttpClient
   ) {}
 
   ngOnInit(): void {
     // Pre-carica spiegazione standard quando si apre il dialog
+    // Il tab iniziale è quello standard: pre-caricarlo evita uno spinner
+    // sul primo tab visibile.
     this.loadExplanation('standard');
   }
 
   // Carica spiegazione AI (già generata nel JSON o dall'API)
+  // Ordine di risoluzione: (1) cache locale, (2) spiegazione già dentro l'articolo,
+  // (3) API che la genera on-demand, (4) spiegazione statica costruita in locale.
+  // In questo modo la UI mostra sempre qualcosa, anche a backend irraggiungibile.
   loadExplanation(type: 'quick' | 'standard' | 'deep'): void {
     const cacheKey = type;
     
@@ -38,6 +56,7 @@ export class ExplainDialogComponent implements OnInit {
     }
     
     // Se già in caricamento, aspetta
+    // evita richieste parallele sullo stesso livello (es. tab rapidi).
     if (this.loading[cacheKey]) {
       return;
     }
@@ -61,11 +80,16 @@ export class ExplainDialogComponent implements OnInit {
     this.loading[cacheKey] = true;
     
     // Chiama API per spiegazione AI (solo se non presente nel JSON)
+    // L'endpoint di generazione è derivato da environment.apiUrl: stesso host
+    // dell'app, con il path /v1/articles/explain.
     const apiUrl = environment.apiUrl.replace('/v1', '/v1/articles/explain');
     this.http.post<any>(apiUrl, {
       article_id: this.article.id,
       slug: this.article.slug,
       explanation_type: type
+    // Nessun unsubscribe esplicito: è una POST che si completa dopo la risposta,
+    // quindi l'observable non resta aperto. Se il dialog viene chiuso prima,
+    // il callback scrive comunque sui campi del componente, ormai non più mostrato.
     }).subscribe({
       next: (response) => {
         if (response.success) {
@@ -79,6 +103,8 @@ export class ExplainDialogComponent implements OnInit {
       },
       error: (error) => {
         console.error('Errore caricamento spiegazione AI:', error);
+        // L'errore non viene propagato al template: la spiegazione statica copre
+        // il caso, così l'utente vede comunque un testo invece di uno spinner infinito.
         // Fallback a spiegazione statica
         this.explanations[cacheKey] = this.getStaticExplanation(type);
         this.loading[cacheKey] = false;
@@ -114,6 +140,8 @@ export class ExplainDialogComponent implements OnInit {
   }
 
   // Spiegazione statica migliorata (fallback)
+  // Composta solo con i dati già presenti nell'articolo (titolo, sommario, keywords,
+  // score di qualità): è quindi disponibile anche senza rete.
   getStaticExplanation(type: 'quick' | 'standard' | 'deep'): string {
     if (type === 'quick') {
       return `🎯 IN BREVE:
@@ -244,6 +272,8 @@ Raccomandiamo la lettura a chi vuole approfondire: ${this.article.keywords?.join
 
   // Helper methods
   getCategory(): string {
+    // Non esiste un campo categoria pronto: si usa la prima keyword come
+    //approssimazione, con un testo neutro se le keyword mancano.
     if (!this.article.keywords || this.article.keywords.length === 0) {
       return 'informazione generale';
     }
@@ -354,6 +384,9 @@ l'impatto a medio-lungo termine.`;
 
   onTabChange(event: any): void {
     // Ottimizzazione: usa requestAnimationFrame per migliorare performance
+    // Il caricamento parte al frame successivo, così il cambio tab non attende
+    // la rete. Si carica solo il livello selezionato: gli altri restano in cache
+    // se sono già stati richiesti.
     requestAnimationFrame(() => {
       const tabIndex = event.index;
       if (tabIndex === 0 && !this.explanations['quick']) {

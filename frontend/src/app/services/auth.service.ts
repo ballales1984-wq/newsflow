@@ -49,6 +49,9 @@ export interface RegisterRequest {
   full_name?: string;
 }
 
+// Chiavi localStorage usate per persistere i token e l'utente tra i refresh di pagina.
+// Sono costanti per evitare errori di battitura e per permettere a altri servizi
+// di leggere gli stessi valori (es. interceptor per il Bearer).
 const TOKEN_KEY = 'newsflow_token';
 const REFRESH_TOKEN_KEY = 'newsflow_refresh_token';
 const USER_KEY = 'newsflow_user';
@@ -58,7 +61,11 @@ const USER_KEY = 'newsflow_user';
 })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/users`;
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  // Stato dell'utente corrente in memoria: null quando non è loggato,
+// l'oggetto User quando lo è. È un BehaviorSubject, quindi i componenti
+// che si iscrivono a `currentUser$` ricevono aggiornamenti in tempo reale
+// (es. aggiornamento del profilo o logout da un altro tab).
+private currentUserSubject = new BehaviorSubject<User | null>(null);
   
   currentUser$ = this.currentUserSubject.asObservable();
 
@@ -66,7 +73,9 @@ export class AuthService {
     this.loadStoredUser();
   }
 
-  private loadStoredUser(): void {
+  // Al costruttore legge l'utente dal localStorage: permette di mantenere la
+// sessione anche dopo un refresh di pagina. Se il JSON è corrotto, fa logout.
+private loadStoredUser(): void {
     const storedUser = localStorage.getItem(USER_KEY);
     if (storedUser) {
       try {
@@ -77,7 +86,9 @@ export class AuthService {
     }
   }
 
-  getToken(): string | null {
+  // Restituisce l'access_token JWT corrente, o null se non è loggato.
+// Usato dall'interceptor per autenticare le richieste protette.
+getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }
 
@@ -85,11 +96,17 @@ export class AuthService {
     return localStorage.getItem(REFRESH_TOKEN_KEY);
   }
 
-  isAuthenticated(): boolean {
+  // True se esiste un token in localStorage; non ne verifica la validità.
+// Usato per mostrare/nascondere il menu di autenticazione senza chiamate API.
+isAuthenticated(): boolean {
     return !!this.getToken();
   }
 
-  login(email: string, password: string): Observable<AuthResponse> {
+  // Flusso di login: invia email/password al backend, salva i token e l'utente
+// tramite handleAuthResponse. L'errore viene rilanciato (throw) così il
+// chiamante può mostrare un messaggio di errore specifico; il catch non
+// restituisce un Observable di successo, interrompe la catena.
+login(email: string, password: string): Observable<AuthResponse> {
     const loginData = { email, password };
     console.log('🔐 Login attempt:', email, loginData);
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, JSON.stringify(loginData), {
@@ -110,7 +127,10 @@ export class AuthService {
     return this.http.post<User>(`${this.apiUrl}/register`, data);
   }
 
-  logout(): void {
+  // Logout: chiama il backend per invalidare la sessione (best-effort,
+// gli errori vengono ignorati) e pulisce localStorage + Subject.
+// Non aspetta la risposta del server per disconnettere l'utente.
+logout(): void {
     if (this.getToken()) {
       this.http.post(`${this.apiUrl}/logout`, {}, {
         headers: this.getHeaders()
@@ -125,7 +145,11 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
-  refreshToken(): Observable<AuthResponse> {
+  // Rinnova il token usando il refresh_token salvato in localStorage.
+// Il backend emette un nuovo access_token (e un nuovo refresh_token
+// opzionale) prima della scadenza; questo metodo permette di evitare
+// il re-login dell'utente quando l'access_token scade.
+refreshToken(): Observable<AuthResponse> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
       throw new Error('No refresh token available');
@@ -166,14 +190,19 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  getHeaders(): HttpHeaders {
+  // Costruisce l'header Authorization con il Bearer token corrente.
+// Usato da tutti i metodi che richiedono autenticazione (me, preferences, logout).
+getHeaders(): HttpHeaders {
     const token = this.getToken();
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
   }
 
-  private handleAuthResponse(response: AuthResponse): void {
+  // Salva i token e l'utente in localStorage e notifica il Subject.
+// Chiamato sia da login che da refresh: garantisce che lo stato sia
+// coerente indipendentemente da quale flusso abbia generato la risposta.
+private handleAuthResponse(response: AuthResponse): void {
     localStorage.setItem(TOKEN_KEY, response.access_token);
     if (response.refresh_token) {
       localStorage.setItem(REFRESH_TOKEN_KEY, response.refresh_token);

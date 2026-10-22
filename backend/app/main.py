@@ -14,7 +14,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Create database tables
+# Create database tables at import time.
+# Questo è un pattern comune in applicazioni FastAPI che non usano migrazioni
+# automatiche: assicura che lo schema sia sempre aggiornato quando l'app viene
+# caricata. In produzione con più worker, questo può causare race condition
+# se due istanze inizializzano contemporaneamente, ma è accettabile per un
+# progetto in via di sviluppo o con un singolo worker.
 Base.metadata.create_all(bind=engine)
 
 # Create FastAPI app
@@ -27,7 +32,10 @@ app = FastAPI(
     openapi_url="/api/openapi.json"
 )
 
-# Configure CORS
+# Configure CORS: permette al client browser (di solito su un dominio diverso,
+# es. Vercel frontend) di chiamare l'API senza che il browser blocchi le
+# richieste cross-origin. allow_credentials=True richiede che si usino
+# origin specifici (non "*") in produzione, ma qui si usano gli origini da settings.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -53,13 +61,22 @@ def health_check():
     return {"status": "healthy"}
 
 
-# Include API router
+# Include API router: tutti i endpoint v1 sono montati sotto /api/v1.
+# Il prefix viene applicato qui, non nei singoli router, così che i tag OpenAPI
+# rimangano associati al router corretto ma l'URL reale sia /api/v1/articles, etc.
 app.include_router(api_router, prefix="/api/v1")
 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    """Global exception handler"""
+    """Global exception handler.
+
+    Cattura qualsiasi eccezione non gestita nelle route per evitare che
+    FastAPI restituisca una risposta HTML di errore di default. Restituisce
+    sempre un JSON con status 500 e un messaggio generico, senza i dettagli
+    dell'eccezione: questo evita di esporre stack trace o informazioni
+    sensibili ai client. I dettagli reali vengono loggati lato server.
+    """
     logger.error(f"Unhandled exception: {exc}")
     return JSONResponse(
         status_code=500,

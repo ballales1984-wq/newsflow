@@ -16,6 +16,10 @@ except ImportError:
     FingerprintAuth = None
     print("WARNING: FingerprintAuth non disponibile")
 
+# L'import è protetto perché su Vercel l'ambiente ha un set di dipendenze ridotto:
+# senza questo try/except l'intero modulo non si importerebbe e Mangum risponderebbe
+# 500 a qualunque richiesta, anche a quelle che non usano l'autenticazione.
+
 # Create FastAPI app
 app = FastAPI(
     title="NewsFlow", version="1.0.0", description="Intelligent News Curation Platform"
@@ -32,8 +36,15 @@ default_origins = [
     "https://*.ngrok.io",
 ]
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
+# Nota: il valore letto dalla env var non viene usato più avanti in questo file
+# (il middleware accetta "*"). Resta comunque il riferimento per i deployment
+# che configurano CORS_ORIGINS, come indicato in DEPLOYMENT.md.
 
 # Per ngrok e Vercel, usa allow_origin_regex invece di allow_origins per supportare wildcard
+# In pratica si usa allow_origins=["*"]: i sottodomini ngrok/Vercel cambiano a ogni
+# deploy e non possono essere elencati staticamente. Starlette sostituisce "*" con
+# l'Origin effettivo quando la richiesta porta cookie, così allow_credentials=True
+# resta valido (il browser rifiuta "*" con credenziali).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Permetti tutti per ngrok e Vercel
@@ -48,6 +59,9 @@ app.add_middleware(
 import os
 
 is_vercel = os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV")
+# Detection a due livelli: VERCEL=1 vale per tutte le build Vercel, mentre
+# VERCEL_ENV (production/preview/development) è valorizzato a runtime e rende
+# truthy il check anche nei deploy di preview.
 
 # IMPORTANTE: Carica le notizie vecchie ALL'AVVIO per evitare pagina vuota
 # Le nuove notizie le sostituiranno quando saranno disponibili
@@ -56,6 +70,9 @@ if not is_vercel:
     @app.on_event("startup")
     async def startup_event():
         """Precarica la cache degli articoli all'avvio con NOTIZIE VECCHIE (se disponibili)"""
+        # Su Vercel questo handler non gira mai: api/index.py costruisce il
+        # Mangum con lifespan="off", quindi il ciclo di vita FastAPI è saltato.
+        # La cache si riempie comunque alla prima richiesta (lazy loading).
         print("Startup: Caricamento notizie vecchie all'avvio...")
         print("   Le nuove notizie sostituiranno le vecchie quando disponibili")
 
@@ -90,18 +107,25 @@ def root():
 @app.get("/api/health")
 def health_check():
     """Health check endpoint"""
+    # Endpoint minimale e senza dipendenze: deve rispondere anche quando la
+    # cache degli articoli è ancora vuota, altrimenti il monitoraggio
+    # segnalerebbe il deployment come non pronto.
     return {"status": "healthy"}
 
 
 @app.get("/health")
 def health_check_root():
     """Health check endpoint at root"""
+    # Duplicato di /api/health: i monitor esterni e uptime robot usano /health,
+    # il frontend Angular usa /api/health.
     return {"status": "healthy"}
 
 
 @app.get("/api/debug/files")
 def debug_files():
     """Debug endpoint per verificare se i file JSON sono accessibili"""
+    # Endpoint puramente diagnostico: espone path e dimensioni dei file,
+    # quindi va considerato privato e non va usato come health check pubblico.
     import os
     import json
 
@@ -120,6 +144,8 @@ def debug_files():
             {
                 "path": cwd,
                 "exists": os.path.exists(cwd),
+                # Listing troncato a 20 voci: la risposta deve restare leggibile
+                # e non trascinare l'intero contenuto delle directory.
                 "files": os.listdir(cwd)[:20] if os.path.exists(cwd) else [],
             }
         )
@@ -199,6 +225,9 @@ def debug_files():
 _articles_cache = None
 _cache_timestamp = None
 _cache_file_path = None
+# Cache solo in memoria di processo: su Vercel ogni istanza lambda ha il proprio
+# heap, quindi la cache non è condivisa e riparte da zero a ogni cold start.
+# È per questo che la validità è legata al mtime del JSON e non a un TTL.
 
 
 def _load_articles(force_reload=False):
@@ -217,6 +246,8 @@ def _load_articles(force_reload=False):
             current_mtime = os.path.getmtime(_cache_file_path)
             if current_mtime == _cache_timestamp:
                 # File non modificato, usa cache (NOTIZIE VECCHIE)
+                # L'mtime del file è il segnale di freschezza: non esiste un TTL,
+                # il JSON cambia solo quando il job di raccolta lo riscrive.
                 print(
                     f"✅ Usando cache (notizie vecchie): {len(_articles_cache)} articoli"
                 )
@@ -236,6 +267,8 @@ def _load_articles(force_reload=False):
 
     def clean_html(text):
         """Rimuove tutti i tag HTML dal testo"""
+        # I feed RSS contengono HTML e entità (anche numeriche): pulire qui evita
+        # di iniettare markup grezzo nel frontend Angular e di rompere il layout.
         if not text:
             return ""
         import html
@@ -273,6 +306,9 @@ def _load_articles(force_reload=False):
     project_root_from_file = os.path.dirname(current_file_dir)  # backend/app -> backend
     project_root_from_file2 = os.path.dirname(project_root_from_file)  # backend -> root
 
+    # L'ordine dei path è significativo: su Vercel il JSON viene servito da api/,
+    # in locale può trovarsi in backend/ o nella root a seconda da dove è lanciato
+    # uvicorn. Il primo path trovato vince, quindi api/ ha la precedenza.
     possible_paths = [
         # Path 0: api/final_news_italian.json (PRIORITÀ - sempre incluso su Vercel)
         os.path.join(
@@ -328,6 +364,8 @@ def _load_articles(force_reload=False):
 
         # IMPORTANTE: Se non trova il file nuovo, prova a caricare le notizie vecchie dalla cache
         if _articles_cache is not None:
+            # Meglio servire notizie vecchie che una lista vuota: durante il
+            # rilascio del nuovo JSON la homepage resterebbe altrimenti spoglia.
             print(
                 f"✅ File nuovo non trovato, uso notizie vecchie dalla cache: {len(_articles_cache)} articoli"
             )
@@ -356,11 +394,16 @@ def _load_articles(force_reload=False):
 
             # VERCEL FREE: Se il caricamento è troppo lento, avvisa
             if load_time > 5:
+                # Soglia di 5 secondi: oltre, il caricamento del JSON rischia il
+                # timeout della funzione serverless. Da qui l'obbligo di tenere
+                # il file compatto (riassunti e contenuti sono già troncati).
                 print(
                     f"⚠️  Caricamento lento ({load_time:.2f}s) - considera ottimizzazioni"
                 )
 
             # Mappa keywords → category_id per articoli esistenti senza category_id
+            # Serve per i JSON prodotti da versioni precedenti della raccolta,
+            # che classificavano gli articoli solo per keyword.
             KEYWORD_TO_CATEGORY_ID = {
                 "technology": 1,
                 "tech": 1,
@@ -422,12 +465,16 @@ def _load_articles(force_reload=False):
 
                     # Se non trovato nei keywords, default a Technology
                     if not category_id:
+                        # id 1 = Technology: bucket più generico, così l'articolo
+                        # resta comunque visibile in una sezione del frontend.
                         category_id = 1
 
                     article["category_id"] = category_id
 
             # Salva in cache
             _articles_cache = articles
+            # Il timestamp salvato è l'mtime del file, non l'ora di caricamento:
+            # così si distingue a colpo d'occhio un JSON rigenerato da uno vecchio.
             _cache_timestamp = os.path.getmtime(file_path)
             _cache_file_path = file_path
             print(f"✅ Cache aggiornata: {len(articles)} articoli")
@@ -438,9 +485,12 @@ def _load_articles(force_reload=False):
 
             traceback.print_exc()
             # Restituisci array vuoto invece di None per evitare errori downstream
+            # Il dettaglio dell'errore resta nei log, non nella risposta HTTP.
             return []
 
     # Fallback su tutte le fonti (stessi path migliorati)
+    # Secondo livello di fallback: dataset aggregato di tutte le fonti, usato
+    # quando il JSON "final" non è ancora stato prodotto dalla raccolta RSS.
     possible_paths_all = [
         # Path 0: api/all_sources_news.json (PRIORITÀ - sempre incluso su Vercel)
         os.path.join(
@@ -492,6 +542,10 @@ def _load_articles(force_reload=False):
             pass
 
     # Fallback: notizie embedded (le 12 migliori)
+    # Ultimo livello di fallback: 12 articoli scritti a mano nel codice, per
+    # garantire una risposta non vuota anche se nessun JSON è raggiungibile.
+    # Nota: sono in inglese, nonostante il docstring dica "ALL IN ITALIAN":
+    # servono come rete di sicurezza, non come contenuto editoriale.
     return [
         {
             "id": 1,
@@ -719,6 +773,8 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
     """
     try:
         # Limita il limite massimo a 200 per evitare problemi di performance
+        # Clamp di sicurezza: senza, un client potrebbe chiedere l'intero
+        # dataset e saturare la memoria (e il tempo) della funzione serverless.
         limit = min(limit, 200)
 
         # Debug: verifica file prima di caricare
@@ -730,6 +786,8 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
             os.path.join(os.getcwd(), "final_news_italian.json"),
         ]
         print(f"DEBUG get_articles: cwd={os.getcwd()}")
+        # Blocco di debug eseguito a ogni richiesta: utile in locale, ma su
+        # Vercel genera rumore nei log (stdout troncato) e costa I/O.
         for path in debug_paths:
             exists = os.path.exists(path)
             print(f"DEBUG get_articles: {path} exists={exists}")
@@ -743,11 +801,16 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
         articles = _load_articles()
 
         # Se non ci sono articoli, restituisci array vuoto invece di causare errore
+        # Risposta vuota ma valida: il frontend deve poter distinguere
+        # "nessuna notizia" da "server rotto" senza gestire un 500.
         if not articles:
             print("⚠️  Nessun articolo caricato, restituisco array vuoto")
             return {"items": [], "total": 0, "page": 1, "size": 0, "pages": 1}
 
         # Mappa categorie → keywords da cercare
+        # Filtro basato su keywords e non sul category_id: la classificazione
+        # per sorgente resta approssimativa, il match di sottostringa è più
+        # tollerante e non lascia fuori articoli etichettati male.
         CATEGORY_KEYWORDS = {
             1: [
                 "technology",
@@ -873,6 +936,8 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
 
             # Ordina: prima articoli con immagini, poi senza
             # Usa una chiave di ordinamento: 0 se ha immagine, 1 se non ha
+            # Le immagini contano più del quality_score perché determinano
+            # l'aspetto della griglia: gli articoli senza foto appaiono "piatti".
             articles.sort(
                 key=lambda x: (
                     0 if x.get("image_url") else 1,

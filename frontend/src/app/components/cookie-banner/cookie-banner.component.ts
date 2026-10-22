@@ -1,6 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
+/**
+ * Banner di consenso cookie (GDPR).
+ * La scelta viene salvata nel localStorage: la chiave 'cookieConsent' con i valori
+ * 'accepted' o 'rejected'. Se la chiave manca (prima visita, dati cancellati)
+ * il banner ricompare, perché in assenza di una scelta registrata il consenso
+ * non può essere considerato prestato.
+ */
 @Component({
   selector: 'app-cookie-banner',
   templateUrl: './cookie-banner.component.html',
@@ -16,6 +23,8 @@ export class CookieBannerComponent implements OnInit {
     const cookieConsent = localStorage.getItem('cookieConsent');
     if (!cookieConsent) {
       // Mostra banner dopo un breve delay per UX migliore
+      // Il ritardo lascia completare il primo rendering: il banner non deve
+      // coprire il contenuto mentre la pagina si sta ancora popolando.
       setTimeout(() => {
         this.showBanner = true;
       }, 1000);
@@ -23,6 +32,8 @@ export class CookieBannerComponent implements OnInit {
   }
 
   acceptCookies() {
+    // La scelta e la data sono entrambe persistite: la data serve a dimostrare
+    // quando il consenso è stato accordato.
     localStorage.setItem('cookieConsent', 'accepted');
     localStorage.setItem('cookieConsentDate', new Date().toISOString());
     this.showBanner = false;
@@ -32,6 +43,8 @@ export class CookieBannerComponent implements OnInit {
   }
 
   rejectCookies() {
+    // Stessa struttura del consenso positivo: la scelta "rifiuta" è anch'essa
+    // una decisione da registrare, non un'assenza di scelta.
     localStorage.setItem('cookieConsent', 'rejected');
     localStorage.setItem('cookieConsentDate', new Date().toISOString());
     this.showBanner = false;
@@ -42,6 +55,8 @@ export class CookieBannerComponent implements OnInit {
 
   private enableTracking() {
     // Abilita Google Analytics e AdSense tramite Consent Mode
+    // Se lo script GA non è ancora in pagina non c'è nulla da aggiornare:
+    // il flag nel localStorage è comunque la fonte di verità per il banner.
     if (typeof (window as any).gtag !== 'undefined') {
       (window as any).gtag('consent', 'update', {
         'ad_storage': 'granted',

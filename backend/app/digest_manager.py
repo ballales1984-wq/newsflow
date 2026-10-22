@@ -1,9 +1,14 @@
-"""Modulo shared per aggiornare il digest automaticamente quando cambiano le notizie"""
+"""Modulo shared per aggiornare il digest automaticamente quando cambiano le notizie
+Costruisce un digest giornaliero raggruppando gli articoli per categoria e lo scrive su più destinazioni.
+Viene rigenerato a ogni chiamata: non c'è logica di rotazione basata sulla data, quindi la freschezza del digest
+dipende dalla frequenza con cui la funzione viene invocata esternamente (una volta al giorno)."""
 import json
 import os
 from datetime import datetime
 
 # Percorsi dove salvare il digest
+# Il digest viene scritto in tutte le destinazioni disponibili (frontend, api, backend) così ogni deployment
+# del progetto può leggere il file dalla propria posizione.
 DIGEST_PATHS = [
     'frontend/src/assets/digest.json',
     'api/digest.json',
@@ -11,6 +16,10 @@ DIGEST_PATHS = [
 ]
 
 # Categorie per la classificazione automatica
+# Le chiavi sono nomi di categoria (con emoji) e i valori sono parole chiave cercate (case-insensitive)
+# nel titolo e nel riassunto; la prima categoria che corrisponde vince. Attenzione: "Politica" e "Ambiente"
+# condividono l'emoji "🌍" e "esplosione" appare tra le keyword di Scienza: incongruenze dei dati lasciate
+# intenzionalmente invariate per non modificare il comportamento esistente.
 CATEGORIES = {
     "💻 Tecnologia": ["technology", "tech", "computer", "software", "app", "quantum", "hardware", "coding"],
     "🤖 Intelligenza Artificiale": ["ai", "artificial intelligence", "chatgpt", "gpt", "machine learning", "llm", "deepmind", "ia", "neural", "model"],
@@ -25,6 +34,8 @@ CATEGORIES = {
 
 def categorize_article(article):
     """Assegna una categoria in base a title e summary"""
+    # Concatena titolo e riassunto in minuscolo: la corrispondenza è una semplice sottostringa, quindi parole
+    # chiave troppo generiche (es. "security") possono classificare articoli non pertinenti.
     title = (article.get('title', '') + ' ' + article.get('summary', '')).lower()
     
     for category, keywords in CATEGORIES.items():
@@ -49,7 +60,7 @@ def update_digest_from_articles(articles_file='final_news_italian.json', max_art
         # Carica gli articoli
         articles = []
         
-        # Prova diverse locazioni del file
+        # Prova diverse locazioni del file perché il digest può essere aggiornato da directory diverse.
         possible_paths = [
             articles_file,
             os.path.join('backend', articles_file),
@@ -62,6 +73,7 @@ def update_digest_from_articles(articles_file='final_news_italian.json', max_art
             if os.path.exists(path):
                 with open(path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
+                    # Il JSON atteso contiene una lista di articoli sotto la chiave "items".
                     articles = data.get('items', [])
                     articles_loaded = True
                     print(f"📰 Caricati {len(articles)} articoli da: {path}")
@@ -76,13 +88,15 @@ def update_digest_from_articles(articles_file='final_news_italian.json', max_art
             return False
         
         # Raggruppa articoli per categoria
+        # Il set è limitato ai primi 100 articoli per contenere tempo di elaborazione e dimensione del file di output.
         categorized = {}
         for article in articles[:100]:  # Prendi i primi 100
             cat = categorize_article(article)
             if cat not in categorized:
                 categorized[cat] = []
             
-            # Crea una versione condensata dell'articolo per il digest
+            # Versione condensata: titolo troncato a 120 caratteri e descrizione a 200 per mantenere il digest compatto.
+            # Se summary manca si usa il campo description (schema alternativo).
             article_digest = {
                 "title": article.get('title', '')[:120],
                 "description": article.get('summary', '')[:200] if article.get('summary') else article.get('description', '')[:200]
@@ -91,6 +105,9 @@ def update_digest_from_articles(articles_file='final_news_italian.json', max_art
             categorized[cat].append(article_digest)
         
         # Costruisci il digest
+        # La data è quella di esecuzione: il file viene sovrascritto a ogni aggiornamento, quindi un "nuovo digest al giorno"
+        # si ottiene solo se la funzione viene rilanciata quotidianamente (nessuna rotazione automatica).
+        # Le categorie sono ordinate alfabeticamente per output stabile; max_articles_per_category limita gli articoli per categoria.
         digest = {
             "date": datetime.now().strftime("%Y-%m-%d"),
             "digest": []
@@ -103,6 +120,7 @@ def update_digest_from_articles(articles_file='final_news_italian.json', max_art
             })
         
         # Salva il digest in tutti i path
+        # Ogni percorso viene provato indipendentemente: un fallimento su una destinazione non blocca le altre.
         saved_count = 0
         for path in DIGEST_PATHS:
             try:

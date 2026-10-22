@@ -2,6 +2,9 @@
 AI Locale integrata per generare spiegazioni approfondite degli articoli
 Usa modelli NLP pre-addestrati (T5, GPT-2, DistilBERT) completamente locali
 Nessuna chiamata API esterna - tutto funziona offline!
+
+Esiste come fallback offline per evitare i cold start delle funzioni serverless, coprire interruzioni dei provider remoti
+e azzerare i costi di chiamata: i modelli vengono caricati una sola volta per processo e poi riutilizzati dalla cache.
 """
 import os
 import re
@@ -10,6 +13,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Import opzionali - installa solo se necessario
+# Le dipendenze sono opzionali: se assenti il modulo si degrada graziosamente alla spiegazione statica.
 try:
     from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
     TRANSFORMERS_AVAILABLE = True
@@ -20,7 +24,7 @@ except ImportError:
 try:
     import torch
     TORCH_AVAILABLE = True
-    # Verifica se CUDA è disponibile per GPU
+    # Verifica se CUDA è disponibile per GPU: l'inferenza su GPU riduce drasticamente i tempi di generazione.
     CUDA_AVAILABLE = torch.cuda.is_available()
     if CUDA_AVAILABLE:
         print(f"✅ GPU disponibile: {torch.cuda.get_device_name(0)}")
@@ -33,6 +37,8 @@ except ImportError:
     print("⚠️ torch non installato. Installa con: pip install torch")
 
 # Cache per modelli caricati (evita ricaricare ogni volta)
+# I modelli T5/GPT-2 pesano centinaia di MB e impiegano 1-2 minuti a caricarsi: tenerli in cache per processo
+# evita un cold start su ogni articolo (critico in ambienti serverless).
 _model_cache = {}
 _tokenizer_cache = {}
 
@@ -47,6 +53,7 @@ def _load_t5_model():
     
     try:
         print("📥 Caricamento modello T5-small (prima volta, può richiedere 1-2 minuti)...")
+        # t5-small (~240MB) è un modello seq2seq leggero, adatto a summarization anche su CPU.
         model_name = "t5-small"  # Modello leggero (~240MB)
         
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -83,6 +90,7 @@ def _load_gpt2_model():
     
     try:
         print("📥 Caricamento modello GPT-2 (prima volta, può richiedere 1-2 minuti)...")
+        # gpt2 (~500MB) è un modello causale: genera testo in avanti, meno adatto alla summarization di T5 ma utile come fallback.
         model_name = "gpt2"  # Modello leggero (~500MB)
         
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -116,10 +124,10 @@ def _generate_with_t5(prompt: str, max_length: int = 200) -> Optional[str]:
         return None
     
     try:
-        # T5 richiede prefisso per il task
+        # T5 richiede un prefisso che indichi il task ("summarize:"); senza di esso l'output è inutilizzabile.
         input_text = f"summarize: {prompt}"
         
-        # Tokenizza
+        # Tokenizza con truncation a 512 token: testi più lunghi vengono tagliati per stare nei limiti del modello T5.
         inputs = tokenizer.encode(input_text, return_tensors="pt", max_length=512, truncation=True)
         
         # Modello è già su GPU se disponibile (caricato all'inizio)
@@ -127,7 +135,9 @@ def _generate_with_t5(prompt: str, max_length: int = 200) -> Optional[str]:
         device = "cuda" if CUDA_AVAILABLE else "cpu"
         inputs = inputs.to(device)
         
-        # Genera
+        # Genera: num_beams=4 per output più coerente, no_repeat_ngram_size=2 contro le ripetizioni,
+        # temperature 0.7 per varietà controllata, do_sample True per campionazione stoccastica;
+        # max_length limita la lunghezza totale della generazione (default 200 token).
         with torch.no_grad():
             outputs = model.generate(
                 inputs,
@@ -140,7 +150,7 @@ def _generate_with_t5(prompt: str, max_length: int = 200) -> Optional[str]:
                 do_sample=True
             )
         
-        # Decodifica
+        # Decodifica rimuovendo i token speciali (skip_special_tokens).
         generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
         return generated_text.strip()
     except Exception as e:
@@ -155,7 +165,7 @@ def _generate_with_gpt2(prompt: str, max_length: int = 200) -> Optional[str]:
         return None
     
     try:
-        # Tokenizza
+        # Tokenizza con truncation a 400 token per l'input del prompt.
         inputs = tokenizer.encode(prompt, return_tensors="pt", max_length=400, truncation=True)
         
         # Modello è già su GPU se disponibile (caricato all'inizio)
@@ -163,10 +173,14 @@ def _generate_with_gpt2(prompt: str, max_length: int = 200) -> Optional[str]:
         device = "cuda" if CUDA_AVAILABLE else "cpu"
         inputs = inputs.to(device)
         
-        # Genera
+        # Genera: num_beams=4 per output più coerente, no_repeat_ngram_size=2 contro le ripetizioni,
+        # temperature 0.7 per varietà controllata, do_sample True per campionazione stoccastica;
+        # max_length limita la lunghezza totale della generazione (default 200 token).
         with torch.no_grad():
             outputs = model.generate(
                 inputs,
+                # max_length qui è addizionale alla lunghezza del prompt (output totale = input + max_length).
+                # pad_token_id sotto è impostato a eos_token_id per evitare avvisi di padding su GPT-2.
                 max_length=inputs.shape[1] + max_length,
                 min_length=inputs.shape[1] + 50,
                 num_beams=4,
@@ -179,7 +193,7 @@ def _generate_with_gpt2(prompt: str, max_length: int = 200) -> Optional[str]:
         
         # Decodifica (rimuovi il prompt originale)
         generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        # Rimuovi il prompt originale dal risultato
+        # Rimuovi il prompt originale dal risultato: GPT-2 rigenera anche il prompt iniziale, va scartato.
         if prompt in generated_text:
             generated_text = generated_text.replace(prompt, "").strip()
         
@@ -191,6 +205,10 @@ def _generate_with_gpt2(prompt: str, max_length: int = 200) -> Optional[str]:
 
 def _create_structured_explanation(article: Dict, explanation_type: str, base_text: str) -> str:
     """Crea spiegazione strutturata usando il testo generato dall'AI"""
+    # Layout fisso attorno al testo del modello: le sezioni (cosa è successo, perché importante, impatto)
+    # vengono riempite con slice di base_text a confini fissi (200/400/300/600 caratteri). Approccio euristico:
+    # i modelli locali producono output brevi e non strutturati, quindi il confezionamento è fatto lato codice
+    # invece che dal modello.
     
     title = article.get('title', '')
     summary = article.get('summary', '')
@@ -321,6 +339,8 @@ def generate_explanation_local_ai(article: Dict, explanation_type: str = "quick"
         return _generate_fallback_explanation(article, explanation_type)
     
     # Prepara prompt in base al tipo
+    # I campi dell'articolo vengono troncati (summary 800, content 1000, summary 400 per quick) per stare
+    # nei limiti di lunghezza di input dei modelli locali (T5 accetta al massimo 512 token).
     title = article.get('title', '')
     summary = article.get('summary', '')[:800]
     keywords = ', '.join(article.get('keywords', [])[:5])
@@ -356,15 +376,15 @@ Parole chiave: {keywords}
 Analizza il contesto storico, gli attori coinvolti, le conseguenze e le prospettive future."""
         max_length = 500
     
-    # Prova prima T5 (migliore per summarization)
+    # Prova prima T5 (migliore per summarization grazie al task "summarize:")
     generated_text = _generate_with_t5(prompt, max_length)
     
-    # Fallback a GPT-2 se T5 non funziona
+    # Fallback a GPT-2 se T5 non funziona o produce testo troppo breve (< 50 caratteri).
     if not generated_text or len(generated_text) < 50:
         print("⚠️ T5 non ha generato testo sufficiente, provo GPT-2...")
         generated_text = _generate_with_gpt2(prompt, max_length)
     
-    # Se ancora nulla, usa fallback statico
+    # Se ancora nulla, usa fallback statico puramente heuristico (nessun modello, nessuna rete).
     if not generated_text or len(generated_text) < 50:
         print("⚠️ AI locale non disponibile, uso spiegazione statica")
         return _generate_fallback_explanation(article, explanation_type)
@@ -375,6 +395,8 @@ Analizza il contesto storico, gli attori coinvolti, le conseguenze e le prospett
 
 def _generate_fallback_explanation(article: Dict, explanation_type: str) -> str:
     """Fallback a spiegazione statica se AI non disponibile"""
+    # Spiegazione puramente heuristica costruita dai campi dell'articolo: nessun modello, nessuna rete,
+    # usata quando transformers/torch mancano o i modelli locali non producono output valido.
     title = article.get('title', '')
     summary = article.get('summary', '')
     keywords = article.get('keywords', [])

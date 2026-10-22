@@ -26,6 +26,24 @@
     <div class="actions-section">
       <button 
         mat-icon-button 
+        matTooltip="Cerca notizie"
+        routerLink="/search"
+        aria-label="Cerca notizie"
+      >
+        <mat-icon>search</mat-icon>
+      </button>
+
+      <button 
+        mat-icon-button 
+        matTooltip="Riepilogo Notizie"
+        routerLink="/digest"
+        aria-label="Riepilogo Notizie"
+      >
+        <mat-icon>auto_stories</mat-icon>
+      </button>
+
+      <button 
+        mat-icon-button 
         matTooltip="Articoli salvati"
         routerLink="/saved"
         [attr.aria-label]="'Articoli salvati' + (savedCount > 0 ? ': ' + savedCount : '')"

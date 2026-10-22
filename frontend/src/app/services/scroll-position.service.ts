@@ -4,6 +4,8 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class ScrollPositionService {
+  // Mappa route -> posizione di scroll (in pixel). Usata come cache in memoria
+  // per il caso in cui sessionStorage non sia disponibile (es. navigator.cookieEnabled=false).
   private scrollPositions: { [key: string]: number } = {};
 
   /**

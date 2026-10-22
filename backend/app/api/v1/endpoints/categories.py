@@ -16,14 +16,21 @@ def get_categories(
     limit: int = 100,
     db: Session = Depends(get_db)
 ):
-    """Get all categories"""
+    """Get all categories.
+
+    Paginato con skip/limit (default skip=0, limit=100). Non ci sono filtri
+    attivi; restituisce tutte le categorie. L'ordinamento non è garantito
+    dal codice: il client deve considerare l'output come non ordinato a
+    meno che il database non restituisca una scansione in ordine naturale
+    (che spesso corrisponde all'ID).
+    """
     categories = db.query(Category).offset(skip).limit(limit).all()
     return categories
 
 
 @router.get("/{category_id}", response_model=schemas.Category)
 def get_category(category_id: int, db: Session = Depends(get_db)):
-    """Get single category by ID"""
+    """Get single category by ID. Restituisce 404 se non trovata."""
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
@@ -35,7 +42,12 @@ def create_category(
     category: schemas.CategoryCreate,
     db: Session = Depends(get_db)
 ):
-    """Create new category (admin only)"""
+    """Create new category (admin only).
+
+    Genera automaticamente lo slug dal nome usando `slugify`, per avere
+    URL friendlies e unici. Se uno slug esiste già, restituisce 400.
+    NOTA: nessuna autenticazione è applicata nonostante il commento "admin only".
+    """
     
     # Create slug
     slug = slugify(category.name)
@@ -66,7 +78,7 @@ def update_category(
     category: schemas.CategoryUpdate,
     db: Session = Depends(get_db)
 ):
-    """Update category (admin only)"""
+    """Update category (admin only). Anche qui manca un auth dependency."""
     
     db_category = db.query(Category).filter(Category.id == category_id).first()
     if not db_category:
@@ -88,7 +100,10 @@ def update_category(
 
 @router.delete("/{category_id}")
 def delete_category(category_id: int, db: Session = Depends(get_db)):
-    """Delete category (admin only)"""
+    """Delete category (admin only). Anche qui manca un auth dependency.
+
+    Restituisce 200 con un JSON di conferma, non 204 (nessun body).
+    """
     
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:

@@ -47,6 +47,11 @@ import { CookieBannerComponent } from './components/cookie-banner/cookie-banner.
 import { StripHtmlPipe } from './pipes/strip-html.pipe';
 import { ServiceWorkerModule } from '@angular/service-worker';
 
+/**
+ * Modulo radice dell'applicazione (architettura a modulo unico, senza componenti standalone).
+ * Qui sono dichiarati tutti i componenti dell'app e la pipe condivisa: non esistono
+ * moduli funzionali separati, quindi il bundle principale contiene l'intera UI.
+ */
 @NgModule({
   declarations: [
     AppComponent,
@@ -71,10 +76,16 @@ import { ServiceWorkerModule } from '@angular/service-worker';
   imports: [
     BrowserModule,
     AppRoutingModule,
+    // Le animazioni di Angular devono essere abilite: i componenti Material
+    // (dialog, menu, paginator) dipendono da di esse e falliscono senza.
     BrowserAnimationsModule,
     HttpClientModule,
+    // FormsModule serve nei template con [(ngModel)], ReactiveFormsModule nei form
+    // costruiti con FormBuilder (login, ricerca, filtri).
     FormsModule,
     ReactiveFormsModule,
+    // Un modulo Material per ogni widget realmente usato nei template:
+    // importare MaterialModule per intero farebbe crescere inutilmente il bundle.
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
@@ -94,6 +105,10 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     MatDialogModule,
     MatTabsModule,
     MatDividerModule,
+    // Service worker attivo solo in produzione (isDevMode()): in sviluppo la cache
+    // servirebbe a mascherare le modifiche locali.
+    // La registrazione avviene a app stabile o dopo 30 secondi, così non compete
+    // con il primo rendering.
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       // Register the ServiceWorker as soon as the application is stable
@@ -103,6 +118,9 @@ import { ServiceWorkerModule } from '@angular/service-worker';
   ],
   providers: [
     {
+      // L'interceptor aggiunge l'header che fa saltare la pagina di avviso di ngrok
+      // quando il backend è esposto tramite tunnel: senza, il browser blocca la risposta.
+      // multi: true perché gli interceptor HTTP sono una catena, non un valore singolo.
       provide: HTTP_INTERCEPTORS,
       useClass: NgrokInterceptor,
       multi: true

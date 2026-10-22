@@ -14,6 +14,8 @@ class APICollector:
     def __init__(self):
         self.newsapi_key = settings.NEWSAPI_KEY
         self.guardian_key = settings.GUARDIAN_API_KEY
+        # 30s per-request timeout: long enough for slow APIs, short enough
+        # that a hung upstream cannot stall a collection worker.
         self.timeout = 30
     
     async def collect_newsapi(
@@ -35,12 +37,17 @@ class APICollector:
         Returns:
             List of article dictionaries
         """
+        # A missing key is not fatal: return [] so the other sources still
+        # run instead of aborting the collection.
         if not self.newsapi_key:
             logger.warning("NewsAPI key not configured")
             return []
         
         try:
             url = "https://newsapi.org/v2/top-headlines"
+            # apiKey is passed as a query param (NewsAPI auth scheme);
+            # pageSize is capped at 100, the API's maximum, to avoid a 400
+            # error when the caller asks for more articles.
             params = {
                 "apiKey": self.newsapi_key,
                 "language": language,
@@ -52,11 +59,16 @@ class APICollector:
             if category:
                 params["category"] = category
             
+            # Per-request timeout so a slow or hung NewsAPI request cannot
+            # block the async worker indefinitely.
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(url, params=params)
                 response.raise_for_status()
                 data = response.json()
             
+            # NewsAPI reports failures in the body (status != ok) rather
+            # than as HTTP error codes, so treat anything else as an empty
+            # result instead of raising.
             if data["status"] != "ok":
                 logger.error(f"NewsAPI error: {data.get('message')}")
                 return []
@@ -91,12 +103,15 @@ class APICollector:
         Returns:
             List of article dictionaries
         """
+        # Missing Guardian key is not fatal: other sources keep running.
         if not self.guardian_key:
             logger.warning("Guardian API key not configured")
             return []
         
         try:
             url = "https://content.guardianapis.com/search"
+            # page-size capped at 50, the Guardian API maximum; newest first
+            # so the most recent articles are collected first.
             params = {
                 "api-key": self.guardian_key,
                 "page-size": min(max_articles, 50),
@@ -109,11 +124,14 @@ class APICollector:
             if section:
                 params["section"] = section
             
+            # Per-request timeout guards against a hung Guardian request.
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(url, params=params)
                 response.raise_for_status()
                 data = response.json()
             
+            # The Guardian signals errors in the response body, not HTTP
+            # codes, so treat a non-ok status as an empty result.
             if data["response"]["status"] != "ok":
                 logger.error("Guardian API error")
                 return []
@@ -133,6 +151,8 @@ class APICollector:
     
     def _parse_newsapi_article(self, item: Dict) -> Optional[Dict[str, Any]]:
         """Parse NewsAPI article"""
+        # One malformed item is skipped (None) so a bad payload does not
+        # abort the whole batch; published_at stays None when undated.
         try:
             published_at = None
             if item.get('publishedAt'):
@@ -153,6 +173,7 @@ class APICollector:
     
     def _parse_guardian_article(self, item: Dict) -> Optional[Dict[str, Any]]:
         """Parse Guardian article"""
+        # Same defensive parse: skip the item on error, keep the batch.
         try:
             fields = item.get('fields', {})
             published_at = None
