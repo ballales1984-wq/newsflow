@@ -100,14 +100,14 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     try {
-      // Inizializza AdSense
-      // Push sulla coda globale adsbygoogle: lo script AdSense la svuota al caricamento.
-      // enable_page_level_ads resta disattivato: gli annunci devono comparire solo
-      // dove il template dichiara le unità, non automaticamente su tutta la pagina.
+      if ((window as any).__adsenseInitialized) {
+        return;
+      }
       ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({
         google_ad_client: this.adClient,
         enable_page_level_ads: false
       });
+      (window as any).__adsenseInitialized = true;
       this.adLoaded = true;
     } catch (e) {
       console.error('Errore nell\'inizializzazione di AdSense:', e);
