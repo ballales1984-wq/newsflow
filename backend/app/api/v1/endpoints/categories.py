@@ -9,14 +9,15 @@ from ....models.article import Article
 from ....schemas import category as schemas
 
 
+router = APIRouter()
+
+
 @router.get("/counts")
 def get_category_counts(db: Session = Depends(get_db)):
     """Return article counts per category id."""
     from sqlalchemy import func
     rows = db.query(Article.category_id, func.count(Article.id)).group_by(Article.category_id).all()
     return {str(cid): count for cid, count in rows if cid is not None}
-
-router = APIRouter()
 
 
 @router.get("/", response_model=List[schemas.Category])

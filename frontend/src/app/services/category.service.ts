@@ -16,6 +16,10 @@ export class CategoryService {
     return this.http.get<Category[]>(this.apiUrl);
   }
 
+  getCategoryCounts(): Observable<{ [key: string]: number }> {
+    return this.http.get<{ [key: string]: number }>(`${this.apiUrl}/counts`);
+  }
+
   getCategory(id: number): Observable<Category> {
     return this.http.get<Category>(`${this.apiUrl}/${id}`);
   }

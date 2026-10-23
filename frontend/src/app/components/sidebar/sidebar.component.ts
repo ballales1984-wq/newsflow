@@ -59,24 +59,22 @@ export class SidebarComponent implements OnInit {
   }
 
   loadArticleCounts(): void {
-    // Carica totale articoli
-    // Il totale arriva già nella risposta dell'API: non serve un endpoint dedicato.
-    this.articleService.getArticles(1, 1000).subscribe({
-      next: (response) => {
-        this.totalArticles = response.total;
+    this.categoryService.getCategoryCounts().subscribe({
+      next: (counts) => {
+        const parsed: { [key: number]: number } = {};
+        let total = 0;
+        Object.keys(counts).forEach((key) => {
+          const id = Number(key);
+          const count = counts[key] || 0;
+          parsed[id] = count;
+          total += count;
+        });
+        this.categoryCounts = parsed;
+        this.totalArticles = total;
+      },
+      error: (error) => {
+        console.error('Error loading category counts:', error);
       }
-    });
-
-    // Carica conteggi per ogni categoria (tutte le 14 categorie)
-    // Il backend non espone un conteggio aggregato per categoria, quindi si
-    // interroga l'elenco articoli filtrato: una richiesta per categoria, tutte
-    // in parallelo, e si usa il campo 'total' di ogni risposta.
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].forEach(catId => {
-      this.articleService.getArticles(1, 1000, { category_id: catId }).subscribe({
-        next: (response) => {
-          this.categoryCounts[catId] = response.total;
-        }
-      });
     });
   }
 
