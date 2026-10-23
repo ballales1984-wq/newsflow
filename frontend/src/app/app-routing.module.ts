@@ -1,13 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
-import { ArticleDetailComponent } from './pages/article-detail/article-detail.component';
-import { SearchComponent } from './pages/search/search.component';
-import { SavedComponent } from './pages/saved/saved.component';
-import { DigestComponent } from './pages/digest/digest.component';
-import { PrivacyComponent } from './pages/privacy/privacy.component';
-import { TermsComponent } from './pages/terms/terms.component';
-import { AuthComponent } from './pages/auth/auth.component';
 
 /**
  * Routing dell'applicazione: tutte le rotte sono dichiarate qui in un unico modulo.
@@ -19,18 +12,14 @@ import { AuthComponent } from './pages/auth/auth.component';
  */
 const routes: Routes = [
   { path: '', component: HomeComponent },
-  // Login e registrazione condividono lo stesso componente: la modalità è decisa
-  // dentro AuthComponent, non dal path.
-  { path: 'login', component: AuthComponent },
-  { path: 'register', component: AuthComponent },
-  // :slug è l'identificativo con cui l'articolo viene cercato nel backend.
-  { path: 'article/:slug', component: ArticleDetailComponent },
-  { path: 'search', component: SearchComponent },
-  { path: 'saved', component: SavedComponent },
-  { path: 'digest', component: DigestComponent },
-  { path: 'privacy', component: PrivacyComponent },
-  { path: 'terms', component: TermsComponent },
-  // Rotta jolly: qualunque URL sconosciuto riporta alla home.
+  { path: 'login', loadComponent: () => import('./pages/auth/auth.component').then(m => m.AuthComponent) },
+  { path: 'register', loadComponent: () => import('./pages/auth/auth.component').then(m => m.AuthComponent) },
+  { path: 'article/:slug', loadComponent: () => import('./pages/article-detail/article-detail.component').then(m => m.ArticleDetailComponent) },
+  { path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
+  { path: 'saved', loadComponent: () => import('./pages/saved/saved.component').then(m => m.SavedComponent) },
+  { path: 'digest', loadComponent: () => import('./pages/digest/digest.component').then(m => m.DigestComponent) },
+  { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent) },
+  { path: 'terms', loadComponent: () => import('./pages/terms/terms.component').then(m => m.TermsComponent) },
   { path: '**', redirectTo: '' }
 ];
 
