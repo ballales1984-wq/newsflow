@@ -104,8 +104,7 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
       ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({
-        google_ad_client: this.adClient,
-        enable_page_level_ads: false
+        google_ad_client: this.adClient
       });
       (window as any).__adsenseInitialized = true;
       this.adLoaded = true;
