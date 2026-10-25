@@ -2783,7 +2783,7 @@ def trigger_news_collection():
 
         # FASE 2: Salta spiegazioni AI - verranno generate in un secondo passaggio
         # Le spiegazioni AI vengono generate chiamando /api/admin/generate-explanations
-        SKIP_AI_EXPLANATIONS = True  # Sempre True - spiegazioni in passaggio separato
+        SKIP_AI_EXPLANATIONS = False  # Genera spiegazioni durante raccolta
 
         if False:  # Disabilitato - spiegazioni in endpoint separato
             print(f"\n🤖 FASE 2: Generazione spiegazioni AI per articoli nuovi...")
