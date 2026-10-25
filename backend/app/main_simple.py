@@ -2962,6 +2962,61 @@ def trigger_news_collection():
         except Exception as e:
             print(f"⚠️  Errore durante reload cache: {e}")
 
+        # AUTO-COMMIT & PUSH SU GITHUB PER SINCRONIZZARE CON VERCEL
+        try:
+            import subprocess
+            import os as _os
+
+            github_token = _os.environ.get("GITHUB_TOKEN") or _os.environ.get("GH_TOKEN")
+            repo_url = _os.environ.get("GIT_REPO_URL") or "https://github.com/ballales1984-wq/newsflow.git"
+            git_branch = _os.environ.get("GIT_BRANCH") or "main"
+
+            if github_token:
+                print("\n🔄 Sincronizzazione con GitHub per Vercel...")
+                # Usa il repo root
+                repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                # Se siamo dentro backend/app, sali fino a root
+                if os.path.basename(repo_root) == "app":
+                    repo_root = os.path.dirname(os.path.dirname(repo_root))
+                elif os.path.basename(repo_root) == "backend":
+                    repo_root = os.path.dirname(repo_root)
+
+                files_to_add = [
+                    os.path.join(repo_root, "api", "final_news_italian.json"),
+                    os.path.join(repo_root, "backend", "final_news_italian.json"),
+                    os.path.join(repo_root, "final_news_italian.json"),
+                    os.path.join(repo_root, "api", "digest.json"),
+                    os.path.join(repo_root, "backend", "digest.json"),
+                    os.path.join(repo_root, "digest.json"),
+                ]
+
+                # Configura git
+                subprocess.run(["git", "-C", repo_root, "config", "user.email", "render-bot@newsflow.app"], check=False)
+                subprocess.run(["git", "-C", repo_root, "config", "user.name", "NewsFlow Bot"], check=False)
+
+                # Add files
+                for f in files_to_add:
+                    if os.path.exists(f):
+                        subprocess.run(["git", "-C", repo_root, "add", f], check=False)
+
+                # Check if there are changes
+                result = subprocess.run(["git", "-C", repo_root, "diff", "--cached", "--quiet"], check=False)
+                if result.returncode == 1:  # Ci sono modifiche
+                    commit_msg = f"🤖 Auto-update: Aggiornate notizie da Render {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}"
+                    subprocess.run(["git", "-C", repo_root, "commit", "-m", commit_msg], check=False)
+                    push_url = repo_url.replace("https://", f"https://x-access-token:{github_token}@")
+                    push_res = subprocess.run(["git", "-C", repo_root, "push", push_url, f"HEAD:{git_branch}"], check=False, capture_output=True, text=True)
+                    if push_res.returncode == 0:
+                        print("✅ Commit & push effettuati - Vercel farà il redeploy automaticamente")
+                    else:
+                        print(f"⚠️  Errore push: {push_res.stderr[:200]}")
+                else:
+                    print("ℹ️  Nessuna modifica da committare")
+            else:
+                print("ℹ️  GITHUB_TOKEN non configurato - salto auto-commit (Vercel userà cache)")
+        except Exception as e:
+            print(f"⚠️  Errore auto-commit: {e}")
+
         # GENERA DIGEST AUTOMATICAMENTE con le notizie nuove
         print(f"\n📰 Generazione digest giornaliero con notizie nuove...")
         try:
