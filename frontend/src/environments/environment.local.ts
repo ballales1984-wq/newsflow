@@ -3,7 +3,8 @@
 export const environment = {
   production: false,
   // Backend locale sul PC
-  apiUrl: 'http://localhost:8000/api/v1'
+  apiUrl: 'http://localhost:8000/api/v1',
+  appUrl: 'http://localhost:4200'
   // Per ngrok, usa:
   // apiUrl: 'https://xxxx-xxxx-xxxx.ngrok-free.app/api/v1'
   // Per IP pubblico, usa:

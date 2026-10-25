@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { SeoService } from '../../services/seo.service';
 import { ArticleService } from '../../services/article.service';
 import { ScrollPositionService } from '../../services/scroll-position.service';
 import { Article } from '../../models/article.model';
@@ -41,7 +42,8 @@ export class ArticleDetailComponent implements OnInit {
     private location: Location,
     private articleService: ArticleService,
     private scrollPositionService: ScrollPositionService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
@@ -59,6 +61,7 @@ export class ArticleDetailComponent implements OnInit {
       next: (article) => {
         this.article = article;
         this.loading = false;
+        this.seoService.updateArticleSeo(article);
       },
       error: (error) => {
         console.error('Error loading article:', error);

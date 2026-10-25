@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
 import { ArticleService } from '../../services/article.service';
 import { AnalyticsService } from '../../services/analytics.service';
+import { ScrollPositionService } from '../../services/scroll-position.service';
 import { Category } from '../../models/category.model';
 
 /**
@@ -27,6 +28,7 @@ export class SidebarComponent implements OnInit {
     private categoryService: CategoryService,
     private articleService: ArticleService,
     private analytics: AnalyticsService,
+    private scrollPositionService: ScrollPositionService,
     private router: Router
   ) {}
 
@@ -110,39 +112,7 @@ export class SidebarComponent implements OnInit {
   }
 
   scrollToFilteredArticles(): void {
-    // Cerca l'elemento degli articoli filtrati con retry multipli
-    // L'elemento esiste solo dopo il render della lista filtrata: si ritenta
-    // fino a 5 volte (ogni 200ms) prima di rinunciare.
-    let attempts = 0;
-    const maxAttempts = 5;
-    
-    const tryScroll = () => {
-      attempts++;
-      const element = document.getElementById('articoli-filtrati');
-      
-      if (element) {
-        const headerOffset = 80; // Offset per l'header fisso
-        // L'header è fisso in alto: senza questo scarto il primo articolo
-        // finirebbe sotto la barra di navigazione.
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-        console.log('📍 Scrolling to filtered articles:', { offsetPosition, elementPosition });
-        
-        window.scrollTo({
-          top: Math.max(0, offsetPosition), // Assicura che non vada in negativo
-          behavior: 'smooth'
-        });
-      } else if (attempts < maxAttempts) {
-        // Retry se l'elemento non è ancora disponibile
-        console.log(`⏳ Retry scroll (attempt ${attempts}/${maxAttempts})...`);
-        setTimeout(tryScroll, 200);
-      } else {
-        console.warn('⚠️ Elemento articoli-filtrati non trovato dopo', maxAttempts, 'tentativi');
-      }
-    };
-    
-    tryScroll();
+    this.scrollPositionService.scrollToElement('articoli-filtrati', 80);
   }
 
   onLinkClick(): void {

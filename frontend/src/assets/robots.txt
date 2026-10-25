@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /register
+Disallow: /saved
+Disallow: /article/
+
+Sitemap: https://newsflow-orcin.vercel.app/sitemap.xml

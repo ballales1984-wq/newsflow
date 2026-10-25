@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { SeoService } from '../../services/seo.service';
 import { ArticleListComponent } from '../../components/article-list/article-list.component';
 
 @Component({
@@ -49,7 +50,8 @@ export class SearchComponent implements OnInit {
     private articleService: ArticleService,
     private categoryService: CategoryService,
     private route: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private seoService: SeoService
   ) {
     this.searchForm = this.fb.group({
       query: [''],
@@ -67,7 +69,10 @@ export class SearchComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['q']) {
         this.searchForm.patchValue({ query: params['q'] });
+        this.seoService.updateSearchSeo(params['q']);
         this.search();
+      } else {
+        this.seoService.updateSearchSeo();
       }
     });
   }
@@ -84,6 +89,7 @@ export class SearchComponent implements OnInit {
   }
 
   search(): void {
+    this.seoService.updateSearchSeo(this.searchForm.value.query || undefined);
     this.loading = true;
     this.currentPage = 1;
     

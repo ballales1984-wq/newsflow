@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Article } from '../models/article.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SeoService {
-  private baseUrl = 'https://newsflow-orcin.vercel.app';
 
   constructor(
     private meta: Meta,
@@ -19,10 +19,10 @@ export class SeoService {
   updateArticleSeo(article: Article): void {
     if (!article) return;
 
-    const articleUrl = `${this.baseUrl}/article/${article.slug || article.id}`;
+    const articleUrl = `${environment.appUrl}/article/${article.slug || article.id}`;
     const imageUrl = article.image_url
-      ? (article.image_url.startsWith('http') ? article.image_url : `${this.baseUrl}${article.image_url}`)
-      : `${this.baseUrl}/assets/icons/icon-512x512.png`;
+      ? (article.image_url.startsWith('http') ? article.image_url : `${environment.appUrl}${article.image_url}`)
+      : `${environment.appUrl}/assets/icons/icon-512x512.png`;
 
     // Title
     this.title.setTitle(`${article.title} | NewsFlow`);
@@ -79,7 +79,7 @@ export class SeoService {
       existingScript.remove();
     }
 
-    const structuredData = {
+    const structuredData: any = {
       '@context': 'https://schema.org',
       '@type': 'NewsArticle',
       'headline': article.title,
@@ -90,14 +90,14 @@ export class SeoService {
       'author': {
         '@type': 'Organization',
         'name': article.author || 'NewsFlow',
-        'url': this.baseUrl
+        'url': environment.appUrl
       },
       'publisher': {
         '@type': 'Organization',
         'name': 'NewsFlow',
         'logo': {
           '@type': 'ImageObject',
-          'url': `${this.baseUrl}/assets/icons/icon-512x512.png`
+          'url': `${environment.appUrl}/assets/icons/icon-512x512.png`
         }
       },
       'mainEntityOfPage': {
@@ -130,16 +130,102 @@ export class SeoService {
     this.title.setTitle('NewsFlow - Notizie Italiane Aggiornate | Piattaforma Intelligente di Curazione News');
     this.meta.updateTag({ name: 'description', content: 'NewsFlow - Piattaforma intelligente per la curazione di notizie italiane. Aggiornamenti in tempo reale, spiegazioni AI, categorie organizzate e molto altro.' });
     this.meta.updateTag({ property: 'og:type', content: 'website' });
-    this.meta.updateTag({ property: 'og:url', content: this.baseUrl });
+    this.meta.updateTag({ property: 'og:url', content: environment.appUrl });
     this.meta.updateTag({ property: 'og:title', content: 'NewsFlow - Notizie Italiane Aggiornate' });
     this.meta.updateTag({ property: 'og:description', content: 'Piattaforma intelligente per la curazione di notizie italiane. Aggiornamenti in tempo reale, spiegazioni AI e categorie organizzate.' });
-    this.meta.updateTag({ property: 'og:image', content: `${this.baseUrl}/assets/icons/icon-512x512.png` });
+    this.meta.updateTag({ property: 'og:image', content: `${environment.appUrl}/assets/icons/icon-512x512.png` });
 
     // Rimuovi structured data articolo
     const existingScript = document.getElementById('article-structured-data');
     if (existingScript) {
       existingScript.remove();
     }
+  }
+
+  /**
+   * Aggiorna meta tag generici per una pagina secondaria
+   */
+  updatePageSeo(options: {
+    title: string;
+    description: string;
+    type?: 'website' | 'article';
+    url?: string;
+    image?: string;
+  }): void {
+    this.title.setTitle(options.title);
+    this.meta.updateTag({ name: 'description', content: options.description });
+    this.meta.updateTag({ property: 'og:type', content: options.type || 'website' });
+    this.meta.updateTag({ property: 'og:url', content: options.url || environment.appUrl });
+    this.meta.updateTag({ property: 'og:title', content: options.title });
+    this.meta.updateTag({ property: 'og:description', content: options.description });
+    this.meta.updateTag({ property: 'og:image', content: options.image || `${environment.appUrl}/assets/icons/icon-512x512.png` });
+    this.meta.updateTag({ property: 'og:locale', content: 'it_IT' });
+    this.meta.updateTag({ property: 'og:site_name', content: 'NewsFlow' });
+    this.meta.updateTag({ property: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ property: 'twitter:url', content: options.url || environment.appUrl });
+    this.meta.updateTag({ property: 'twitter:title', content: options.title });
+    this.meta.updateTag({ property: 'twitter:description', content: options.description });
+    this.meta.updateTag({ property: 'twitter:image', content: options.image || `${environment.appUrl}/assets/icons/icon-512x512.png` });
+
+    // Rimuovi structured data articolo se presente
+    const existingScript = document.getElementById('article-structured-data');
+    if (existingScript) {
+      existingScript.remove();
+    }
+  }
+
+  updateSearchSeo(query?: string): void {
+    const title = query ? `Risultati per "${query}" | NewsFlow` : 'Ricerca | NewsFlow';
+    const description = query
+      ? `Risultati di ricerca per "${query}" su NewsFlow - Notizie italiane curate con intelligenza artificiale.`
+      : 'Cerca notizie italiane su NewsFlow. Filtra per categoria, lingua, data e qualità.';
+    this.updatePageSeo({
+      title,
+      description,
+      url: `${environment.appUrl}/search${query ? `?q=${encodeURIComponent(query)}` : ''}`
+    });
+  }
+
+  updateSavedSeo(): void {
+    this.updatePageSeo({
+      title: 'Articoli Salvati | NewsFlow',
+      description: 'I tuoi articoli salvati su NewsFlow. Leggi le notizie che ti interessano quando vuoi.',
+      url: `${environment.appUrl}/saved`
+    });
+  }
+
+  updateDigestSeo(): void {
+    this.updatePageSeo({
+      title: 'Digest Giornaliero | NewsFlow',
+      description: 'Riepilogo giornaliero delle notizie italiane raggruppate per categoria.',
+      url: `${environment.appUrl}/digest`
+    });
+  }
+
+  updatePrivacySeo(): void {
+    this.updatePageSeo({
+      title: 'Privacy Policy | NewsFlow',
+      description: 'Informativa sulla privacy di NewsFlow - come trattiamo i tuoi dati personali.',
+      url: `${environment.appUrl}/privacy`
+    });
+  }
+
+  updateTermsSeo(): void {
+    this.updatePageSeo({
+      title: 'Termini di Servizio | NewsFlow',
+      description: 'Termini e condizioni d\'uso di NewsFlow - piattaforma di curazione notizie italiane.',
+      url: `${environment.appUrl}/terms`
+    });
+  }
+
+  updateAuthSeo(isLogin: boolean): void {
+    this.updatePageSeo({
+      title: isLogin ? 'Accedi | NewsFlow' : 'Registrati | NewsFlow',
+      description: isLogin
+        ? 'Accedi al tuo account NewsFlow per salvare articoli e personalizzare la tua esperienza.'
+        : 'Crea il tuo account su NewsFlow per salvare articoli e ricevere notizie personalizzate.',
+      url: `${environment.appUrl}/${isLogin ? 'login' : 'register'}`
+    });
   }
 }
 

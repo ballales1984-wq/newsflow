@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { environment } from '../../../environments/environment';
 import { StripHtmlPipe } from '../../pipes/strip-html.pipe';
+import { SeoService } from '../../services/seo.service';
 
 interface DigestArticle {
   title: string;
@@ -50,10 +51,11 @@ export class DigestComponent implements OnInit, OnDestroy {
   private subscription?: Subscription;
   private digestUrl = `${environment.apiUrl}/digest`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private seoService: SeoService) {}
 
   ngOnInit(): void {
     console.log('📰 Pagina Digest caricata');
+    this.seoService.updateDigestSeo();
     this.loadDigest();
   }
 

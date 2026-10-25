@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SeoService } from '../../services/seo.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 
@@ -28,9 +29,10 @@ export class AuthComponent {
     private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar,
-    // Iniettato ma non usato: il tema viene applicato dal ThemeService.
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private seoService: SeoService
   ) {
+    this.seoService.updateAuthSeo(true);
     this.authForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       // Nota: il validatore richiede 6 caratteri, mentre il messaggio del
@@ -47,6 +49,7 @@ export class AuthComponent {
     // Il form viene resettato: le credenziali inserite in una modalità
     // non devono restare visibili nell'altra.
     this.isLoginMode = !this.isLoginMode;
+    this.seoService.updateAuthSeo(this.isLoginMode);
     this.authForm.reset();
   }
 

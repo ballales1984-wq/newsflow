@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { SeoService } from '../../services/seo.service';
 import { ArticleService } from '../../services/article.service';
 import { SavedArticleService } from '../../services/saved-article.service';
 import { Article } from '../../models/article.model';
@@ -23,10 +24,12 @@ export class SavedComponent implements OnInit {
 
   constructor(
     private articleService: ArticleService,
-    private savedArticleService: SavedArticleService
+    private savedArticleService: SavedArticleService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
+    this.seoService.updateSavedSeo();
     this.loadSavedArticles();
   }
 

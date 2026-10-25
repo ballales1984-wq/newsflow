@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SeoService } from '../../services/seo.service';
 import { ArticleService } from '../../services/article.service';
 import { CategoryService } from '../../services/category.service';
 import { SpeechService } from '../../services/speech.service';
@@ -75,11 +76,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     private scrollPositionService: ScrollPositionService,
     private route: ActivatedRoute,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
     console.log('🏠 HomeComponent initialized');
+    this.seoService.resetToHomepage();
     try {
       this.loadCategories();
       
@@ -446,36 +449,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   scrollToFilteredArticles(): void {
-    // Cerca l'elemento degli articoli filtrati con retry multipli
-    let attempts = 0;
-    const maxAttempts = 5;
-    
-    const tryScroll = () => {
-      attempts++;
-      const element = document.getElementById('articoli-filtrati');
-      
-      if (element) {
-        const headerOffset = 80; // Offset per l'header fisso
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-        console.log('📍 Scrolling to filtered articles:', { offsetPosition, elementPosition, scrollY: window.pageYOffset });
-        
-        // Scroll fluido agli articoli filtrati
-        window.scrollTo({
-          top: Math.max(0, offsetPosition), // Assicura che non vada in negativo
-          behavior: 'smooth'
-        });
-      } else if (attempts < maxAttempts) {
-        // Retry se l'elemento non è ancora disponibile
-        console.log(`⏳ Retry scroll (attempt ${attempts}/${maxAttempts})...`);
-        setTimeout(tryScroll, 200);
-      } else {
-        console.warn('⚠️ Elemento articoli-filtrati non trovato dopo', maxAttempts, 'tentativi');
-      }
-    };
-    
-    tryScroll();
+    this.scrollPositionService.scrollToElement('articoli-filtrati', 80);
   }
 
   copyError(): void {
