@@ -1,6 +1,6 @@
 <mat-card class="article-card" (click)="viewArticle()">
   <div class="card-image" *ngIf="article.image_url">
-    <img [src]="article.image_url" [alt]="article.title" />
+    <img [src]="article.image_url" [alt]="article.title" loading="lazy" decoding="async" />
     <div class="quality-badge" *ngIf="article.quality_score">
       <mat-chip [color]="getQualityColor(article.quality_score)">
         {{ (article.quality_score * 100).toFixed(0) }}%

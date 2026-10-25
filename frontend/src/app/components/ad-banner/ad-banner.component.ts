@@ -1,4 +1,5 @@
 import { Component, OnInit, Input, OnDestroy, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 /**
  * Banner pubblicitario AdSense.
@@ -9,6 +10,8 @@ import { Component, OnInit, Input, OnDestroy, AfterViewInit } from '@angular/cor
  */
 @Component({
   selector: 'app-ad-banner',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './ad-banner.component.html',
   styleUrls: ['./ad-banner.component.scss']
 })

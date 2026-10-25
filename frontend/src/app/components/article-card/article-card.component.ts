@@ -1,11 +1,20 @@
 import { Component, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatBadgeModule } from '@angular/material/badge';
 import { Article } from '../../models/article.model';
 import { SavedArticleService } from '../../services/saved-article.service';
 import { AnalyticsService } from '../../services/analytics.service';
 import { ScrollPositionService } from '../../services/scroll-position.service';
 import { ExplainDialogComponent } from '../explain-dialog/explain-dialog.component';
+import { StripHtmlPipe } from '../../pipes/strip-html.pipe';
 
 /**
  * Card di anteprima di un articolo: è il componente più riusato dell'app
@@ -14,6 +23,17 @@ import { ExplainDialogComponent } from '../explain-dialog/explain-dialog.compone
  */
 @Component({
   selector: 'app-article-card',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatChipsModule,
+    MatTooltipModule,
+    MatBadgeModule,
+    StripHtmlPipe
+  ],
   templateUrl: './article-card.component.html',
   styleUrls: ['./article-card.component.scss']
 })
@@ -25,7 +45,8 @@ export class ArticleCardComponent {
     public savedArticleService: SavedArticleService,
     private dialog: MatDialog,
     private analytics: AnalyticsService,
-    private scrollPositionService: ScrollPositionService
+    private scrollPositionService: ScrollPositionService,
+    private snackBar: MatSnackBar
   ) {}
 
   viewArticle(): void {
@@ -72,20 +93,63 @@ export class ArticleCardComponent {
     event.stopPropagation();
     this.analytics.trackArticleShare(this.article.id, this.article.title);
 
+    const url = this.article.url || window.location.origin + '/article/' + this.article.slug;
+    const title = this.article.title;
+    const text = this.article.summary || title;
+
     if (navigator.share) {
       // Web Share API: mobile/desktop la mostrano nativamente, senza UI custom.
       navigator.share({
-        title: this.article.title,
-        text: this.article.summary,
-        url: this.article.url
+        title: title,
+        text: text,
+        url: url
+      }).catch(() => {
+        // Fallback se l'utente annulla o c'è un errore
+        this.openShareMenu(url, title, text);
       });
     } else {
-      // Fallback: copia URL
-      // Nessuna Web Share API disponibile (desktop vecchi, contesto non sicuro):
-      // si copia il link negli appunti e si avvisa l'utente.
-      navigator.clipboard.writeText(this.article.url);
-      alert('Link copiato negli appunti!');
+      this.openShareMenu(url, title, text);
     }
+  }
+
+  private openShareMenu(url: string, title: string, text: string): void {
+    const encodedUrl = encodeURIComponent(url);
+    const encodedTitle = encodeURIComponent(title);
+    const encodedText = encodeURIComponent(text);
+
+    const shareOptions = [
+      { name: 'Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+      { name: 'Twitter', url: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}` },
+      { name: 'LinkedIn', url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}` },
+      { name: 'WhatsApp', url: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}` },
+      { name: 'Telegram', url: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}` },
+      { name: 'Copia link', action: 'copy' }
+    ];
+
+    const choice = prompt(
+      'Condividi su:\n' +
+      '1. Facebook\n' +
+      '2. Twitter/X\n' +
+      '3. LinkedIn\n' +
+      '4. WhatsApp\n' +
+      '5. Telegram\n' +
+      '6. Copia link\n\n' +
+      'Inserisci il numero (1-6):'
+    );
+
+    if (!choice) return;
+
+    const index = parseInt(choice) - 1;
+    if (index >= 0 && index < shareOptions.length) {
+      const option = shareOptions[index];
+      if (option.action === 'copy') {
+        navigator.clipboard.writeText(url);
+        alert('Link copiato negli appunti!');
+      } else if (option.url) {
+        window.open(option.url, '_blank', 'width=600,height=400');
+      }
+    }
+  }
   }
 
   isSaved(): boolean {

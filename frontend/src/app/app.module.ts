@@ -28,50 +28,32 @@ import { MatDividerModule } from '@angular/material/divider';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { HomeComponent } from './pages/home/home.component';
-import { ArticleListComponent } from './components/article-list/article-list.component';
-import { ArticleCardComponent } from './components/article-card/article-card.component';
-import { ArticleDetailComponent } from './pages/article-detail/article-detail.component';
-import { SearchComponent } from './pages/search/search.component';
-import { CategoryFilterComponent } from './components/category-filter/category-filter.component';
 import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
-import { SavedComponent } from './pages/saved/saved.component';
 import { ExplainDialogComponent } from './components/explain-dialog/explain-dialog.component';
 import { DigestComponent } from './pages/digest/digest.component';
 import { PrivacyComponent } from './pages/privacy/privacy.component';
 import { TermsComponent } from './pages/terms/terms.component';
 import { AuthComponent } from './pages/auth/auth.component';
-import { AdBannerComponent } from './components/ad-banner/ad-banner.component';
 import { CookieBannerComponent } from './components/cookie-banner/cookie-banner.component';
-import { StripHtmlPipe } from './pipes/strip-html.pipe';
 import { ServiceWorkerModule } from '@angular/service-worker';
 
 /**
  * Modulo radice dell'applicazione (architettura a modulo unico, senza componenti standalone).
- * Qui sono dichiarati tutti i componenti dell'app e la pipe condivisa: non esistono
- * moduli funzionali separati, quindi il bundle principale contiene l'intera UI.
+ * I componenti della home (HomeComponent, ArticleListComponent, ArticleCardComponent,
+ * CategoryFilterComponent, AdBannerComponent) sono ora standalone e caricati in lazy
+ * tramite il router, quindi non vanno dichiarati qui.
  */
 @NgModule({
   declarations: [
     AppComponent,
-    HomeComponent,
-    ArticleListComponent,
-    ArticleCardComponent,
-    ArticleDetailComponent,
-    SearchComponent,
-    CategoryFilterComponent,
     HeaderComponent,
     SidebarComponent,
-    SavedComponent,
     ExplainDialogComponent,
-    DigestComponent,
     PrivacyComponent,
     TermsComponent,
     AuthComponent,
-    AdBannerComponent,
-    CookieBannerComponent,
-    StripHtmlPipe
+    CookieBannerComponent
   ],
   imports: [
     BrowserModule,
@@ -130,3 +112,5 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 })
 export class AppModule { }
 
+
+import { FooterModule } from './components/footer/footer.module';

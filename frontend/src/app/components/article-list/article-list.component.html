@@ -1,6 +1,14 @@
 <div class="article-list">
-  <div *ngIf="loading" class="loading-spinner">
-    <mat-spinner></mat-spinner>
+  <div *ngIf="loading" class="skeleton-grid">
+    <div class="skeleton-card" *ngFor="let i of [0, 1, 2, 3, 4, 5]">
+      <div class="skeleton-image"></div>
+      <div class="skeleton-content">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-subtitle"></div>
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text"></div>
+      </div>
+    </div>
   </div>
 
   <div *ngIf="!loading && articles.length === 0" class="no-articles">

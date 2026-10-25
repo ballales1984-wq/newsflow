@@ -49,6 +49,29 @@
           Leggi originale
         </a>
       </div>
+
+      <div class="social-share-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+        <button mat-stroked-button (click)="shareOnFacebook()" aria-label="Condividi su Facebook">
+          <img src="https://www.facebook.com/favicon.ico" alt="Facebook" style="width: 18px; height: 18px; margin-right: 8px;">
+          Facebook
+        </button>
+        <button mat-stroked-button (click)="shareOnTwitter()" aria-label="Condividi su Twitter">
+          <img src="https://abs.twimg.com/favicons/twitter.3.ico" alt="Twitter" style="width: 18px; height: 18px; margin-right: 8px;">
+          Twitter
+        </button>
+        <button mat-stroked-button (click)="shareOnLinkedIn()" aria-label="Condividi su LinkedIn">
+          <img src="https://static.licdn.com/aero-v1/sc/h/al2o9zrvru7aqj8e1x2rzsrca" alt="LinkedIn" style="width: 18px; height: 18px; margin-right: 8px;">
+          LinkedIn
+        </button>
+        <button mat-stroked-button (click)="shareOnWhatsApp()" aria-label="Condividi su WhatsApp">
+          <img src="https://static.whatsapp.net/rsrc.php/v3/yP/r/rYZqPCBaG70.png" alt="WhatsApp" style="width: 18px; height: 18px; margin-right: 8px;">
+          WhatsApp
+        </button>
+        <button mat-stroked-button (click)="shareOnTelegram()" aria-label="Condividi su Telegram">
+          <img src="https://telegram.org/favicon.ico" alt="Telegram" style="width: 18px; height: 18px; margin-right: 8px;">
+          Telegram
+        </button>
+      </div>
     </header>
 
     <div class="article-image" *ngIf="article.image_url">

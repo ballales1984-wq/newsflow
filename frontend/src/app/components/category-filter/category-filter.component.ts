@@ -1,5 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { RouterModule } from '@angular/router';
 import { Category } from '../../models/category.model';
 
 /**
@@ -10,6 +14,13 @@ import { Category } from '../../models/category.model';
  */
 @Component({
   selector: 'app-category-filter',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatChipsModule,
+    MatIconModule,
+    RouterModule
+  ],
   templateUrl: './category-filter.component.html',
   styleUrls: ['./category-filter.component.scss']
 })

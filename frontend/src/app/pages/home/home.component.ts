@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ArticleService } from '../../services/article.service';
 import { CategoryService } from '../../services/category.service';
 import { SpeechService } from '../../services/speech.service';
@@ -7,8 +9,14 @@ import { ScrollPositionService } from '../../services/scroll-position.service';
 import { Article } from '../../models/article.model';
 import { Category } from '../../models/category.model';
 import { PageEvent } from '@angular/material/paginator';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { timeout, catchError, filter } from 'rxjs/operators';
 import { of, Subscription } from 'rxjs';
+import { CategoryFilterComponent } from '../../components/category-filter/category-filter.component';
+import { ArticleListComponent } from '../../components/article-list/article-list.component';
 
 /**
  * Pagina principale: elenco articoli, filtro per categoria, ricerca rapida
@@ -20,6 +28,16 @@ import { of, Subscription } from 'rxjs';
  */
 @Component({
   selector: 'app-home',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+    MatPaginatorModule,
+    CategoryFilterComponent,
+    ArticleListComponent
+  ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
@@ -56,7 +74,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private speechService: SpeechService,
     private scrollPositionService: ScrollPositionService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -306,7 +325,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             console.warn('Impossibile salvare errore in localStorage:', e);
           }
           
-          alert(errorMsg);
+          this.snackBar.open(errorMsg, 'Chiudi', { duration: 8000, panelClass: ['error-snack'] });
           
           return of({
             items: [],
@@ -382,7 +401,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.articles = [];
           this.totalArticles = 0;
           this.loading = false;
-          alert(`Errore subscribe: ${errorDetails.message}\n\nErrore salvato! Clicca sul pulsante "Mostra Errore" in basso per copiarlo.`);
+          this.snackBar.open(`Errore subscribe: ${errorDetails.message}`, 'Chiudi', { duration: 8000 });
         }
       });
   }

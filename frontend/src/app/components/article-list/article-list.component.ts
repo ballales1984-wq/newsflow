@@ -1,4 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ArticleCardComponent } from '../article-card/article-card.component';
+import { AdBannerComponent } from '../ad-banner/ad-banner.component';
 import { Article } from '../../models/article.model';
 
 /**
@@ -8,6 +13,14 @@ import { Article } from '../../models/article.model';
  */
 @Component({
   selector: 'app-article-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    ArticleCardComponent,
+    AdBannerComponent
+  ],
   templateUrl: './article-list.component.html',
   styleUrls: ['./article-list.component.scss']
 })

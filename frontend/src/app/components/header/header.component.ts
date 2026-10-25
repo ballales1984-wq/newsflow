@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth.service';
 import { SavedArticleService } from '../../services/saved-article.service';
 import { WeatherService, WeatherData } from '../../services/weather.service';
+import { ThemeService } from '../../services/theme.service';
 
 /**
  * Header dell'app: data e ora, meteo, scorciatoie verso le sezioni principali
@@ -28,6 +29,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Esposti pubblicamente perché il template ne legge lo stato (menu utente, badge).
     public authService: AuthService,
     public savedArticleService: SavedArticleService,
+    public themeService: ThemeService,
     private weatherService: WeatherService,
     private router: Router
   ) {}

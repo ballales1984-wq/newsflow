@@ -2,14 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 
-/**
- * Routing dell'applicazione: tutte le rotte sono dichiarate qui in un unico modulo.
- *
- * Nota: nessuna rotta usa loadChildren, quindi tutti i componenti vengono caricati
- * eager nel bundle principale. Per un sito di queste dimensioni va bene; se il bundle
- * cresce, le pagine meno usate (saved, digest, privacy, terms) sarebbero le prime
- * candidate per un caricamento lazy.
- */
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', loadComponent: () => import('./pages/auth/auth.component').then(m => m.AuthComponent) },
@@ -20,15 +12,12 @@ const routes: Routes = [
   { path: 'digest', loadComponent: () => import('./pages/digest/digest.component').then(m => m.DigestComponent) },
   { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent) },
   { path: 'terms', loadComponent: () => import('./pages/terms/terms.component').then(m => m.TermsComponent) },
+  { path: 'normative', loadComponent: () => import('./pages/normative/normative.component').then(m => m.NormativeComponent) },
   { path: '**', redirectTo: '' }
 ];
 
 @NgModule({
-  // forRoot() registra il router come provider singleton e attiva la navigazione;
-  // export[] lo rende disponibile anche ai template dei componenti dichiarati
-  // (routerLink, router-outlet).
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
-

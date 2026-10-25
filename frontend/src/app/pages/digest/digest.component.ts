@@ -1,8 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { environment } from '../../../environments/environment';
+import { StripHtmlPipe } from '../../pipes/strip-html.pipe';
 
 interface DigestArticle {
   title: string;
@@ -27,6 +31,13 @@ interface DailyDigest {
  */
 @Component({
   selector: 'app-digest',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    StripHtmlPipe
+  ],
   templateUrl: './digest.component.html',
   styleUrls: ['./digest.component.scss']
 })

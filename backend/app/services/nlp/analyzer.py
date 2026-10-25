@@ -35,16 +35,24 @@ class NLPAnalyzer:
             # spaCy models are large downloads; their absence is not fatal and
             # simply disables the NLP features that depend on them.
             try:
-                self.nlp_it = spacy.load("it_core_news_lg")
+                self.nlp_it = spacy.load("it_core_news_sm")
                 logger.info("Loaded Italian spaCy model")
             except:
-                logger.warning("Italian spaCy model not available")
+                try:
+                    self.nlp_it = spacy.load("it_core_news_lg")
+                    logger.info("Loaded Italian spaCy model")
+                except:
+                    logger.warning("Italian spaCy model not available")
             
             try:
-                self.nlp_en = spacy.load("en_core_web_lg")
+                self.nlp_en = spacy.load("en_core_web_sm")
                 logger.info("Loaded English spaCy model")
             except:
-                logger.warning("English spaCy model not available")
+                try:
+                    self.nlp_en = spacy.load("en_core_web_lg")
+                    logger.info("Loaded English spaCy model")
+                except:
+                    logger.warning("English spaCy model not available")
         else:
             logger.warning("spaCy not available, NLP features disabled")
     

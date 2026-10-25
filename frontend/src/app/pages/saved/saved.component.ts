@@ -1,10 +1,19 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { ArticleService } from '../../services/article.service';
 import { SavedArticleService } from '../../services/saved-article.service';
 import { Article } from '../../models/article.model';
+import { ArticleListComponent } from '../../components/article-list/article-list.component';
 
 @Component({
   selector: 'app-saved',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatIconModule,
+    ArticleListComponent
+  ],
   templateUrl: './saved.component.html',
   styleUrls: ['./saved.component.scss']
 })

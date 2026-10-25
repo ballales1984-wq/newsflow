@@ -56,6 +56,15 @@
         </mat-icon>
       </button>
 
+      <!-- Toggle tema chiaro/scuro -->
+      <button 
+        mat-icon-button 
+        (click)="themeService.toggleTheme()"
+        [attr.aria-label]="'Passa a tema ' + (themeService.isDarkMode ? 'chiaro' : 'scuro')"
+      >
+        <mat-icon>{{ themeService.isDarkMode ? 'brightness_7' : 'brightness_4' }}</mat-icon>
+      </button>
+
       <!-- User logged in -->
       <button mat-icon-button [matMenuTriggerFor]="userMenu" *ngIf="currentUser" [attr.aria-label]="'Menu utente: ' + currentUser.username">
         <div class="user-avatar">{{ currentUser.username.substring(0, 2).toUpperCase() }}</div>
