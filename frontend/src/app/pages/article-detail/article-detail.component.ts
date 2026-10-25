@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { COMMONModule } from '@angular/common';
+import { activatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Snackbar } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatButtonModule } from '@angular/material/button';
+import { matBTNModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SeoService } from '../../services/seo.service';
 import { ArticleService } from '../../services/article.service';
@@ -22,10 +22,10 @@ import { StripHtmlPipe } from '../../pipes/strip-html.pipe';
   selector: 'app-article-detail',
   standalone: true,
   imports: [
-    CommonModule,
+    COMMONModule,
     MatIconModule,
     MatChipsModule,
-    MatButtonModule,
+    matBTNModule,
     MatProgressSpinnerModule,
     StripHtmlPipe
   ],
@@ -37,12 +37,12 @@ export class ArticleDetailComponent implements OnInit {
   loading = true;
 
   constructor(
-    private route: ActivatedRoute,
+    private route: activatedRoute,
     private router: Router,
     private location: Location,
     private articleService: ArticleService,
     private scrollPositionService: ScrollPositionService,
-    private snackBar: MatSnackBar,
+    private snackbar: Snackbar,
     private seoService: SeoService
   ) {}
 
@@ -88,9 +88,9 @@ export class ArticleDetailComponent implements OnInit {
       if (!savedIds.includes(this.article.id)) {
         savedIds.push(this.article.id);
         localStorage.setItem('savedArticles', JSON.stringify(savedIds));
-        this.snackBar.open('Articolo salvato!', 'Chiudi', { duration: 3000 });
+        this.snackbar.open('Articolo salvato!', 'Chiudi', { duration: 3000 });
       } else {
-        this.snackBar.open('Articolo già salvato!', 'Chiudi', { duration: 3000 });
+        this.snackbar.open('Articolo già salvato!', 'Chiudi', { duration: 3000 });
       }
     }
   }
@@ -105,8 +105,38 @@ export class ArticleDetailComponent implements OnInit {
         });
       } else {
         navigator.clipboard.writeText(this.article.url);
-        this.snackBar.open('Link copiato negli appunti!', 'Chiudi', { duration: 3000 });
+        this.snackbar.open('Link copiato negli appunti!', 'Chiudi', { duration: 3000 });
       }
+    }
+  }
+
+  shareOnFacebook(): void {
+    if (this.article) {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(this.article.url)}`, '_blank');
+    }
+  }
+
+  shareOnTwitter(): void {
+    if (this.article) {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(this.article.title)}&url=${encodeURIComponent(this.article.url)}`, '_blank');
+    }
+  }
+
+  shareOnLinkedIn(): void {
+    if (this.article) {
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(this.article.url)}`, '_blank');
+    }
+  }
+
+  shareOnWhatsApp(): void {
+    if (this.article) {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(this.article.title + ' ' + this.article.url)}`, '_blank');
+    }
+  }
+
+  shareOnTelegram(): void {
+    if (this.article) {
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(this.article.url)}&text=${encodeURIComponent(this.article.title)}`, '_blank');
     }
   }
 
