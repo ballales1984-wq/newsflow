@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { COMMONModule } from '@angular/common';
-import { activatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { Snackbar } from '@angular/material/snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { matBTNModule } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SeoService } from '../../services/seo.service';
 import { ArticleService } from '../../services/article.service';
@@ -22,10 +22,10 @@ import { StripHtmlPipe } from '../../pipes/strip-html.pipe';
   selector: 'app-article-detail',
   standalone: true,
   imports: [
-    COMMONModule,
+    CommonModule,
     MatIconModule,
     MatChipsModule,
-    matBTNModule,
+    MatButtonModule,
     MatProgressSpinnerModule,
     StripHtmlPipe
   ],
@@ -37,17 +37,17 @@ export class ArticleDetailComponent implements OnInit {
   loading = true;
 
   constructor(
-    private route: activatedRoute,
+    private route: ActivatedRoute,
     private router: Router,
     private location: Location,
     private articleService: ArticleService,
     private scrollPositionService: ScrollPositionService,
-    private snackbar: Snackbar,
+    private snackbar: MatSnackBar,
     private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params: any) => {
       const slug = params['slug'];
       if (slug) {
         this.loadArticle(slug);
