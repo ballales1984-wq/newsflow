@@ -81,52 +81,34 @@ export class HomeComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('🏠 HomeComponent initialized');
     this.seoService.resetToHomepage();
     try {
       this.loadCategories();
       
-      // Ascolta navigazione per ripristinare scroll quando si torna dalla pagina articolo
-      // La posizione è salvata dalla card prima di aprire l'articolo e ripristinata
-      // qui al rientro, così l'utente torna al punto esatto della lista.
       this.routerSubscription = this.router.events
         .pipe(filter(event => event instanceof NavigationEnd))
         .subscribe((event: any) => {
-          // Se torniamo alla home da un articolo, ripristina la posizione
           if (event.url === '/' || event.urlAfterRedirects === '/') {
             setTimeout(() => {
               this.scrollPositionService.restoreScrollPosition('home');
-            }, 100);
+            }, 50);
           }
         });
       
-      // Load articles immediately on init and listen to query params changes
-      // Ogni cambio di ?category rilancia il caricamento: il filtro non viene
-      // applicato in locale, è il server a restituire gli articoli della categoria.
       this.route.queryParams.subscribe(params => {
-        console.log('📋 Query params changed:', params);
         const previousCategoryId = this.selectedCategoryId;
-        const isFirstLoad = this.selectedCategoryId === null && previousCategoryId === null;
-        // La categoria arriva come stringa nella query param: va convertita
-        // in numero per confrontarla con gli id delle categorie.
         this.selectedCategoryId = params['category'] ? +params['category'] : null;
-        // Cambio di filtro = nuova pagina 1: la pagina corrente riguarderebbe
-        // un insieme di articoli diverso.
         this.currentPage = 1;
         this.loadArticles();
         
-        // Scroll to filtered articles section when category changes
-        // Scroll sempre quando c'è una categoria selezionata (anche se è la stessa)
-        // Lo scroll verrà fatto anche dopo il caricamento degli articoli (nel subscribe)
-        // Questo è un backup nel caso il componente sia già caricato
         if (this.selectedCategoryId !== null && previousCategoryId !== this.selectedCategoryId) {
           setTimeout(() => {
             this.scrollToFilteredArticles();
-          }, 1000); // Aspetta che gli articoli siano caricati
+          }, 500);
         }
       });
     } catch (error) {
-      console.error('❌ Error in ngOnInit:', error);
+      // Silently fail
     }
   }
 
@@ -150,18 +132,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   loadCategoryCounts(): void {
-    // Ottimizzato: usa requestAnimationFrame per non bloccare UI
-    // Carica tutti gli articoli per contare quelli per categoria
-    // Il backend non espone un conteggio per categoria, quindi si scarica una
-    // pagina molto grande (fino a 1000 articoli) e si conta qui: è un costo
-    // una tantum, contenuto dal fatto che il conteggio gira a chunk.
-    this.articleService.getArticles(1, 1000, {}).subscribe({
+    this.articleService.getArticles(1, 500, {}).subscribe({
       next: (response) => {
         const allArticles = response.items || [];
         
-        // Mappa keywords → category_id (come nel backend) - ottimizzata per lookup veloce
-        // Replica la classificazione del backend: serve solo per gli articoli
-        // che arrivano senza category_id.
         const KEYWORD_TO_CATEGORY_ID: { [key: string]: number } = {
           'technology': 1, 'tech': 1, 'tecnologia': 1,
           'science': 2, 'scienz': 2,
@@ -179,33 +153,25 @@ export class HomeComponent implements OnInit, OnDestroy {
           'entertainment': 14, 'intrattenimento': 14
         };
         
-        // Inizializza conteggi
         this.categoryCounts = {};
-        // La chiave 0 rappresenta "Tutte" nel filtro.
-        this.categoryCounts[0] = allArticles.length; // "Tutte"
+        this.categoryCounts[0] = allArticles.length;
         
-        // Ottimizzazione: usa requestAnimationFrame per spezzare il lavoro e non bloccare UI
-        // Il conteggio gira a blocchi da 50 articoli, uno per frame: il browser
-        // resta responsivo mentre i conteggi si riempiono.
-        const processInChunks = (articles: any[], categories: any[], chunkSize: number = 50) => {
+        const processInChunks = (articles: any[], categories: any[], chunkSize: number = 30) => {
           let articleIndex = 0;
           
           const processChunk = () => {
             const endIndex = Math.min(articleIndex + chunkSize, articles.length);
             
-            // Processa chunk di articoli
             for (let i = articleIndex; i < endIndex; i++) {
               const article = articles[i];
               const articleCategoryId = article.category_id;
               
-              // Incrementa conteggio per category_id diretto
               if (articleCategoryId) {
                 if (!this.categoryCounts[articleCategoryId]) {
                   this.categoryCounts[articleCategoryId] = 0;
                 }
                 this.categoryCounts[articleCategoryId]++;
               } else {
-                // Fallback: cerca nei keywords (solo se category_id mancante)
                 const keywords = article.keywords || [];
                 const matchedCategories = new Set<number>();
                 
@@ -217,7 +183,6 @@ export class HomeComponent implements OnInit, OnDestroy {
                   }
                 }
                 
-                // Incrementa conteggi per categorie trovate
                 matchedCategories.forEach(catId => {
                   if (!this.categoryCounts[catId]) {
                     this.categoryCounts[catId] = 0;
@@ -229,33 +194,23 @@ export class HomeComponent implements OnInit, OnDestroy {
             
             articleIndex = endIndex;
             
-            // Se ci sono ancora articoli da processare, continua nel prossimo frame
             if (articleIndex < articles.length) {
               requestAnimationFrame(processChunk);
             } else {
-              // Inizializza a 0 le categorie senza articoli
-              // Senza questa passata una categoria vuota resterebbe assente
-              // dalla mappa e il filtro la mostrerebbe con un conteggio 'undefined'.
               categories.forEach(category => {
                 if (!this.categoryCounts[category.id]) {
                   this.categoryCounts[category.id] = 0;
                 }
               });
-              
-              console.log('✅ Conteggi categorie:', this.categoryCounts);
             }
           };
           
-          // Inizia il processing
           requestAnimationFrame(processChunk);
         };
         
-        // Avvia processing ottimizzato
         processInChunks(allArticles, this.categories);
       },
       error: (error) => {
-        console.error('Error loading category counts:', error);
-        // Inizializza conteggi a 0 in caso di errore
         this.categories.forEach(category => {
           this.categoryCounts[category.id] = 0;
         });
@@ -266,69 +221,31 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   loadArticles(): void {
     this.loading = true;
-    console.log('🔄 Loading articles...', { page: this.currentPage, size: this.pageSize, category: this.selectedCategoryId });
     
-    // Log API URL per debug
-    const apiUrl = (this.articleService as any).apiUrl || 'N/A';
-    console.log('🌐 API URL:', apiUrl);
-    
-    // Filtro solo per categoria: gli altri filtri (ricerca, qualità) sono
-    // applicati lato client su rawArticles.
     const filters = this.selectedCategoryId 
       ? { category_id: this.selectedCategoryId } 
       : {};
 
     this.articleService.getArticles(this.currentPage, this.pageSize, filters)
       .pipe(
-        timeout(60000), // 60 secondi timeout per permettere wake-up Render
+        timeout(60000),
         catchError(error => {
-          console.error('❌ Error loading articles:', error);
-          console.error('❌ Error details:', {
-            message: error?.message,
-            status: error?.status,
-            statusText: error?.statusText,
-            url: error?.url,
-            error: error?.error,
-            name: error?.name
-          });
-          console.error('❌ Full error:', JSON.stringify(error, null, 2));
-          
-          // Salva errore per visualizzazione
-          const errorDetails = {
+          this.lastError = JSON.stringify({
             message: error?.message || 'N/A',
             status: error?.status || 'N/A',
             statusText: error?.statusText || 'N/A',
-            url: error?.url || apiUrl,
+            url: error?.url || '',
             error: error?.error || 'N/A',
             name: error?.name || 'N/A',
             timestamp: new Date().toISOString()
-          };
-          
-          const errorMsg = `Errore caricamento articoli:\n\n` +
-            `Messaggio: ${errorDetails.message}\n` +
-            `Status: ${errorDetails.status}\n` +
-            `StatusText: ${errorDetails.statusText}\n` +
-            `URL: ${errorDetails.url}\n` +
-            `Error: ${JSON.stringify(errorDetails.error)}\n` +
-            `Name: ${errorDetails.name}\n\n` +
-            `Verifica:\n` +
-            `1. Backend locale attivo?\n` +
-            `2. Ngrok attivo?\n` +
-            `3. Console per dettagli`;
-          
-          // Salva errore nel componente per visualizzazione
-          this.lastError = JSON.stringify(errorDetails, null, 2);
+          }, null, 2);
           this.showError = true;
           
-          // Salva anche nel localStorage per recupero
           try {
-            localStorage.setItem('newsflow_last_error', JSON.stringify(errorDetails));
-            localStorage.setItem('newsflow_last_error_text', errorMsg);
-          } catch (e) {
-            console.warn('Impossibile salvare errore in localStorage:', e);
-          }
+            localStorage.setItem('newsflow_last_error', this.lastError);
+          } catch (e) {}
           
-          this.snackBar.open(errorMsg, 'Chiudi', { duration: 8000, panelClass: ['error-snack'] });
+          this.snackBar.open('Errore caricamento articoli', 'Chiudi', { duration: 5000, panelClass: ['error-snack'] });
           
           return of({
             items: [],
@@ -341,70 +258,28 @@ export class HomeComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response) => {
-          console.log('✅ Articles loaded:', { count: response.items?.length || 0, total: response.total });
-          console.log('✅ First article:', response.items?.[0]?.title || 'N/A');
-          // La pagina grezza viene conservata: la ricerca client-side la filtra
-          // senza dover richiedere nuovi dati al server.
           this.rawArticles = response.items || [];
           this.applyClientSearch();
           this.totalArticles = response.total || 0;
           this.loading = false;
           
-          if (this.articles.length === 0) {
-            console.warn('⚠️  ATTENZIONE: Nessun articolo caricato!');
-            console.warn('⚠️  Response:', response);
-          }
-          
-          // Riproduci messaggio vocale quando gli articoli vengono caricati per la prima volta
-          // Solo quando non c'è una categoria selezionata (homepage principale)
-          // Il messaggio di benvenuto introduce l'elenco generale: con un
-          // filtro attivo sarebbe fuorviante.
           if (this.articles.length > 0 && !this.selectedCategoryId) {
-            // Resetta il flag per permettere la riproduzione anche dopo refresh
             this.speechService.reset();
-            // Aspetta un po' per permettere al browser di caricare le voci
             setTimeout(() => {
-              console.log('🔊 Riproduzione messaggio vocale di benvenuto');
               this.speechService.speakWelcome();
-            }, 500);
+            }, 300);
           }
           
-          // Scroll agli articoli filtrati dopo che sono stati caricati (se c'è una categoria selezionata)
           if (this.selectedCategoryId !== null) {
             setTimeout(() => {
               this.scrollToFilteredArticles();
-            }, 300); // Aspetta che il DOM sia aggiornato
+            }, 200);
           }
         },
         error: (error) => {
-          console.error('❌ Subscribe error loading articles:', error);
-          console.error('❌ Full error object:', JSON.stringify(error, null, 2));
-          
-          const errorDetails = {
-            message: error?.message || 'Errore sconosciuto',
-            status: error?.status || 'N/A',
-            statusText: error?.statusText || 'N/A',
-            url: error?.url || 'N/A',
-            error: error?.error || 'N/A',
-            name: error?.name || 'N/A',
-            timestamp: new Date().toISOString()
-          };
-          
-          // Salva errore
-          this.lastError = JSON.stringify(errorDetails, null, 2);
-          this.showError = true;
-          
-          try {
-            localStorage.setItem('newsflow_last_error', JSON.stringify(errorDetails));
-            localStorage.setItem('newsflow_last_error_text', `Errore subscribe: ${errorDetails.message}`);
-          } catch (e) {
-            console.warn('Impossibile salvare errore:', e);
-          }
-          
           this.articles = [];
           this.totalArticles = 0;
           this.loading = false;
-          this.snackBar.open(`Errore subscribe: ${errorDetails.message}`, 'Chiudi', { duration: 8000 });
         }
       });
   }

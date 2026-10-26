@@ -60,7 +60,7 @@ export class ScrollPositionService {
    * ancora nel DOM (es. dopo un caricamento asincrono di articoli).
    * Offsets in pixel per compensare header fissi.
    */
-  scrollToElement(elementId: string, offset: number = 80, maxAttempts: number = 5): void {
+  scrollToElement(elementId: string, offset: number = 80, maxAttempts: number = 3): void {
     const now = performance.now();
     if (now - this.lastScrollTime < this.SCROLL_THROTTLE_MS) {
       return;
@@ -70,21 +70,18 @@ export class ScrollPositionService {
     let attempts = 0;
     const tryScroll = () => {
       attempts++;
-      // Legge le dimensioni e scorre dentro un solo frame per evitare di
-      // forzare riflussi sincroni interletti con scritture di layout.
       requestAnimationFrame(() => {
         const element = document.getElementById(elementId);
-
         if (element) {
-          const elementPosition = element.getBoundingClientRect().top;
+          const rect = element.getBoundingClientRect();
+          const elementPosition = rect.top;
           const offsetPosition = elementPosition + window.pageYOffset - offset;
-
           window.scrollTo({
             top: Math.max(0, offsetPosition),
-            behavior: 'smooth'
+            behavior: 'auto'
           });
         } else if (attempts < maxAttempts) {
-          setTimeout(tryScroll, 200);
+          setTimeout(tryScroll, 150);
         }
       });
     };
