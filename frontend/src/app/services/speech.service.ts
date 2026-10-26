@@ -111,6 +111,8 @@ private synth: SpeechSynthesis | null = null;
 
       utterance.onerror = (event) => {
         console.error('❌ Errore riproduzione vocale:', event);
+        // Mark as spoken to avoid retry loops on autoplay policies
+        this.hasSpoken = true;
       };
 
       // Riproduci
@@ -118,6 +120,7 @@ private synth: SpeechSynthesis | null = null;
         this.synth!.speak(utterance);
       } catch (error) {
         console.error('❌ Errore chiamata speechSynthesis:', error);
+        this.hasSpoken = true;
       }
     };
 
