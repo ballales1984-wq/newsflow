@@ -41,31 +41,22 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    // Aspetta che lo script sia caricato prima di inizializzare ads
+    // Lo script AdSense è caricato in modo asincrono: si attende l'evento
+    // onload invece di sondare window.adsbygoogle a intervalli fissi
+    // (ogni 100 ms), che teneva attivo un timer principale anche dopo l'inizializzazione.
     if (this.adScriptLoaded) {
       this.initializeAd();
-    } else {
-      // Controlla periodicamente se lo script è stato caricato
-      // Polling ogni 100ms: lo script è esterno e non offre un callback affidabile
-      // quando è già in volo, quindi si preferisce sondare lo stato globale.
-      const checkInterval = setInterval(() => {
-        if (typeof (window as any).adsbygoogle !== 'undefined') {
-          this.adScriptLoaded = true;
-          clearInterval(checkInterval);
-          this.initializeAd();
-        }
-      }, 100);
-
-      // Timeout dopo 5 secondi
-      // Un annuncio che non arriva non deve essere un errore applicativo:
-      // si limita a segnalarlo e il banner resta vuoto.
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        if (!this.adScriptLoaded) {
-          console.warn('AdSense script non caricato entro il timeout');
-        }
-      }, 5000);
+      return;
     }
+    // Fallback breve: se lo script è già in cache ma onload non è scattato,
+    // si inizializza dopo 500 ms. Scaduto il timeout il banner resta vuoto
+    // senza bloccare il resto della pagina.
+    setTimeout(() => {
+      if (!this.adScriptLoaded && typeof (window as any).adsbygoogle !== 'undefined') {
+        this.adScriptLoaded = true;
+        this.initializeAd();
+      }
+    }, 500);
   }
 
   ngOnDestroy() {
@@ -96,40 +87,31 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initializeAd() {
-    // Doppio avvio possibile (onload dello script + polling): il flag evita
-    // di inserire due volte la stessa richiesta nella coda.
-    if (this.adLoaded) {
+    // Doppio avvio possibile (onload dello script + fallback timeout): il flag
+    // evita di inserire due volte la stessa richiesta nella coda AdSense.
+    if (this.adLoaded || (window as any).__adsenseInitialized) {
       return;
     }
 
+    // Al massimo 5 tentativi (uno per frame): il container potrebbe non avere
+    // ancora larghezza calcolata, ma un loop di requestAnimationFrame senza
+    // limite terrà occupato il thread principale fino al layout.
+    let attempts = 0;
+    const maxAttempts = 5;
+
     const run = () => {
       try {
-        if (this.adLoaded) {
+        if (this.adLoaded || (window as any).__adsenseInitialized) {
           return;
         }
-        if ((window as any).__adsenseInitialized) {
-          return;
-        }
+        attempts++;
         const container = document.getElementById(this.adId);
         // AdSense fallisce con "No slot size for availableWidth=0" se il
-        // container non ha ancora una larghezza calcolata: si rinvia al frame
-        // successivo finché il layout non è pronto (max ~1s).
+        // container non ha ancora una larghezza calcolata.
         if (!container || container.clientWidth === 0) {
-          let attempts = 0;
-          const retry = () => {
-            attempts++;
-            if (attempts > 10) {
-              return;
-            }
-            requestAnimationFrame(() => {
-              if (container && container.clientWidth > 0) {
-                run();
-              } else {
-                retry();
-              }
-            });
-          };
-          retry();
+          if (attempts < maxAttempts) {
+            requestAnimationFrame(run);
+          }
           return;
         }
         ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({

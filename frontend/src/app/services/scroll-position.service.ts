@@ -8,6 +8,12 @@ export class ScrollPositionService {
   // per il caso in cui sessionStorage non sia disponibile (es. navigator.cookieEnabled=false).
   private scrollPositions: { [key: string]: number } = {};
 
+  // Timestamp dell'ultima esecuzione di scrollToElement. Evita riflussi forzati
+  // ripetuti quando più componenti (home, sidebar, cambio pagina) richiedono
+  // lo scroll sullo stesso elemento in breve intervallo.
+  private lastScrollTime = 0;
+  private readonly SCROLL_THROTTLE_MS = 300;
+
   /**
    * Salva la posizione di scroll corrente per una route
    */
@@ -55,23 +61,32 @@ export class ScrollPositionService {
    * Offsets in pixel per compensare header fissi.
    */
   scrollToElement(elementId: string, offset: number = 80, maxAttempts: number = 5): void {
-    let attempts = 0;
+    const now = performance.now();
+    if (now - this.lastScrollTime < this.SCROLL_THROTTLE_MS) {
+      return;
+    }
+    this.lastScrollTime = now;
 
+    let attempts = 0;
     const tryScroll = () => {
       attempts++;
-      const element = document.getElementById(elementId);
+      // Legge le dimensioni e scorre dentro un solo frame per evitare di
+      // forzare riflussi sincroni interletti con scritture di layout.
+      requestAnimationFrame(() => {
+        const element = document.getElementById(elementId);
 
-      if (element) {
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - offset;
+        if (element) {
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - offset;
 
-        window.scrollTo({
-          top: Math.max(0, offsetPosition),
-          behavior: 'smooth'
-        });
-      } else if (attempts < maxAttempts) {
-        setTimeout(tryScroll, 200);
-      }
+          window.scrollTo({
+            top: Math.max(0, offsetPosition),
+            behavior: 'smooth'
+          });
+        } else if (attempts < maxAttempts) {
+          setTimeout(tryScroll, 200);
+        }
+      });
     };
 
     tryScroll();

@@ -25,22 +25,16 @@ export class ThemeService {
   toggleTheme(): void {
     const newValue = !this.darkMode.value;
     this.darkMode.next(newValue);
-    // Usa requestAnimationFrame per non bloccare il thread principale
-    requestAnimationFrame(() => {
-      this.applyTheme(newValue);
-      localStorage.setItem('darkMode', newValue.toString());
-    });
+    this.applyTheme(newValue);
+    localStorage.setItem('darkMode', newValue.toString());
   }
 
   private applyTheme(isDark: boolean): void {
-    // Usa requestAnimationFrame per modifiche DOM non bloccanti
-    requestAnimationFrame(() => {
-      if (isDark) {
-        document.body.classList.add('dark-theme');
-      } else {
-        document.body.classList.remove('dark-theme');
-      }
-    });
+    if (isDark) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
   }
 
   get isDarkMode(): boolean {
