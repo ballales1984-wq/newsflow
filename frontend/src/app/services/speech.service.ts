@@ -109,8 +109,13 @@ private synth: SpeechSynthesis | null = null;
         this.hasSpoken = true;
       };
 
-      utterance.onerror = (event) => {
-        console.error('❌ Errore riproduzione vocale:', event);
+      utterance.onerror = (event: any) => {
+        console.warn('⚠️ Errore riproduzione vocale:', event?.error || event);
+        // 'not-allowed' è normale quando il browser blocca l'autoplay senza interazione utente
+        if (event?.error === 'not-allowed') {
+          // Non impostare hasSpoken per permettere un eventuale tentativo successivo
+          return;
+        }
         // Mark as spoken to avoid retry loops on autoplay policies
         this.hasSpoken = true;
       };
