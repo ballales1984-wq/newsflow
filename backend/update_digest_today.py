@@ -45,8 +45,8 @@ for article in articles[:50]:  # Prendi i primi 50
         categorized[cat] = []
 
     categorized[cat].append({
-        "title": article.get('title', '')[:100],
-        "description": article.get('summary', '')[:150]
+        "title": article.get('title', ''),
+        "description": article.get('summary', '')
     })
 
 # Costruisci il digest

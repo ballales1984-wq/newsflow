@@ -31,7 +31,7 @@
   <mat-card-content>
     <!-- Mostra content completo se disponibile, altrimenti summary -->
     <p class="summary" *ngIf="article.content && article.content.length > 0">
-      {{ (article.content.length > 400 ? (article.content.substring(0, 400) + '...') : article.content) | stripHtml }}
+      {{ article.content | stripHtml }}
     </p>
     <p class="summary" *ngIf="!article.content || article.content.length === 0">
       {{ article.summary | stripHtml }}

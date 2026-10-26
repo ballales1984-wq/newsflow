@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 from ....core.database import get_db
 from ....models import Article
 from ....schemas import article as schemas
-# L'import di `collect_from_source` è opzionale perché dipende da Celery/Redis,
-# che potrebbero non essere disponibili in ambienti di test o di sviluppo.
-# Se il modulo non è importabile, TASKS_AVAILABLE diventa False e l'endpoint
-# corrispondente restituisce un messaggio di "disattivato" invece di crashare.
+# Import condizionale di collect_from_source (task Celery)
+# L'import dipende da Celery/Redis che potrebbero non essere disponibili
+# in ambienti di test o sviluppo. Se l'import fallisce, TASKS_AVAILABLE
+# diventa False e l'endpoint corrispondente restituisce un messaggio
+# di "disattivato" invece di crashare l'applicazione.
 try:
     from ....services.tasks import collect_from_source
     TASKS_AVAILABLE = True
