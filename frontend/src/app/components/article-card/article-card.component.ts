@@ -96,13 +96,17 @@ export class ArticleCardComponent {
 
   explainArticle(event: Event): void {
     event.stopPropagation();
+    event.preventDefault();
     this.analytics.trackExplainClick(this.article.id, this.article.title);
 
     this.dialog.open(ExplainDialogComponent, {
       data: this.article,
       width: '900px',
       maxWidth: '95vw',
-      maxHeight: '90vh'
+      maxHeight: '90vh',
+      disableClose: false,
+      hasBackdrop: true,
+      panelClass: 'explain-dialog-panel'
     });
   }
 

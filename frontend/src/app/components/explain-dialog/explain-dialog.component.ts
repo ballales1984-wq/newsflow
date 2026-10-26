@@ -383,6 +383,8 @@ l'impatto a medio-lungo termine.`;
   }
 
   onTabChange(event: any): void {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
     // Ottimizzazione: usa requestAnimationFrame per migliorare performance
     // Il caricamento parte al frame successivo, così il cambio tab non attende
     // la rete. Si carica solo il livello selezionato: gli altri restano in cache
