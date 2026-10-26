@@ -1,10 +1,10 @@
 """
-Sistema di autenticazione senza password basato su fingerprinting
+Passwordless authentication system based on fingerprinting
 Zero friction - 100% conversion rate
 """
 # Passwordless, anonymous identity: instead of asking the visitor to register,
 # the four request characteristics below are hashed into a stable device id.
-# The identifier exists to keep the saved articles and the preferences of an
+# The identifier exists to keep the saved articles and preferences of an
 # anonymous reader together across requests; it is not a credential.
 import hashlib
 import json
@@ -13,15 +13,15 @@ from typing import Optional
 
 class FingerprintAuth:
     """
-    Autenticazione automatica usando browser fingerprint
+    Automatic authentication using browser fingerprinting
     
-    Combina:
+    Combines:
     - IP address
     - User-Agent  
     - Accept-Language
     - Accept-Encoding
     
-    → Genera ID univoco per identificare utente
+    → Generates unique ID to identify user
     """
     # The fingerprint is entirely client derived: the caller passes the values
     # in and nothing here checks them against the server's own view of the

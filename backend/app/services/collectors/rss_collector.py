@@ -1,3 +1,12 @@
+"""
+RSS Feed Collector
+===================
+Collector for RSS and Atom feeds used to aggregate news from sources
+that expose structured feeds.
+
+Uses feedparser for feed parsing and BeautifulSoup for HTML content cleaning.
+"""
+
 import feedparser
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
@@ -8,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class RSSCollector:
+    """Collector for RSS feeds"""
     """Collector for RSS feeds"""
     
     def __init__(self):
