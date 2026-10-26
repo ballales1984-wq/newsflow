@@ -1,20 +1,15 @@
-import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth.service';
 import { SavedArticleService } from '../../services/saved-article.service';
 import { WeatherService, WeatherData } from '../../services/weather.service';
 import { ThemeService } from '../../services/theme.service';
 
-/**
- * Header dell'app: data e ora, meteo, scorciatoie verso le sezioni principali
- * e menu utente.
- * Non carica articoli: si limita a riflettere lo stato dei servizi (utente
- * autenticato, articoli salvati) e a navigare.
- */
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss']
+  styleUrls: ['./header.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   searchQuery = '';
@@ -32,33 +27,30 @@ export class HeaderComponent implements OnInit, OnDestroy {
     public themeService: ThemeService,
     private weatherService: WeatherService,
     private router: Router,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     // Subscribe to user changes
-    // currentUser$ è un BehaviorSubject: emette subito lo stato corrente e poi
-    // ogni cambio (login, logout, refresh del profilo) senza che l'header
-    // debba conoscere l'origine dell'aggiornamento.
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      this.cdr.markForCheck();
     });
 
     // Subscribe to saved articles count
-    // Il badge dell'header si aggiorna da solo quando un articolo viene
-    // salvato o rimosso da qualsiasi pagina.
     this.savedArticleService.savedArticles$.subscribe((articles: number[]) => {
       this.savedCount = articles.length;
+      this.cdr.markForCheck();
     });
 
     // Aggiorna data e ora immediatamente e poi ogni secondo
-    // Il primo aggiornamento è sincrono, altrimenti l'orologio resterebbe vuoto
-    // per un secondo dopo il render.
     this.updateDateTime();
     this.ngZone.runOutsideAngular(() => {
       this.dateTimeInterval = setInterval(() => {
         this.ngZone.run(() => {
           this.updateDateTime();
+          this.cdr.markForCheck();
         });
       }, 1000);
     });
@@ -112,13 +104,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.weatherService.getCurrentWeather().subscribe({
       next: (weather) => {
         this.weatherData = weather;
-        console.log('✅ Meteo caricato:', weather);
+        this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('❌ Errore caricamento meteo:', error);
         // Fallback: dati di default
-        // Il meteo è decorativo: in caso di errore si mostra un placeholder
-        // invece di lasciare spazio vuoto nell'header.
         this.weatherData = {
           temperature: 20,
           condition: 'Parzialmente nuvoloso',
@@ -126,6 +115,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           city: 'Italia',
           icon: 'wb_cloudy'
         };
+        this.cdr.markForCheck();
       }
     });
   }

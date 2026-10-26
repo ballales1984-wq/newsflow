@@ -41,16 +41,10 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    // Lo script AdSense è caricato in modo asincrono: si attende l'evento
-    // onload invece di sondare window.adsbygoogle a intervalli fissi
-    // (ogni 100 ms), che teneva attivo un timer principale anche dopo l'inizializzazione.
     if (this.adScriptLoaded) {
       this.initializeAd();
       return;
     }
-    // Fallback breve: se lo script è già in cache ma onload non è scattato,
-    // si inizializza dopo 500 ms. Scaduto il timeout il banner resta vuoto
-    // senza bloccare il resto della pagina.
     setTimeout(() => {
       if (!this.adScriptLoaded && typeof (window as any).adsbygoogle !== 'undefined') {
         this.adScriptLoaded = true;
@@ -87,17 +81,12 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initializeAd() {
-    // Doppio avvio possibile (onload dello script + fallback timeout): il flag
-    // evita di inserire due volte la stessa richiesta nella coda AdSense.
     if (this.adLoaded || (window as any).__adsenseInitialized) {
       return;
     }
 
-    // Al massimo 5 tentativi (uno per frame): il container potrebbe non avere
-    // ancora larghezza calcolata, ma un loop di requestAnimationFrame senza
-    // limite terrà occupato il thread principale fino al layout.
     let attempts = 0;
-    const maxAttempts = 5;
+    const maxAttempts = 3;
 
     const run = () => {
       try {
@@ -106,8 +95,6 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         attempts++;
         const container = document.getElementById(this.adId);
-        // AdSense fallisce con "No slot size for availableWidth=0" se il
-        // container non ha ancora una larghezza calcolata.
         if (!container || container.clientWidth === 0) {
           if (attempts < maxAttempts) {
             requestAnimationFrame(run);
@@ -120,7 +107,7 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
         (window as any).__adsenseInitialized = true;
         this.adLoaded = true;
       } catch (e) {
-        console.error('Errore nell\'inizializzazione di AdSense:', e);
+        // Silently fail
       }
     };
 

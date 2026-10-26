@@ -1,15 +1,14 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, OnDestroy } from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
-export class SpeechService {
-private synth: SpeechSynthesis | null = null;
+export class SpeechService implements OnDestroy {
   private isSupported = false;
-  // Flag per evitare di ripetere il messaggio di benvenuto più volte di seguito.
-  // Viene messo a true alla fine di `onend` e reso false da reset().
-  // Permette di riprodurre lo stesso testo solo dopo un reset manuale o un force.
-  private hasSpoken = false; // Flag per evitare di ripetere il messaggio
+  private hasSpoken = false;
+  private voicesLoaded = false;
+  private voicesCheckInterval: any = null;
+  private synth: SpeechSynthesis | undefined;
 
   // Al costruttore verifica se il browser supporta speechSynthesis.
   // Se non è supportato, isSupported rimane false e tutti i metodi
@@ -19,20 +18,17 @@ private synth: SpeechSynthesis | null = null;
   // saranno pronte. Se non ci sono voci al momento, il codice che
   // chiama speak() aspetta con un polling di 100ms fino a un timeout di 2s.
   constructor(private ngZone: NgZone) {
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       this.synth = window.speechSynthesis;
       this.isSupported = true;
-      console.log('✅ Speech Synthesis supportato');
       
-      // Le voci possono non essere disponibili immediatamente
-      // Aspetta che siano caricate
-      if (this.synth.getVoices().length === 0) {
+      if (this.synth.getVoices().length > 0) {
+        this.voicesLoaded = true;
+      } else {
         this.synth.onvoiceschanged = () => {
-          console.log('✅ Voci caricate:', this.synth?.getVoices().length);
+          this.voicesLoaded = true;
         };
       }
-    } else {
-      console.warn('⚠️ Speech Synthesis non supportato dal browser');
     }
   }
 
@@ -41,120 +37,90 @@ private synth: SpeechSynthesis | null = null;
    */
   speak(text: string, force: boolean = false): void {
     if (!this.isSupported || !this.synth) {
-      console.warn('⚠️ Speech Synthesis non disponibile');
       return;
     }
 
-    // Se già pronunciato e non forzato, non ripetere.
-    // Il flag hasSpoken impedisce di riascoltare il benvenuto più volte
-    // senza un intervento esplicito (reset() o force=true).
     if (this.hasSpoken && !force) {
       return;
     }
 
-    // Funzione per riprodurre il messaggio
     const doSpeak = () => {
-      // Annulla eventuali messaggi in coda
-      this.synth!.cancel();
-
-      // Crea utterance
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Imposta lingua italiana
-      utterance.lang = 'it-IT';
-      
-      // Velocità e volume: rate=0.9 (più lento per chiarezza), pitch=1.1
-      // (più acuto per suono "femminile"), volume=0.8 (moderato).
-      utterance.rate = 0.9; // Leggermente più lento per chiarezza
-      utterance.pitch = 1.1; // Leggermente più acuto per suono più femminile
-      utterance.volume = 0.8; // Volume moderato
-
-      // Selezione voce per lingua: cerca prima una voce italiana "femminile"
-      // (name contiene female/Zira/Elena/Silvia/Paola/Chiara). Se non la trova,
-      // cerca qualsiasi voce con lang che inizia per 'it'. Se nemmeno quella
-      // esiste, usa la voce di default del browser (nessun utterance.voice).
-      const voices = this.synth!.getVoices();
-      const italianFemaleVoice = voices.find(voice => 
-        voice.lang.startsWith('it') && 
-        (voice.name.toLowerCase().includes('female') || 
-         voice.name.toLowerCase().includes('zira') ||
-         voice.name.toLowerCase().includes('elena') ||
-         voice.name.toLowerCase().includes('silvia') ||
-         voice.name.toLowerCase().includes('paola') ||
-         voice.name.toLowerCase().includes('chiara'))
-      );
-
-      if (italianFemaleVoice) {
-        utterance.voice = italianFemaleVoice;
-        console.log('✅ Voce femminile italiana trovata:', italianFemaleVoice.name);
-      } else {
-        // Fallback: cerca qualsiasi voce italiana
-        const italianVoice = voices.find(voice => voice.lang.startsWith('it'));
-        if (italianVoice) {
-          utterance.voice = italianVoice;
-          console.log('✅ Voce italiana trovata:', italianVoice.name);
-        } else {
-          console.warn('⚠️ Nessuna voce italiana trovata, uso default');
-        }
-      }
-
-      // Eventi: onstart/onend/onerror forniscono feedback per il debugging
-      // e permettono di gestire lo stato (es. hasSpoken = true in onend).
-      utterance.onstart = () => {
-        console.log('🔊 Inizio riproduzione vocale');
-      };
-
-      utterance.onend = () => {
-        console.log('✅ Fine riproduzione vocale');
-        this.hasSpoken = true;
-      };
-
-      utterance.onerror = (event: any) => {
-        console.warn('⚠️ Errore riproduzione vocale:', event?.error || event);
-        // 'not-allowed' è normale quando il browser blocca l'autoplay senza interazione utente
-        if (event?.error === 'not-allowed') {
-          // Non impostare hasSpoken per permettere un eventuale tentativo successivo
-          return;
-        }
-        // Mark as spoken to avoid retry loops on autoplay policies
-        this.hasSpoken = true;
-      };
-
-      // Riproduci
       try {
+        this.synth!.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'it-IT';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.8;
+
+        const voices = this.synth!.getVoices();
+        const italianFemaleVoice = voices.find((voice: SpeechSynthesisVoice) => 
+          voice.lang.startsWith('it') && 
+          (voice.name.toLowerCase().includes('female') || 
+           voice.name.toLowerCase().includes('zira') ||
+           voice.name.toLowerCase().includes('elena') ||
+           voice.name.toLowerCase().includes('silvia') ||
+           voice.name.toLowerCase().includes('paola') ||
+           voice.name.toLowerCase().includes('chiara'))
+        );
+
+        if (italianFemaleVoice) {
+          utterance.voice = italianFemaleVoice;
+        } else {
+          const italianVoice = voices.find((voice: SpeechSynthesisVoice) => voice.lang.startsWith('it'));
+          if (italianVoice) {
+            utterance.voice = italianVoice;
+          }
+        }
+
+        utterance.onend = () => {
+          this.hasSpoken = true;
+        };
+
+        utterance.onerror = (event: any) => {
+          if (event?.error === 'not-allowed') {
+            return;
+          }
+          this.hasSpoken = true;
+        };
+
         this.synth!.speak(utterance);
       } catch (error) {
-        console.error('❌ Errore chiamata speechSynthesis:', error);
         this.hasSpoken = true;
       }
     };
 
-    // Se le voci non sono ancora caricate, aspetta con un polling di 100ms.
-    // Timeout di 2s: se dopo 2 secondi non ci sono voci, riproduce comunque
-    // con la voce di default (potrebbe non essere italiana).
-    if (this.synth.getVoices().length === 0) {
-      console.log('⏳ Voci non ancora caricate, aspetto...');
-      const checkVoices = this.ngZone.runOutsideAngular(() => {
-        return setInterval(() => {
-          if (this.synth!.getVoices().length > 0) {
-            clearInterval(checkVoices);
-            console.log('✅ Voci caricate, riproduco messaggio');
-            this.ngZone.run(() => doSpeak());
-          }
-        }, 100);
-      });
-      
-      // Timeout dopo 2 secondi
-      setTimeout(() => {
-        clearInterval(checkVoices);
-        if (this.synth!.getVoices().length === 0) {
-          console.warn('⚠️ Timeout caricamento voci, riproduco comunque');
-        }
-        this.ngZone.run(() => doSpeak());
-      }, 2000);
-    } else {
+    if (this.voicesLoaded || this.synth.getVoices().length > 0) {
+      this.voicesLoaded = true;
       doSpeak();
+      return;
     }
+
+    if (this.voicesCheckInterval) {
+      return;
+    }
+
+    this.ngZone.runOutsideAngular(() => {
+      this.voicesCheckInterval = setInterval(() => {
+        if (this.synth!.getVoices().length > 0 || this.voicesLoaded) {
+          if (this.voicesCheckInterval) {
+            clearInterval(this.voicesCheckInterval);
+            this.voicesCheckInterval = null;
+          }
+          this.voicesLoaded = true;
+          this.ngZone.run(() => doSpeak());
+        }
+      }, 100);
+    });
+
+    setTimeout(() => {
+      if (this.voicesCheckInterval) {
+        clearInterval(this.voicesCheckInterval);
+        this.voicesCheckInterval = null;
+      }
+      this.ngZone.run(() => doSpeak());
+    }, 1000);
   }
 
   /**
@@ -176,22 +142,24 @@ private synth: SpeechSynthesis | null = null;
     }
   }
 
-  /**
-   * Resetta il flag per permettere di riprodurre di nuovo
-   */
-  // Resetta il flag per permettere di riprodurre di nuovo.
-  // Dopo un reset, speak() può riprodurre lo stesso testo anche se già pronunciato.
   reset(): void {
     this.hasSpoken = false;
   }
 
-  /**
-   * Verifica se il supporto è disponibile
-   */
-  // Verifica se il supporto è disponibile.
-  // Restituisce isSupported, che è true solo se window.speechSynthesis esiste.
   isAvailable(): boolean {
     return this.isSupported;
+  }
+
+  ngOnDestroy(): void {
+    if (this.voicesCheckInterval) {
+      clearInterval(this.voicesCheckInterval);
+      this.voicesCheckInterval = null;
+    }
+    if (this.synth) {
+      try {
+        this.synth.cancel();
+      } catch (e) {}
+    }
   }
 }
 
