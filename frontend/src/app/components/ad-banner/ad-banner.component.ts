@@ -102,18 +102,47 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    try {
-      if ((window as any).__adsenseInitialized) {
-        return;
+    const run = () => {
+      try {
+        if (this.adLoaded) {
+          return;
+        }
+        if ((window as any).__adsenseInitialized) {
+          return;
+        }
+        const container = document.getElementById(this.adId);
+        // AdSense fallisce con "No slot size for availableWidth=0" se il
+        // container non ha ancora una larghezza calcolata: si rinvia al frame
+        // successivo finché il layout non è pronto (max ~1s).
+        if (!container || container.clientWidth === 0) {
+          let attempts = 0;
+          const retry = () => {
+            attempts++;
+            if (attempts > 10) {
+              return;
+            }
+            requestAnimationFrame(() => {
+              if (container && container.clientWidth > 0) {
+                run();
+              } else {
+                retry();
+              }
+            });
+          };
+          retry();
+          return;
+        }
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({
+          google_ad_client: this.adClient
+        });
+        (window as any).__adsenseInitialized = true;
+        this.adLoaded = true;
+      } catch (e) {
+        console.error('Errore nell\'inizializzazione di AdSense:', e);
       }
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({
-        google_ad_client: this.adClient
-      });
-      (window as any).__adsenseInitialized = true;
-      this.adLoaded = true;
-    } catch (e) {
-      console.error('Errore nell\'inizializzazione di AdSense:', e);
-    }
+    };
+
+    requestAnimationFrame(run);
   }
 
   // Metodo per ricaricare l'ad (utile dopo cambi di route)
@@ -125,4 +154,3 @@ export class AdBannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 100);
   }
 }
-
