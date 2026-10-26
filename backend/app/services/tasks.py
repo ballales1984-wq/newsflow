@@ -165,7 +165,10 @@ def analyze_article(article_id: int):
         
         db.commit()
         
-        logger.info(f"Analyzed article {article.id}")
+        from app.services.rag.service import RAGService
+        import os
+        _rag = RAGService(os.getenv("RAG_STORE_PATH", "rag_store.json"), os.getenv("EMBEDDING_MODEL", ""), os.getenv("OPENAI_API_KEY", ""))
+        _rag.index_document(str(article.id), article.title, text, {"url": article.url})
         
     except Exception as e:
         logger.error(f"Error analyzing article {article_id}: {e}")
