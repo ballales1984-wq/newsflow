@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth.service';
 import { SavedArticleService } from '../../services/saved-article.service';
@@ -31,7 +31,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     public savedArticleService: SavedArticleService,
     public themeService: ThemeService,
     private weatherService: WeatherService,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -54,9 +55,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Il primo aggiornamento è sincrono, altrimenti l'orologio resterebbe vuoto
     // per un secondo dopo il render.
     this.updateDateTime();
-    this.dateTimeInterval = setInterval(() => {
-      this.updateDateTime();
-    }, 1000);
+    this.ngZone.runOutsideAngular(() => {
+      this.dateTimeInterval = setInterval(() => {
+        this.ngZone.run(() => {
+          this.updateDateTime();
+        });
+      }, 1000);
+    });
 
     // Carica meteo
     this.loadWeather();

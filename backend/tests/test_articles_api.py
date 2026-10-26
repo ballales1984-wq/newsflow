@@ -1,5 +1,5 @@
 """Tests for the articles API endpoints (/api/v1/articles/*)
-
+ 
 Uses an in-memory SQLite database so tests are fully isolated from the
 production database.  The fixture `client` provides a TestClient with the
 database dependency overridden.
@@ -9,12 +9,15 @@ from datetime import datetime, timedelta
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.main import app
 from app.core.database import Base, get_db
 from app.models.article import Article
 from app.models.source import Source
 from app.models.category import Category
+# Import all models to ensure they are registered with Base.metadata
+from app.models import user, saved_article, annotation  # noqa: F401
 
 # ---------------------------------------------------------------------------
 # In-memory DB setup
@@ -25,6 +28,7 @@ SQLALCHEMY_TEST_URL = "sqlite://"  # in-memory
 engine = create_engine(
     SQLALCHEMY_TEST_URL,
     connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -43,6 +47,13 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest.fixture(autouse=True)
 def reset_db():
     """Re-create all tables before each test and drop them after."""
+    # Ensure all models are imported before creating tables
+    import app.models.article  # noqa: F401
+    import app.models.source  # noqa: F401
+    import app.models.category  # noqa: F401
+    import app.models.user  # noqa: F401
+    import app.models.saved_article  # noqa: F401
+    import app.models.annotation  # noqa: F401
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)

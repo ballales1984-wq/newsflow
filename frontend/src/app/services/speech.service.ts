@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +18,7 @@ private synth: SpeechSynthesis | null = null;
   // (caricate in background): si registra onvoiceschanged per quando
   // saranno pronte. Se non ci sono voci al momento, il codice che
   // chiama speak() aspetta con un polling di 100ms fino a un timeout di 2s.
-  constructor() {
+  constructor(private ngZone: NgZone) {
     if ('speechSynthesis' in window) {
       this.synth = window.speechSynthesis;
       this.isSupported = true;
@@ -134,13 +134,15 @@ private synth: SpeechSynthesis | null = null;
     // con la voce di default (potrebbe non essere italiana).
     if (this.synth.getVoices().length === 0) {
       console.log('⏳ Voci non ancora caricate, aspetto...');
-      const checkVoices = setInterval(() => {
-        if (this.synth!.getVoices().length > 0) {
-          clearInterval(checkVoices);
-          console.log('✅ Voci caricate, riproduco messaggio');
-          doSpeak();
-        }
-      }, 100);
+      const checkVoices = this.ngZone.runOutsideAngular(() => {
+        return setInterval(() => {
+          if (this.synth!.getVoices().length > 0) {
+            clearInterval(checkVoices);
+            console.log('✅ Voci caricate, riproduco messaggio');
+            this.ngZone.run(() => doSpeak());
+          }
+        }, 100);
+      });
       
       // Timeout dopo 2 secondi
       setTimeout(() => {
@@ -148,7 +150,7 @@ private synth: SpeechSynthesis | null = null;
         if (this.synth!.getVoices().length === 0) {
           console.warn('⚠️ Timeout caricamento voci, riproduco comunque');
         }
-        doSpeak();
+        this.ngZone.run(() => doSpeak());
       }, 2000);
     } else {
       doSpeak();
