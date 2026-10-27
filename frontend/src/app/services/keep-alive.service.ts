@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { interval, Subscription, of } from 'rxjs';
@@ -16,11 +16,11 @@ export class KeepAliveService {
   // per colpire l'health check root del backend.
   private readonly PING_INTERVAL = 5 * 60 * 1000; // 5 minuti
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private ngZone: NgZone) {}
 
   /**
    * Avvia il servizio di keep-alive
-   * Fa ping al backend ogni 10 minuti per mantenerlo sveglio
+   * Fa ping al backend ogni 5 minuti per mantenerlo sveglio
    */
   start(): void {
     if (this.subscription) {
@@ -29,13 +29,16 @@ export class KeepAliveService {
 
     console.log('🔄 Servizio Keep-Alive avviato');
     
-    // Ping immediato
-    this.pingBackend();
-
-    // Ping periodico ogni 5 minuti (valore effettivo della costante PING_INTERVAL).
-    // Il ping è best-effort: un errore non interrompe il servizio né gli altri observable.
-    this.subscription = interval(this.PING_INTERVAL).subscribe(() => {
+    // Esegui fuori dalla zona Angular per evitare violazioni di performance
+    this.ngZone.runOutsideAngular(() => {
+      // Ping immediato
       this.pingBackend();
+
+      // Ping periodico ogni 5 minuti (valore effettivo della costante PING_INTERVAL).
+      // Il ping è best-effort: un errore non interrompe il servizio né gli altri observable.
+      this.subscription = interval(this.PING_INTERVAL).subscribe(() => {
+        this.pingBackend();
+      });
     });
   }
 
