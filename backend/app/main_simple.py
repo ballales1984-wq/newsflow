@@ -9,6 +9,13 @@ from datetime import datetime
 import os
 import json
 
+from app.core.constants import (
+    DEFAULT_CATEGORIES,
+    CATEGORY_KEYWORDS,
+    clean_html,
+    format_pagination,
+)
+
 # Import opzionale di FingerprintAuth per evitare crash su Vercel
 try:
     from app.core.auth_fingerprint import FingerprintAuth
@@ -225,79 +232,46 @@ def debug_files():
 _articles_cache = None
 _cache_timestamp = None
 _cache_file_path = None
-# Cache solo in memoria di processo: su Vercel ogni istanza lambda ha il proprio
-# heap, quindi la cache non è condivisa e riparte da zero a ogni cold start.
-# È per questo che la validità è legata al mtime del JSON e non a un TTL.
+_cache_load_time = None
+# TTL configurabile via env (default: 300 secondi = 5 minuti)
+_CACHE_TTL_SECONDS = int(os.getenv("ARTICLES_CACHE_TTL", "300"))
 
 
 def _load_articles(force_reload=False):
     """Helper to load articles - 94 NEWS ALL IN ITALIAN
     IMPORTANTE: Carica PRIMA le notizie vecchie (se esistono), poi le sostituisce con le nuove
-    Usa cache in memoria per performance migliori"""
+    Usa cache in memoria con TTL e mtime per performance e coerenza migliori"""
     import json
     import os
     import re
+    import time
 
-    global _articles_cache, _cache_timestamp, _cache_file_path
+    global _articles_cache, _cache_timestamp, _cache_file_path, _cache_load_time
 
-    # Se abbiamo cache valida e non è forzato il reload, verifica se il file è cambiato
+    # Se abbiamo cache valida e non è forzato il reload, verifica sia TTL che mtime del file
     if not force_reload and _articles_cache is not None and _cache_file_path:
-        try:
-            current_mtime = os.path.getmtime(_cache_file_path)
-            if current_mtime == _cache_timestamp:
-                # File non modificato, usa cache (NOTIZIE VECCHIE)
-                # L'mtime del file è il segnale di freschezza: non esiste un TTL,
-                # il JSON cambia solo quando il job di raccolta lo riscrive.
-                print(
-                    f"✅ Usando cache (notizie vecchie): {len(_articles_cache)} articoli"
-                )
-                return _articles_cache
-            else:
-                # File modificato, ricarica (SOSTITUISCE con nuove)
-                print(
-                    f"🔄 File modificato, ricarico cache (sostituisco vecchie con nuove)..."
-                )
-        except:
-            # File non esiste più o errore, ricarica
-            pass
+        is_expired = bool(_cache_load_time and (time.time() - _cache_load_time > _CACHE_TTL_SECONDS))
+        if not is_expired:
+            try:
+                current_mtime = os.path.getmtime(_cache_file_path)
+                if current_mtime == _cache_timestamp:
+                    print(
+                        f"✅ Usando cache (notizie vecchie): {len(_articles_cache)} articoli"
+                    )
+                    return _articles_cache
+                else:
+                    print(
+                        f"🔄 File modificato, ricarico cache (sostituisco vecchie con nuove)..."
+                    )
+            except Exception:
+                # File non esiste più o errore, ricarica
+                pass
+        else:
+            print(f"⏱️ TTL cache scaduto ({_CACHE_TTL_SECONDS}s), ricarico articoli...")
 
     # Se non c'è cache, prova a caricare le notizie vecchie PRIMA
     if _articles_cache is None:
         print("📰 Caricamento iniziale: cerco notizie vecchie da caricare...")
-
-    def clean_html(text):
-        """Rimuove tutti i tag HTML dal testo"""
-        # I feed RSS contengono HTML e entità (anche numeriche): pulire qui evita
-        # di iniettare markup grezzo nel frontend Angular e di rompere il layout.
-        if not text:
-            return ""
-        import html
-
-        # Rimuove tutti i tag HTML
-        text = re.sub(r"<[^>]+>", "", text)
-        # Decodifica entità HTML (inclusi quelli numerici come &#8217;)
-        try:
-            text = html.unescape(text)
-        except:
-            # Fallback manuale se html.unescape non disponibile
-            text = text.replace("&nbsp;", " ")
-            text = text.replace("&amp;", "&")
-            text = text.replace("&lt;", "<")
-            text = text.replace("&gt;", ">")
-            text = text.replace("&quot;", '"')
-            text = text.replace("&#39;", "'")
-            text = text.replace("&apos;", "'")
-            # Decodifica entità numeriche comuni
-            text = text.replace("&#8217;", "'")  # apostrofo
-            text = text.replace("&#8216;", "'")  # apostrofo sinistro
-            text = text.replace("&#8220;", '"')  # virgolette sinistre
-            text = text.replace("&#8221;", '"')  # virgolette destre
-            text = text.replace("&#8230;", "...")  # tre puntini
-            text = text.replace("&mdash;", "—")  # dash
-            text = text.replace("&ndash;", "–")  # en dash
-        # Rimuove spazi multipli
-        text = re.sub(r"\s+", " ", text)
-        return text.strip()
 
     # Determina il path base (directory corrente o backend/)
     # Su Vercel, i file sono nella root del progetto
@@ -319,7 +293,6 @@ def _load_articles(force_reload=False):
             "final_news_italian.json",
         ),
         os.path.join(os.getcwd(), "api", "final_news_italian.json"),
-        "/vercel/path0/api/final_news_italian.json",
         # Path 1: backend/final_news_italian.json dalla root (Vercel standard)
         os.path.join(os.getcwd(), "backend", "final_news_italian.json"),
         # Path 2: backend/final_news_italian.json relativo al file corrente
@@ -330,10 +303,7 @@ def _load_articles(force_reload=False):
         os.path.join(project_root_from_file2, "backend", "final_news_italian.json"),
         # Path 5: final_news_italian.json nella root (2 livelli su)
         os.path.join(project_root_from_file2, "final_news_italian.json"),
-        # Path 6: Prova anche con /vercel/path0 (Vercel build path)
-        "/vercel/path0/backend/final_news_italian.json",
-        "/vercel/path0/final_news_italian.json",
-        # Path 7: Prova anche nella directory corrente se siamo già in backend/
+        # Path 6: Prova anche nella directory corrente se siamo già in backend/
         os.path.join(current_file_dir, "final_news_italian.json"),
         os.path.join(current_file_dir, "..", "final_news_italian.json"),
     ]
@@ -471,13 +441,12 @@ def _load_articles(force_reload=False):
 
                     article["category_id"] = category_id
 
-            # Salva in cache
+            # Salva in cache con timestamp e ora di caricamento per il TTL
             _articles_cache = articles
-            # Il timestamp salvato è l'mtime del file, non l'ora di caricamento:
-            # così si distingue a colpo d'occhio un JSON rigenerato da uno vecchio.
             _cache_timestamp = os.path.getmtime(file_path)
             _cache_file_path = file_path
-            print(f"✅ Cache aggiornata: {len(articles)} articoli")
+            _cache_load_time = time.time()
+            print(f"✅ Cache aggiornata: {len(articles)} articoli (TTL: {_CACHE_TTL_SECONDS}s)")
             return articles
         except Exception as e:
             print(f"❌ Errore caricamento final_news_italian.json: {e}")
@@ -501,14 +470,11 @@ def _load_articles(force_reload=False):
             "all_sources_news.json",
         ),
         os.path.join(os.getcwd(), "api", "all_sources_news.json"),
-        "/vercel/path0/api/all_sources_news.json",
         os.path.join(os.getcwd(), "backend", "all_sources_news.json"),
         os.path.join(project_root_from_file, "all_sources_news.json"),
         os.path.join(os.getcwd(), "all_sources_news.json"),
         os.path.join(project_root_from_file2, "backend", "all_sources_news.json"),
         os.path.join(project_root_from_file2, "all_sources_news.json"),
-        "/vercel/path0/backend/all_sources_news.json",
-        "/vercel/path0/all_sources_news.json",
         os.path.join(current_file_dir, "all_sources_news.json"),
         os.path.join(current_file_dir, "..", "all_sources_news.json"),
     ]
@@ -535,7 +501,8 @@ def _load_articles(force_reload=False):
                 _articles_cache = articles
                 _cache_timestamp = os.path.getmtime(file_path)
                 _cache_file_path = file_path
-                print(f"✅ Cache aggiornata (all_sources): {len(articles)} articoli")
+                _cache_load_time = time.time()
+                print(f"✅ Cache aggiornata (all_sources): {len(articles)} articoli (TTL: {_CACHE_TTL_SECONDS}s)")
                 return articles
         except Exception as e:
             print(f"Errore caricamento all_sources_news.json: {e}")
@@ -807,109 +774,7 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
             print("⚠️  Nessun articolo caricato, restituisco array vuoto")
             return {"items": [], "total": 0, "page": 1, "size": 0, "pages": 1}
 
-        # Mappa categorie → keywords da cercare
-        # Filtro basato su keywords e non sul category_id: la classificazione
-        # per sorgente resta approssimativa, il match di sottostringa è più
-        # tollerante e non lascia fuori articoli etichettati male.
-        CATEGORY_KEYWORDS = {
-            1: [
-                "technology",
-                "tech",
-                "tecnologia",
-                "computer",
-                "software",
-                "hardware",
-                "digital",
-            ],  # Technology
-            2: [
-                "science",
-                "scienz",
-                "research",
-                "ricerca",
-                "studio",
-                "arxiv",
-            ],  # Science
-            3: ["philosophy", "filosofia", "pensiero", "critica"],  # Philosophy
-            4: [
-                "cybersecurity",
-                "security",
-                "sicurezza",
-                "hacking",
-                "exploit",
-                "malware",
-                "cyber",
-            ],  # Cybersecurity
-            5: [
-                "ai",
-                "artificial intelligence",
-                "intelligenza artificiale",
-                "machine learning",
-                "gpt",
-                "openai",
-                "llm",
-            ],  # AI
-            6: ["innovation", "innovazione", "futuro", "new"],  # Innovation
-            7: ["culture", "cultura", "arte", "society", "società"],  # Culture
-            8: ["ethics", "etica", "morale", "diritti"],  # Ethics
-            9: [
-                "sport",
-                "calcio",
-                "football",
-                "soccer",
-                "tennis",
-                "basketball",
-                "sports",
-            ],  # Sport
-            10: [
-                "nature",
-                "ambiente",
-                "environment",
-                "climate",
-                "clima",
-                "green",
-                "ecologia",
-            ],  # Nature
-            11: [
-                "business",
-                "economia",
-                "finance",
-                "finanza",
-                "market",
-                "mercato",
-                "company",
-                "azienda",
-            ],  # Business
-            12: [
-                "health",
-                "salute",
-                "medical",
-                "medico",
-                "hospital",
-                "ospedale",
-                "medicine",
-            ],  # Health
-            13: [
-                "politics",
-                "politica",
-                "government",
-                "governo",
-                "election",
-                "elezioni",
-                "parliament",
-            ],  # Politics
-            14: [
-                "entertainment",
-                "intrattenimento",
-                "movie",
-                "film",
-                "cinema",
-                "music",
-                "musica",
-                "tv",
-                "show",
-            ],  # Entertainment
-        }
-
+        # Utilizza CATEGORY_KEYWORDS condiviso da app.core.constants
         if articles:
             # Filtra per categoria se richiesto
             if category_id and category_id in CATEGORY_KEYWORDS:
@@ -935,9 +800,6 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
                 articles = filtered
 
             # Ordina: prima articoli con immagini, poi senza
-            # Usa una chiave di ordinamento: 0 se ha immagine, 1 se non ha
-            # Le immagini contano più del quality_score perché determinano
-            # l'aspetto della griglia: gli articoli senza foto appaiono "piatti".
             articles.sort(
                 key=lambda x: (
                     0 if x.get("image_url") else 1,
@@ -945,20 +807,14 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
                 )
             )
 
-            # Applica paginazione
+            # Applica paginazione con helper condiviso
             total = len(articles)
             paginated_articles = articles[skip : skip + limit]
 
-            return {
-                "items": paginated_articles,
-                "total": total,
-                "page": (skip // limit) + 1,
-                "size": len(paginated_articles),
-                "pages": (total + limit - 1) // limit if limit > 0 else 1,
-            }
+            return format_pagination(paginated_articles, total, skip, limit)
 
         # Fallback se non ci sono articoli dopo il filtro
-        return {"items": [], "total": 0, "page": 1, "size": 0, "pages": 1}
+        return format_pagination([], 0, skip, limit)
     except Exception as e:
         print(f"❌ Errore in get_articles: {e}")
         import traceback
@@ -977,101 +833,8 @@ def get_articles(category_id: int = None, skip: int = 0, limit: int = 50):
 
 @app.get("/api/v1/categories")
 def get_categories():
-    """Get categories - demo data"""
-    return [
-        {
-            "id": 1,
-            "name": "Technology",
-            "slug": "technology",
-            "icon": "computer",
-            "color": "#2196F3",
-        },
-        {
-            "id": 2,
-            "name": "Science",
-            "slug": "science",
-            "icon": "science",
-            "color": "#4CAF50",
-        },
-        {
-            "id": 3,
-            "name": "Philosophy",
-            "slug": "philosophy",
-            "icon": "psychology",
-            "color": "#9C27B0",
-        },
-        {
-            "id": 4,
-            "name": "Cybersecurity",
-            "slug": "cybersecurity",
-            "icon": "security",
-            "color": "#F44336",
-        },
-        {"id": 5, "name": "AI", "slug": "ai", "icon": "smart_toy", "color": "#FF9800"},
-        {
-            "id": 6,
-            "name": "Innovation",
-            "slug": "innovation",
-            "icon": "lightbulb",
-            "color": "#FFEB3B",
-        },
-        {
-            "id": 7,
-            "name": "Culture",
-            "slug": "culture",
-            "icon": "palette",
-            "color": "#E91E63",
-        },
-        {
-            "id": 8,
-            "name": "Ethics",
-            "slug": "ethics",
-            "icon": "balance",
-            "color": "#607D8B",
-        },
-        {
-            "id": 9,
-            "name": "Sport",
-            "slug": "sport",
-            "icon": "sports_soccer",
-            "color": "#FF5722",
-        },
-        {
-            "id": 10,
-            "name": "Nature",
-            "slug": "nature",
-            "icon": "park",
-            "color": "#4CAF50",
-        },
-        {
-            "id": 11,
-            "name": "Business",
-            "slug": "business",
-            "icon": "business_center",
-            "color": "#1976D2",
-        },
-        {
-            "id": 12,
-            "name": "Health",
-            "slug": "health",
-            "icon": "health_and_safety",
-            "color": "#E91E63",
-        },
-        {
-            "id": 13,
-            "name": "Politics",
-            "slug": "politics",
-            "icon": "gavel",
-            "color": "#9C27B0",
-        },
-        {
-            "id": 14,
-            "name": "Entertainment",
-            "slug": "entertainment",
-            "icon": "movie",
-            "color": "#FF9800",
-        },
-    ]
+    """Get categories - single source of truth from core.constants"""
+    return DEFAULT_CATEGORIES
 
 
 @app.get("/api/v1/articles/{article_id}")

@@ -73,21 +73,17 @@ class TestTokens:
     def test_decode_access_token_preserves_payload(self):
         token = create_access_token({"sub": "99"})
         payload = decode_token(token)
-        # decode_token currently returns None because the exp field is an
-        # ISO-8601 string instead of a Unix timestamp (known bug documented in
-        # security.py comments).  This test documents the current behaviour.
-        # When the bug is fixed, the assertion should be:
-        #   assert payload["sub"] == "99"
-        # For now we only check that it doesn't raise an exception.
-        # (payload can be None or a dict)
-        assert payload is None or isinstance(payload, dict)
+        assert payload is not None
+        assert payload["sub"] == "99"
+        assert "exp" in payload
 
     def test_decode_refresh_token_type_claim(self):
         token = create_refresh_token({"sub": "7"})
         payload = decode_token(token)
-        # Same note as above: may be None due to the exp format bug.
-        if payload is not None:
-            assert payload.get("type") == "refresh"
+        assert payload is not None
+        assert payload["sub"] == "7"
+        assert payload.get("type") == "refresh"
+        assert "exp" in payload
 
     def test_decode_garbage_returns_none(self):
         result = decode_token("not.a.valid.jwt")

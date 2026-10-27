@@ -4,6 +4,7 @@ from typing import List
 from slugify import slugify
 
 from ....core.database import get_db
+from ....core.constants import DEFAULT_CATEGORIES
 from ....models import Category
 from ....models.article import Article
 from ....schemas import category as schemas
@@ -41,6 +42,8 @@ def get_categories(
         List of categories in the system
     """
     categories = db.query(Category).offset(skip).limit(limit).all()
+    if not categories and skip == 0:
+        return [schemas.Category(**c) for c in DEFAULT_CATEGORIES[:limit]]
     return categories
 
 

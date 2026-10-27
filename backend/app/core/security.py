@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -45,19 +45,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     # added here and the default lifetime comes from ACCESS_TOKEN_EXPIRE_MINUTES.
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
-    # Note: `exp` is written as an ISO-8601 string, while the JWT specification
-    # (and python-jose) expect a numeric Unix timestamp. Decoding such a token
-    # raises JWTClaimsError("Expiration Time claim (exp) must be an integer"),
-    # and since JWTClaimsError is a JWTError, decode_token() maps it to None and
-    # the token is rejected with 401. Left unchanged on purpose: the auth layer
-    # has its own remediation item.
-    to_encode.update({"exp": expire.isoformat()})
+    # `exp` must be a numeric timestamp or datetime (RFC 7519) so python-jose
+    # can decode and validate token expiration without JWTClaimsError.
+    to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
@@ -71,8 +67,8 @@ def create_refresh_token(data: dict) -> str:
     # Note: get_current_user() never inspects the "type" claim, so a refresh
     # token would also pass the access token check.
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=30)
-    to_encode.update({"exp": expire.isoformat(), "type": "refresh"})
+    expire = datetime.now(timezone.utc) + timedelta(days=30)
+    to_encode.update({"exp": expire, "type": "refresh"})
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )

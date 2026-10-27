@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 
 from ....core.database import get_db
+from ....core.constants import format_pagination
 from ....models import Article
 from ....schemas import article as schemas
 # Conditional import of collect_from_source (Celery task)
@@ -67,13 +68,7 @@ def get_articles(
     # di `limit`.
     articles = query.order_by(Article.published_at.desc()).offset(skip).limit(limit).all()
     
-    return {
-        "items": articles,
-        "total": total,
-        "page": skip // limit + 1,
-        "size": limit,
-        "pages": (total + limit - 1) // limit
-    }
+    return format_pagination(articles, total, skip, limit)
 
 
 @router.get("/{article_id}", response_model=schemas.Article)

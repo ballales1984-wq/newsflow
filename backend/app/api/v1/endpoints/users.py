@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -96,8 +96,8 @@ def login(
     # Refresh token issued at login; it is rotated (replaced) on every
     # /refresh call so a stolen refresh token has a limited lifespan.
 
-    # Records the last login timestamp; the inline import is kept as-is.
-    user.last_login = __import__("datetime").datetime.utcnow()
+    # Records the last login timestamp
+    user.last_login = datetime.utcnow()
     db.commit()
 
     return {

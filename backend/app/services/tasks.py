@@ -21,6 +21,26 @@ except ImportError:
     def slugify(text):
         return text.lower().replace(" ", "-")[:500]
 
+
+def generate_unique_slug(title: str, db: Session, max_length: int = 500) -> str:
+    """Generate a unique slug for an article title, appending a numeric suffix if needed."""
+    raw_slug = slugify(title or "article")
+    raw_slug = raw_slug.strip("-")
+    if not raw_slug:
+        raw_slug = "article"
+
+    # Reserve space for suffix (e.g. up to "-99999")
+    base_slug = raw_slug[:max_length - 20]
+    candidate = base_slug
+    counter = 1
+
+    while db.query(Article.id).filter(Article.slug == candidate).first() is not None:
+        candidate = f"{base_slug}-{counter}"
+        counter += 1
+
+    return candidate
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,10 +116,11 @@ def collect_from_source(source_id: int) -> int:
                 if existing:
                     continue
                 
-                # Create article
+                # Create article with unique slug to prevent collision errors
+                unique_slug = generate_unique_slug(article_data['title'], db)
                 article = Article(
                     title=article_data['title'],
-                    slug=slugify(article_data['title'])[:500],
+                    slug=unique_slug,
                     url=article_data['url'],
                     summary=article_data.get('summary'),
                     content=article_data.get('content'),
