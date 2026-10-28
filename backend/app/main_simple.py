@@ -55,7 +55,8 @@ CORS_ORIGINS = os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
 # resta valido (il browser rifiuta "*" con credenziali).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permetti tutti per ngrok e Vercel
+    allow_origins=default_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.ngrok\.free\.app|https://.*\.ngrok\.io",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
