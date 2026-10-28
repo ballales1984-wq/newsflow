@@ -6,11 +6,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from app import main  # noqa
 from app.main import app
 from app.core.database import Base, get_db
+from app.core.security import get_password_hash
 from app import models  # ensure models are registered
-
 
 # ---------------------------------------------------------------------------
 # In-memory DB setup (separate engine from test_articles_api.py to avoid
@@ -22,6 +24,7 @@ SQLALCHEMY_TEST_URL = "sqlite://"
 engine = create_engine(
     SQLALCHEMY_TEST_URL,
     connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -210,8 +213,10 @@ class TestPreferences:
         r = client.put("/api/v1/users/me/preferences", headers=headers, json=payload)
         assert r.status_code == 200
         data = r.json()
-        assert data["theme"] == "dark"
-        assert data["language"] == "en"
+        # Endpoint returns User object with preferences dict
+        prefs = data.get("preferences") or {}
+        assert prefs.get("theme") == "dark"
+        assert prefs.get("language") == "en"
 
 
 # ---------------------------------------------------------------------------
