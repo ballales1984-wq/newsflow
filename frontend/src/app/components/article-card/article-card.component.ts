@@ -94,16 +94,17 @@ export class ArticleCardComponent {
     event.preventDefault();
     this.analytics.trackExplainClick(this.article.id, this.article.title);
 
-    this.dialog.open(ExplainDialogComponent, {
+    const dialogRef = this.dialog.open(ExplainDialogComponent, {
       data: this.article,
       width: '900px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       disableClose: false,
       hasBackdrop: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'explain-dialog-panel'
+      autoFocus: true,
+      restoreFocus: false,
+      panelClass: 'explain-dialog-panel',
+      backdropClass: 'explain-dialog-backdrop'
     });
   }
 

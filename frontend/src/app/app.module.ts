@@ -20,7 +20,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { A11yModule } from '@angular/cdk/a11y';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -87,6 +87,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     MatDialogModule,
     MatTabsModule,
     MatDividerModule,
+    A11yModule,
     // Service worker attivo solo in produzione (isDevMode()): in sviluppo la cache
     // servirebbe a mascherare le modifiche locali.
     // La registrazione avviene a app stabile o dopo 30 secondi, così non compete

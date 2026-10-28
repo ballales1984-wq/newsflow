@@ -105,6 +105,11 @@ body {
 .explain-dialog-panel .mat-mdc-dialog-container {
   padding: 0;
   overflow: visible;
+  z-index: 2100;
+}
+
+.explain-dialog-backdrop {
+  z-index: 2050;
 }
 
 /* Loading spinner */
