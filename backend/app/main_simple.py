@@ -14,6 +14,7 @@ from app.core.constants import (
     CATEGORY_KEYWORDS,
     clean_html,
     format_pagination,
+    clean_digest_description,
 )
 
 # Import opzionale di FingerprintAuth per evitare crash su Vercel
@@ -1384,12 +1385,14 @@ def _generate_dynamic_digest():
         cat = categorize(article)
         if cat not in categorized:
             categorized[cat] = []
+        raw_desc = (
+            article.get("summary", "") or article.get("description", "") or article.get("content", "") or ""
+        )
+        desc = clean_digest_description(raw_desc, max_length=500)
         categorized[cat].append(
             {
-                "title": (article.get("title", "") or "")[:250],
-                "description": (
-                    article.get("summary", "") or article.get("description", "") or ""
-                )[:500],
+                "title": (article.get("title", "") or "").strip()[:250],
+                "description": desc,
             }
         )
 

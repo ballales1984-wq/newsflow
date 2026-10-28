@@ -1,8 +1,13 @@
 """Script per generare il digest giornaliero dai nuovi articoli"""
 import json
 import os
+import sys
 from datetime import datetime, timedelta
 from collections import defaultdict
+
+# Aggiungi backend al path se necessario
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from app.core.constants import clean_digest_description
 
 # Mappa category_id -> nome categoria
 CATEGORY_MAP = {
@@ -131,9 +136,11 @@ def generate_digest():
         
         # Prendi solo i primi 5 articoli per categoria (i più recenti/importanti)
         if len(articles_by_category[category_id]) < 5:
+            raw_desc = article.get('summary') or article.get('description') or article.get('content') or ''
+            desc = clean_digest_description(raw_desc, max_length=500)
             articles_by_category[category_id].append({
-                'title': article.get('title', ''),
-                'description': article.get('summary', '')[:200]  # Primi 200 caratteri
+                'title': (article.get('title', '') or '').strip(),
+                'description': desc
             })
     
     # Costruisci il digest

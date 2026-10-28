@@ -134,3 +134,61 @@ def format_pagination(items: list, total: int, skip: int, limit: int) -> Dict[st
         "size": len(items),
         "pages": (total + limit - 1) // limit if limit > 0 else 1,
     }
+
+
+def clean_digest_description(text: Optional[str], max_length: int = 500) -> str:
+    """Pulisce la descrizione/riassunto dell'articolo per il digest:
+    - Rimuove immagini, tag HTML e tag parziali/troncati a fine stringa
+    - Rimuove boilerplate RSS (es. 'L'articolo ... proviene da ...', 'The post ...')
+    - Tronca a fine frase o a confine di parola (senza tagliare parole a metà)
+    """
+    if not text:
+        return ""
+
+    # 1. Rimuove tag HTML completi
+    cleaned = re.sub(r"<[^>]+>", " ", text)
+    # Rimuove tag HTML incompleti a fine stringa (es. '<a href="https://w', '</')
+    cleaned = re.sub(r"<[^>]*$", "", cleaned)
+
+    # 2. Decodifica entità HTML
+    try:
+        cleaned = html.unescape(cleaned)
+    except Exception:
+        pass
+
+    # 3. Rimuove boilerplate RSS
+    boilerplate_patterns = [
+        r"L'articolo\s+.*?proviene da.*$",
+        r"L'articolo\s+proviene da.*$",
+        r"The post\s+.*?appeared first on.*$",
+        r"The post\s+.*$",
+        r"proviene da\s+.*$",
+        r"Continua a leggere.*$",
+        r"Leggi l'articolo completo.*$",
+        r"Fonte:\s+.*$",
+    ]
+    for pattern in boilerplate_patterns:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.DOTALL)
+
+    # 4. Normalizza spazi
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+
+    if not cleaned:
+        return ""
+
+    # Se rientra nel limite, restituiscilo intero
+    if len(cleaned) <= max_length:
+        return cleaned
+
+    # Altrimenti cerca una fine frase naturale (. ! ?) entro max_length
+    sub = cleaned[:max_length]
+    last_sentence_end = max(sub.rfind(". "), sub.rfind("! "), sub.rfind("? "))
+    if last_sentence_end > max_length // 2:
+        return sub[: last_sentence_end + 1].strip()
+
+    # Fallback su confine di parola
+    last_space = sub.rfind(" ")
+    if last_space > max_length // 2:
+        return sub[:last_space].strip() + "..."
+
+    return sub.strip() + "..."

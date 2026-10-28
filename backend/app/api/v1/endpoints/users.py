@@ -17,7 +17,7 @@ from ....core.config import settings
 from ....models import User
 from ....schemas import user as schemas
 
-router = APIRouter(prefix="/users", tags=["Authentication"])
+router = APIRouter()
 
 
 @router.post(

@@ -34,6 +34,15 @@ export class StripHtmlPipe implements PipeTransform {
     // Now remove all HTML tags
     result = result.replace(/<[^>]*>/g, '');
 
+    // Also remove unclosed/truncated HTML tags at end of string (e.g. '<a href="https://w', '</')
+    result = result.replace(/<[^>]*$/g, '');
+
+    // Strip common RSS feed boilerplate credits
+    result = result
+      .replace(/L'articolo\s+.*?proviene da.*$/is, '')
+      .replace(/The post\s+.*$/is, '')
+      .replace(/proviene da\s+.*$/is, '');
+
     // Clean up whitespace
     return result.replace(/\s+/g, ' ').trim();
   }

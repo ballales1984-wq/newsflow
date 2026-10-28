@@ -1,28 +1,28 @@
 {
-  "date": "2026-10-26",
+  "date": "2026-10-27",
   "digest": [
     {
       "category": "💻 Tecnologia",
       "articles": [
         {
-          "title": "La rete oscura delle evacuazioni da Gaza",
-          "description": "Un’indagine sulle evacuazioni dei civili da Gaza rivela corridoi paralleli, voli fantasma e operazioni gestite da entità opache. L'articolo La rete oscura delle evacuazioni da Gaza proviene da MicroMega."
+          "title": "Proteste di piazza, se l’assenza di futuro si trasforma in rabbia",
+          "description": "Perché un appello online, senza direzione politica comune, ha attratto così tanti giovani? Il patto generazionale è sempre più incrinato. L'articolo Proteste di piazza, se l’assenza di futuro si trasforma in rab"
         },
         {
-          "title": "Digital Omnibus: l’Europa ridisegna il quadro normativo digitale tra competitività e ridefinizione dei diritti fondamentali",
-          "description": "Il Digital Omnibus, presentato dalla Commissione Europea il 19 novembre 2025, rappresenta la più ampia revisione del quadro normativo digitale europeo dall'entrata in vigore del GDPR nel 2018. L'iniziativa introduce modifiche parallele a molteplici regolamenti digitali dell'UE, tra cui GDPR e AI Act, sollevando un dibattito senza precedenti tra necessità di competitività e protezione dei..."
+          "title": "La roadmap del quantum: dalle prime applicazioni al mercato",
+          "description": "Il quantum computing potrebbe generare fino a 2.700 miliardi di dollari di valore entro il 2035, ma tempi e applicazioni restano incerti. La roadmap di McKinsey individua tre orizzonti per le imprese: costruire competenze e partnership, preparare casi d’uso e migrare subito la crittografia vulnerabile L'articolo La roadmap del quantum: dalle prime applicazioni al me"
         },
         {
-          "title": "Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre su Amazon",
-          "description": "Approfitta del Black Friday Amazon per acquistare Garmin, Puma, Levis e American Tourister ai prezzi più bassi di sempre: solo oggi e domani. The post <a href=\"https://www.punto-in"
+          "title": "Pirelli, la digitalizzazione avanzata dei processi di procurement, strategia di resilienza industriale",
+          "description": "Gestire una filiera globale di 18 stabilimenti e migliaia di fornitori richiede visibilità in tempo reale e processi predittivi. L'azienda italiana, con SAP e Accenture, indica come l'AI pervasiva e la digitalizzazione del procurement rappresentino una risorsa centrale per contenere i costi delle materie prime e creare valore di lungo periodo L'articolo"
         },
         {
-          "title": "Telecamere nei negozi: guida a regole, rischi e buone pratiche",
-          "description": "La videosorveglianza nei negozi è lecita solo se fondata su finalità chiare, proporzionata e supportata dalle corrette procedure lavoristiche e privacy. Da qui derivano obblighi operativi, limiti di conservazione, DPIA nei contesti su larga scala e pesanti sanzioni in caso di violazioni L'articolo Telecamere nei negozi: guida a regole, rischi e buone pratiche proviene da"
+          "title": "AI, il MIMIT dà il via alla mappatura italiana",
+          "description": "Il ministero delle Imprese e del Made in Italy e l'Istituto italiano di intelligenza artificiale per l'industria avviano una consultazione pubblica per mappare la filiera nazionale dell'AI. Imprese, startup e centri di ricerca possono partecipare fino al 20 novembre 2026. Obiettivo: individuare competenze e priorità per le politiche industriali L'articolo AI, il MIMIT dà il via"
         },
         {
-          "title": "Cina e Giappone: non solo una crisi diplomatica",
-          "description": "Dalla questione Taiwan alle ritorsioni economiche: lo scontro tra Cina e Giappone riapre ferite storiche. L'articolo Cina e Giappone: non solo una crisi diplomatica proviene da MicroMega."
+          "title": "Levoit Core 300s Pro è un purificatore piccino picciò, perfetto per stanze e piccoli appartamenti",
+          "description": "Lo porti sottobraccio da una stanza all'altra e si prende cura dell'aria circostante aiutandoti con allergie, pollini e molto altro. Ecco a chi è indicato e chi dovrebbe guardare oltre"
         }
       ]
     },
@@ -30,37 +30,24 @@
       "category": "🤖 Intelligenza Artificiale",
       "articles": [
         {
-          "title": "Ripensare i contratti nella direzione legale aziendale nell’era dell’AI",
-          "description": "Dalla redazione automatica all’analisi intelligente del rischio, l’intelligenza artificiale trasforma la direzione legale in una funzione strategica e data-driven. Le soluzioni DiliTrust mostrano come tecnologia e governance possano coesistere per generare valore e sicurezza nei processi contrattuali L'articolo Ripensare i contratti nella direzione legale"
+          "title": "Israele, se la propaganda viaggia sui social",
+          "description": "Creator italiani di destra, legati all’universo Maga, partecipano a una campagna per presentare positivamente il paese."
         },
         {
-          "title": "Black Friday 2025, le 70 migliori offerte scelte da Wired",
-          "description": "Abbiamo raccolto le offerte migliori del Black Friday in tutte le categorie: dai notebook alla cucina, passando per robot aspirapolvere e idee regalo"
+          "title": "Salvini rieletto attacca la stampa",
+          "description": "La vignetta di Massimiliano Turi, in arte Batmax."
         },
         {
-          "title": "L'Ucraina alla ricerca di alleati anche alla Cop30 perché “siamo contro tutto quello che è vitale per la Russia” (come il gas)",
-          "description": "Il viceministro all'Economia, Ambiente e Agricoltura Pavlo Kartashov a Belém racconta a Wired come Kyiv vuole ricostruire l'impegno ambientale. Ma la realtà della diplomazia non fa sconti"
+          "title": "“Deep State”",
+          "description": "Concetto impiegato come etichetta per designare gli avversari politici che conserverebbero il potere a prescindere dai risultati elettorali."
         },
         {
-          "title": "L’AI cambia l’università: non bastano policy, servono regole",
-          "description": "L’AI entra nei processi cognitivi di atenei e laboratori: accelera traduzioni, sintesi e ipotesi, ma solleva dubbi su autorialità, integrità e valutazione. Servono governance della conoscenza, audit, competenze critiche e infrastrutture aperte per evitare derive e diseguaglianze L'articolo L’AI cambia l’università: non bastano policy, servono regole proviene da <a href="
+          "title": "Le proteste di piazza in Italia e le altre notizie della settimana",
+          "description": "Uno sguardo ai contenuti pubblicati sul sito questa settimana."
         },
         {
-          "title": "Come gli evals stanno guidando l’introduzione dell’AI nelle imprese",
-          "description": "Sempre più aziende integrano l’intelligenza artificiale nei processi, ma molte faticano a ottenere i risultati sperati. Il motivo spesso risiede nella mancanza di sistemi di valutazione adeguati. Secondo OpenAI, gli evals trasformano obiettivi astratti in criteri misurabili, aiutando le organizzazioni a definire qualità, ridurre errori e massimizzare il ritorno sull’investimento L'articolo <a href=\"https://www.ai4business.it/intelligenza-artificiale/come-gli-evals-stanno-guidando-lintr"
-        }
-      ]
-    },
-    {
-      "category": "💼 Business",
-      "articles": [
-        {
-          "title": "La creazione di valore nel business del cloud fluisce verso l’America",
-          "description": "Servono alternative agli hyperscaler statunitensi, poiché i loro modelli spingono le imprese verso una dipendenza sempre più forte. In Europa il problema è stato riconosciuto, ma interminabili consultazioni, comitati e normative regolatorie stanno portando alla fuga della creazione di valore. Il micromanagement burocratico non crea un clima d’investimento favorevole alle imprese – il valore aggiunto..."
-        },
-        {
-          "title": "Talento come leva strategica: come attivarlo e misurarlo in azienda",
-          "description": "Il talento non è dote innata: è una costruzione dinamica che richiede cultura, leadership e contesti abilitanti. Dalle competenze all’impatto, ecco come trasformare il potenziale in valore reale per il business L'articolo Talento come leva strategica: come attivarlo e misurarlo in azienda proviene da <a href=\"https://www.agendadigitale.eu\""
+          "title": "Elezioni in Serbia, gli studenti sfidano Vučić",
+          "description": "Dopo due anni di proteste il paese non è più lo stesso e ora il movimento studentesco può insidiare il potere del presidente in carica."
         }
       ]
     }

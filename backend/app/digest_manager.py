@@ -5,6 +5,7 @@ dipende dalla frequenza con cui la funzione viene invocata esternamente (una vol
 import json
 import os
 from datetime import datetime
+from app.core.constants import clean_digest_description
 
 # Percorsi dove salvare il digest
 # Il digest viene scritto in tutte le destinazioni disponibili (frontend, api, backend) così ogni deployment
@@ -95,11 +96,13 @@ def update_digest_from_articles(articles_file='final_news_italian.json', max_art
             if cat not in categorized:
                 categorized[cat] = []
             
-            # Versione condensata: titolo troncato a 120 caratteri e descrizione a 200 per mantenere il digest compatto.
-            # Se summary manca si usa il campo description (schema alternativo).
+            # Descrizione pulita: rimuove tag HTML, boilerplate RSS e preserva frasi intere
+            raw_desc = article.get('summary') or article.get('description') or article.get('content') or ''
+            desc = clean_digest_description(raw_desc, max_length=500)
+            
             article_digest = {
-                "title": article.get('title', '')[:120],
-                "description": article.get('summary', '')[:200] if article.get('summary') else article.get('description', '')[:200]
+                "title": (article.get('title', '') or '').strip()[:200],
+                "description": desc
             }
             
             categorized[cat].append(article_digest)

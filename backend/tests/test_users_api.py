@@ -9,7 +9,8 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.core.database import Base, get_db
-from app.core.security import get_password_hash
+from app import models  # ensure models are registered
+
 
 # ---------------------------------------------------------------------------
 # In-memory DB setup (separate engine from test_articles_api.py to avoid
