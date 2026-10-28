@@ -17,12 +17,13 @@
     <mat-tab-group (selectedTabChange)="onTabChange($event)" [disableRipple]="false" animationDuration="0ms">
       <mat-tab label="⚡ 30 secondi">
         <div class="explanation-content">
-          <div *ngIf="loading['quick']" class="loading-indicator">
+          <div *ngIf="isLoading('quick')" class="loading-indicator">
             <mat-spinner diameter="30"></mat-spinner>
-            <span>Generazione spiegazione AI...</span>
+            <span>Caricamento...</span>
           </div>
-          <pre *ngIf="!loading['quick']">{{ getQuickExplanation() }}</pre>
-          <div *ngIf="aiUsed && !loading['quick']" class="ai-badge">
+          <pre *ngIf="!isLoading('quick') && explanations['quick']">{{ explanations['quick'] }}</pre>
+          <pre *ngIf="!isLoading('quick') && !explanations['quick']">{{ getStaticExplanation('quick') }}</pre>
+          <div *ngIf="aiUsed" class="ai-badge">
             🤖 Powered by {{ aiUsed }}
           </div>
         </div>
@@ -30,12 +31,13 @@
 
       <mat-tab label="📄 3 minuti">
         <div class="explanation-content">
-          <div *ngIf="loading['standard']" class="loading-indicator">
+          <div *ngIf="isLoading('standard')" class="loading-indicator">
             <mat-spinner diameter="30"></mat-spinner>
-            <span>Generazione spiegazione AI...</span>
+            <span>Caricamento...</span>
           </div>
-          <pre *ngIf="!loading['standard']">{{ getStandardExplanation() }}</pre>
-          <div *ngIf="aiUsed && !loading['standard']" class="ai-badge">
+          <pre *ngIf="!isLoading('standard') && explanations['standard']">{{ explanations['standard'] }}</pre>
+          <pre *ngIf="!isLoading('standard') && !explanations['standard']">{{ getStaticExplanation('standard') }}</pre>
+          <div *ngIf="aiUsed" class="ai-badge">
             🤖 Powered by {{ aiUsed }}
           </div>
         </div>
@@ -43,12 +45,13 @@
 
       <mat-tab label="📚 Approfondimento">
         <div class="explanation-content">
-          <div *ngIf="loading['deep']" class="loading-indicator">
+          <div *ngIf="isLoading('deep')" class="loading-indicator">
             <mat-spinner diameter="30"></mat-spinner>
-            <span>Generazione analisi approfondita AI...</span>
+            <span>Caricamento...</span>
           </div>
-          <pre *ngIf="!loading['deep']">{{ getDeepExplanation() }}</pre>
-          <div *ngIf="aiUsed && !loading['deep']" class="ai-badge">
+          <pre *ngIf="!isLoading('deep') && explanations['deep']">{{ explanations['deep'] }}</pre>
+          <pre *ngIf="!isLoading('deep') && !explanations['deep']">{{ getStaticExplanation('deep') }}</pre>
+          <div *ngIf="aiUsed" class="ai-badge">
             🤖 Powered by {{ aiUsed }}
           </div>
         </div>

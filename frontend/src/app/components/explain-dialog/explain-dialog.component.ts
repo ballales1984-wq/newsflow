@@ -41,6 +41,9 @@ export class ExplainDialogComponent implements OnInit {
     // Il tab iniziale è quello standard: pre-caricarlo evita uno spinner
     // sul primo tab visibile.
     this.loadExplanation('standard');
+    // Forza anche il caricamento degli altri tab per avere contenuto immediato
+    this.loadExplanation('quick');
+    this.loadExplanation('deep');
   }
 
   // Carica spiegazione AI (già generata nel JSON o dall'API)
@@ -56,7 +59,6 @@ export class ExplainDialogComponent implements OnInit {
     }
     
     // Se già in caricamento, aspetta
-    // evita richieste parallele sullo stesso livello (es. tab rapidi).
     if (this.loading[cacheKey]) {
       return;
     }
@@ -73,7 +75,8 @@ export class ExplainDialogComponent implements OnInit {
       // Spiegazione già presente nel JSON (pre-generata durante collect-news)
       this.explanations[cacheKey] = this.article[explanationField as keyof typeof this.article] as string;
       this.aiUsed = 'Pre-generated';
-      return; // Istantaneo, nessun caricamento necessario!
+      this.loading[cacheKey] = false;
+      return;
     }
     
     // Se non presente nel JSON, carica dall'API (fallback)
