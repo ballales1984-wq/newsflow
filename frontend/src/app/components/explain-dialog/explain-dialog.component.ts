@@ -53,14 +53,17 @@ export class ExplainDialogComponent implements OnInit {
   loadExplanation(type: 'quick' | 'standard' | 'deep'): void {
     const cacheKey = type;
     
+    // Se già in cache, usa quella
     if (this.explanations[cacheKey]) {
       return;
     }
     
+    // Se già in caricamento, aspetta
     if (this.loading[cacheKey]) {
       return;
     }
     
+    // Controlla se la spiegazione è già nell'articolo (pre-generata)
     const explanationFieldMap: { [key: string]: string } = {
       'quick': 'explanation_quick',
       'standard': 'explanation_standard',
@@ -69,18 +72,47 @@ export class ExplainDialogComponent implements OnInit {
     
     const explanationField = explanationFieldMap[type];
     if (this.article[explanationField as keyof typeof this.article]) {
+      // Spiegazione già presente nel JSON (pre-generata durante collect-news)
       this.explanations[cacheKey] = this.article[explanationField as keyof typeof this.article] as string;
       this.aiUsed = 'Pre-generated';
       this.loading[cacheKey] = false;
       return;
     }
     
-    // Use pre-generated explanation as fallback instead of calling API
-    this.explanations[cacheKey] = this.getStaticExplanation(type);
-    this.aiUsed = 'Pre-generated';
-    this.loading[cacheKey] = false;
-    return;
-  }
+    // Se non presente nel JSON, carica dall'API (fallback)
+    this.loading[cacheKey] = true;
+    
+    // Chiama API per spiegazione AI (solo se non presente nel JSON)
+    // L'endpoint di generazione è derivato da environment.apiUrl: stesso host
+    // dell'app, con il path /v1/articles/explain.
+    const apiUrl = environment.apiUrl.replace('/v1', '/v1/articles/explain');
+    this.http.post<any>(apiUrl, {
+      article_id: this.article.id,
+      slug: this.article.slug,
+      explanation_type: type
+    // Nessun unsubscribe esplicito: è una POST che si completa dopo la risposta,
+    // quindi l'observable non resta aperto. Se il dialog viene chiuso prima,
+    // il callback scrive comunque sui campi del componente, ormai non più mostrato.
+    }).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.explanations[cacheKey] = response.explanation;
+          this.aiUsed = response.ai_used || 'Static';
+        } else {
+          // Fallback a spiegazione statica
+          this.explanations[cacheKey] = this.getStaticExplanation(type);
+        }
+        this.loading[cacheKey] = false;
+      },
+      error: (error) => {
+        console.error('Errore caricamento spiegazione AI:', error);
+        // L'errore non viene propagato al template: la spiegazione statica copre
+        // il caso, così l'utente vede comunque un testo invece di uno spinner infinito.
+        // Fallback a spiegazione statica
+        this.explanations[cacheKey] = this.getStaticExplanation(type);
+        this.loading[cacheKey] = false;
+      }
+    });
   }
 
   // Spiegazione rapida (30 secondi) - ora usa AI
