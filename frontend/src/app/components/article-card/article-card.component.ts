@@ -101,6 +101,8 @@ export class ArticleCardComponent {
       maxHeight: '90vh',
       disableClose: false,
       hasBackdrop: true,
+      autoFocus: false,
+      restoreFocus: true,
       panelClass: 'explain-dialog-panel'
     });
   }
