@@ -51,27 +51,22 @@ export class ArticleCardComponent {
 
   viewArticle(): void {
     this.scrollPositionService.saveScrollPosition('home');
-
-    setTimeout(() => {
-      this.analytics.trackArticleView(this.article.id, this.article.title);
-      if (this.article.url) {
-        window.open(this.article.url, '_blank');
-      } else {
-        this.router.navigate(['/article', this.article.slug]);
-      }
-    }, 0);
+    this.analytics.trackArticleView(this.article.id, this.article.title);
+    if (this.article.url) {
+      window.open(this.article.url, '_blank');
+    } else {
+      this.router.navigate(['/article', this.article.slug]);
+    }
   }
 
   saveArticle(event: Event): void {
     event.stopPropagation();
-    setTimeout(() => {
-      if (this.isSaved()) {
-        this.savedArticleService.unsaveArticle(this.article.id);
-      } else {
-        this.savedArticleService.saveArticle(this.article.id);
-        this.analytics.trackArticleSave(this.article.id, this.article.title);
-      }
-    }, 0);
+    if (this.isSaved()) {
+      this.savedArticleService.unsaveArticle(this.article.id);
+    } else {
+      this.savedArticleService.saveArticle(this.article.id);
+      this.analytics.trackArticleSave(this.article.id, this.article.title);
+    }
   }
 
   shareArticle(event: Event): void {
