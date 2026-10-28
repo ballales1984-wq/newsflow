@@ -137,7 +137,7 @@ def generate_digest():
         # Prendi solo i primi 5 articoli per categoria (i più recenti/importanti)
         if len(articles_by_category[category_id]) < 5:
             raw_desc = article.get('summary') or article.get('description') or article.get('content') or ''
-            desc = clean_digest_description(raw_desc, max_length=500)
+            desc = clean_digest_description(raw_desc, max_length=2000)
             articles_by_category[category_id].append({
                 'title': (article.get('title', '') or '').strip(),
                 'description': desc

@@ -98,7 +98,7 @@ def update_digest_from_articles(articles_file='final_news_italian.json', max_art
             
             # Descrizione pulita: rimuove tag HTML, boilerplate RSS e preserva frasi intere
             raw_desc = article.get('summary') or article.get('description') or article.get('content') or ''
-            desc = clean_digest_description(raw_desc, max_length=500)
+            desc = clean_digest_description(raw_desc, max_length=2000)
             
             article_digest = {
                 "title": (article.get('title', '') or '').strip()[:200],

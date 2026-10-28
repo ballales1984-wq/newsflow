@@ -1388,7 +1388,7 @@ def _generate_dynamic_digest():
         raw_desc = (
             article.get("summary", "") or article.get("description", "") or article.get("content", "") or ""
         )
-        desc = clean_digest_description(raw_desc, max_length=500)
+        desc = clean_digest_description(raw_desc, max_length=2000)
         categorized[cat].append(
             {
                 "title": (article.get("title", "") or "").strip()[:250],
