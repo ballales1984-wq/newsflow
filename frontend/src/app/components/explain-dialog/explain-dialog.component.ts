@@ -37,11 +37,12 @@ export class ExplainDialogComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.explanations = {};
-    this.loading = { quick: false, standard: false, deep: false };
-    this.aiUsed = 'Pre-generated';
-    this.loadExplanation('quick');
+    // Pre-carica spiegazione standard quando si apre il dialog
+    // Il tab iniziale è quello standard: pre-caricarlo evita uno spinner
+    // sul primo tab visibile.
     this.loadExplanation('standard');
+    // Forza anche il caricamento degli altri tab per avere contenuto immediato
+    this.loadExplanation('quick');
     this.loadExplanation('deep');
   }
 
@@ -51,26 +52,67 @@ export class ExplainDialogComponent implements OnInit {
   // In questo modo la UI mostra sempre qualcosa, anche a backend irraggiungibile.
   loadExplanation(type: 'quick' | 'standard' | 'deep'): void {
     const cacheKey = type;
-    if (this.explanations[cacheKey]) { return; }
-    if (this.loading[cacheKey]) { return; }
-
-    const explanationFieldMap: any = {
+    
+    // Se già in cache, usa quella
+    if (this.explanations[cacheKey]) {
+      return;
+    }
+    
+    // Se già in caricamento, aspetta
+    if (this.loading[cacheKey]) {
+      return;
+    }
+    
+    // Controlla se la spiegazione è già nell'articolo (pre-generata)
+    const explanationFieldMap: { [key: string]: string } = {
       'quick': 'explanation_quick',
       'standard': 'explanation_standard',
       'deep': 'explanation_deep'
     };
-
+    
     const explanationField = explanationFieldMap[type];
-    const articleAny: any = this.article;
-    if (articleAny && articleAny[explanationField]) {
-      this.explanations[cacheKey] = articleAny[explanationField];
+    if (this.article[explanationField as keyof typeof this.article]) {
+      // Spiegazione già presente nel JSON (pre-generata durante collect-news)
+      this.explanations[cacheKey] = this.article[explanationField as keyof typeof this.article] as string;
       this.aiUsed = 'Pre-generated';
+      this.loading[cacheKey] = false;
       return;
     }
-
-    this.explanations[cacheKey] = this.getStaticExplanation(type);
-    this.aiUsed = 'Pre-generated';
-  }
+    
+    // Se non presente nel JSON, carica dall'API (fallback)
+    this.loading[cacheKey] = true;
+    
+    // Chiama API per spiegazione AI (solo se non presente nel JSON)
+    // L'endpoint di generazione è derivato da environment.apiUrl: stesso host
+    // dell'app, con il path /v1/articles/explain.
+    const apiUrl = environment.apiUrl.replace('/v1', '/v1/articles/explain');
+    this.http.post<any>(apiUrl, {
+      article_id: this.article.id,
+      slug: this.article.slug,
+      explanation_type: type
+    // Nessun unsubscribe esplicito: è una POST che si completa dopo la risposta,
+    // quindi l'observable non resta aperto. Se il dialog viene chiuso prima,
+    // il callback scrive comunque sui campi del componente, ormai non più mostrato.
+    }).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.explanations[cacheKey] = response.explanation;
+          this.aiUsed = response.ai_used || 'Static';
+        } else {
+          // Fallback a spiegazione statica
+          this.explanations[cacheKey] = this.getStaticExplanation(type);
+        }
+        this.loading[cacheKey] = false;
+      },
+      error: (error) => {
+        console.error('Errore caricamento spiegazione AI:', error);
+        // L'errore non viene propagato al template: la spiegazione statica copre
+        // il caso, così l'utente vede comunque un testo invece di uno spinner infinito.
+        // Fallback a spiegazione statica
+        this.explanations[cacheKey] = this.getStaticExplanation(type);
+        this.loading[cacheKey] = false;
+      }
+    });
   }
 
   // Spiegazione rapida (30 secondi) - ora usa AI
